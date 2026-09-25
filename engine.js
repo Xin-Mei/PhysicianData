@@ -462,7 +462,7 @@
           h += '<td class="gap" rowspan="' + rows.length + '"></td>';
           csCols.forEach(x => {
             let v = '';
-            if (x[0] === 'total') v = fmt(c.total, 'int');
+            if (x[0] === 'total') { v = fmt(c.total, 'int'); const pc = (data.prevClinicSum || []).find(p => p.clinic === cl); if (v && pc && numOrNull(pc.total) !== null) { const d = +c.total - (+pc.total); v += '<div class="csd' + (d < 0 ? ' neg' : '') + '">' + (d > 0 ? '+' : '') + d + '</div>'; } }
             if (x[0] === 'slow') v = fmt(c.slow, 'int');
             if (x[0] === 'rate') v = fmt(c.slowRate, 'pct', pd);
             if (x[0] === 'rank') v = csRank[cl] || '';
@@ -507,6 +507,7 @@
   .rpt td.r.top sub{color:inherit!important}
   .rpt td.gap,.rpt th.gap{border:none;background:transparent;width:10px;min-width:10px;padding:0}
   .rpt td.cs{font-size:11px}
+  .rpt td.cs .csd{font-size:9.5px;color:#555;margin-top:2px}.rpt td.cs .csd.neg{color:#b42318}
   .rpt td.cs-avg{background:#fdf1d8;font-weight:700}
   .rpt td.nb{border:none}
   .rpt td.grand{border:none;color:#c0271d;font-weight:700;font-size:12px}
@@ -551,12 +552,22 @@
     if (Math.abs(v) < 1e-9) return `<span class="pd z">－ ${t}</span>`;
     return `<span class="pd ${v > 0 ? 'up' : 'dn'}">${v > 0 ? '▲' : '▼'} ${t}</span>`;
   }
+  let RANK_STYLE = 'medal';
   function prettyRank(rk, m, topC, lim) {
-    if (!rk) return '';
-    if (rk.none) return '';
-    if (rk.rank > lim) return '';
+    if (!rk || rk.none || rk.rank > lim) return '';
     const top = rk.rank <= topC;
+    if (RANK_STYLE === 'medal')   // 圓形徽章：緊貼數值右側
+      return `<span class="rm${top ? ' top' : ''}" style="${top ? `background:${tint(m.color, .45)};color:${dark(m.color)}` : `border-color:${tint(m.color, .2)};color:${dark(m.color)}`}">${rk.rank}</span>`;
+    if (RANK_STYLE === 'text')    // 純文字：數值下方一行
+      return `<span class="rt" style="color:${top ? dark(m.color) : '#8a8880'}"><i style="background:${top ? m.color : tint(m.color, .35)}"></i>第 ${rk.rank} 名<em>／${rk.n}</em></span>`;
+    if (RANK_STYLE === 'corner')  // 角標：格子右上角
+      return `<span class="rc" style="background:${top ? tint(m.color, .35) : '#f3f1ec'};color:${top ? dark(m.color) : '#8a8880'}">${rk.rank}<i>/${rk.n}</i></span>`;
     return `<span class="pr${top ? ' top' : ''}" style="${top ? `background:${tint(m.color, .55)};border-color:${m.color};color:${dark(m.color)}` : `background:#fff;border-color:${tint(m.color, .35)};color:${dark(m.color)}`}">第 <b>${rk.rank}</b> 名<i>/${rk.n}</i></span>`;
+  }
+  function rankCell(val, dd, rr) {   // 依排名樣式組合一格內容
+    if (RANK_STYLE === 'medal') return `<div class="pv">${val}${rr ? ' ' + rr : ''}</div>${dd ? `<div class="ps">${dd}</div>` : ''}`;
+    if (RANK_STYLE === 'corner') return `${rr}<div class="pv">${val}</div>${dd ? `<div class="ps">${dd}</div>` : ''}`;
+    return `<div class="pv">${val}</div>${dd ? `<div class="ps">${dd}</div>` : ''}${rr ? `<div class="prk">${rr}</div>` : ''}`;
   }
 
   /**
@@ -566,6 +577,7 @@
   function renderPretty(data, cfg, variant) {
     const pd = cfg.pctDigits == null ? 2 : +cfg.pctDigits;
     const P = prettyPrep(data, cfg);
+    RANK_STYLE = cfg.rankStyle || 'medal';
     const topC = +cfg.topColor || 5, lim = +cfg.showLimit || 10;
     const month = monthLabel(data.month);
     const avgs = [];
@@ -579,7 +591,7 @@
         <div class="p-t"><div class="p-org">金鶯診所 Elite Clinic</div><div class="p-title">${esc(month)} 醫師回診率分析結果${data.analysisDate ? '<small>（' + esc(data.analysisDate) + '分析）</small>' : ''}</div></div>
       </div>
       <div class="p-kpis">
-        ${P.grand ? `<div class="p-kpi"><div class="l">全院區總人次</div><div class="v">${P.grand.toLocaleString()}</div><div class="s">${P.pgrand ? prettyDiff(P.grand - P.pgrand, 'int') + '<em>較上月</em>' : ''}</div></div>` : ''}
+        ${P.grand ? `<div class="p-kpi tot"><div class="l">全院區總人次</div><div class="v">${P.grand.toLocaleString()}</div><div class="s">${P.pgrand ? '較上月 ' + prettyDiff(P.grand - P.pgrand, 'int') : '<em style="margin:0">上月無資料</em>'}</div></div>` : ''}
         ${avgs.length ? `<div class="p-kpi p-avg"><div class="l">集團平均</div><div class="avg-row">${avgs.map(a => `<div class="ai"><div class="al">${a[0]}</div><div class="av">${a[1]}</div></div>`).join('')}</div></div>` : ''}
       </div>`;
 
@@ -611,19 +623,17 @@
         h += `<td class="c-doc"><b>${esc(r.doctor)}</b><small>${esc(r.title || '醫師')}</small>${isNew ? '<em class="new">新進</em>' : ''}</td>`;
         P.cols.forEach(c => {
           const m = c.m; const rk = (P.ranks[key] || {})[m.k];
-          let inner = '';
-          if (c.v) inner += `<div class="pv">${fmt(r[m.k], m.fmt, pd) || '<span class="na">—</span>'}</div>`;
+          const val = c.v ? (fmt(r[m.k], m.fmt, pd) || '<span class="na">—</span>') : '';
           const dd = c.d ? prettyDiff(diffOf(r, prev, m.k), m.fmt, pd) : '';
           const rr = c.r ? prettyRank(rk, m, topC, lim) : '';
-          if (dd) inner += `<div class="ps">${dd}</div>`;
-          if (rr) inner += `<div class="prk">${rr}</div>`;
-          h += `<td>${inner}</td>`;
+          const inner = rankCell(val, dd, rr);
+          h += `<td class="rcell">${inner}</td>`;
         });
         if (csCols.length && ri === 0) {
           const c = P.csMap[cl] || {};
           csCols.forEach(x => {
             let v = '';
-            if (x[0] === 'total') v = `<div class="pv big">${fmt(c.total, 'int') ? (+c.total).toLocaleString() : ''}</div>` + (P.pcsMap[cl] && c.total ? `<div class="ps">${prettyDiff(+c.total - (+P.pcsMap[cl].total || 0), 'int')}</div>` : '');
+            if (x[0] === 'total') v = `<div class="pv big">${fmt(c.total, 'int') ? (+c.total).toLocaleString() : ''}</div>` + (c.total ? `<div class="ps">${P.pcsMap[cl] && numOrNull(P.pcsMap[cl].total) !== null ? '<span class="cmp">較上月</span>' + prettyDiff(+c.total - (+P.pcsMap[cl].total), 'int') : '<span class="cmp">上月無資料</span>'}</div>` : '');
             if (x[0] === 'slow') v = `<div class="pv">${fmt(c.slow, 'int')}</div>`;
             if (x[0] === 'rate') v = `<div class="pv">${fmt(c.slowRate, 'pct', pd)}</div>`;
             if (x[0] === 'rank') v = P.csRank[cl] ? `<span class="crk${P.csRank[cl] <= 3 ? ' top' : ''}">${P.csRank[cl]}</span>` : '';
@@ -656,7 +666,7 @@
       const rows = P.rowsOf(c); if (!rows.length) return;
       const s = P.csMap[c] || {};
       h += `<div class="p-card cc"><div class="cc-h"><div class="cc-n">${esc(c)}</div><div class="cc-s">`;
-      if (P.cs.total && s.total) h += `<span>總人次 <b>${(+s.total).toLocaleString()}</b></span>`;
+      if (P.cs.total && s.total) h += `<span>總人次 <b>${(+s.total).toLocaleString()}</b>${P.pcsMap[c] && numOrNull(P.pcsMap[c].total) !== null ? ' ' + prettyDiff(+s.total - (+P.pcsMap[c].total), 'int') : ''}</span>`;
       if (P.cs.rate && s.slowRate !== '' && s.slowRate != null) h += `<span>慢箋 <b>${fmt(s.slowRate, 'pct', pd)}</b></span>`;
       if (P.cs.rank && P.csRank[c]) h += `<span class="crk${P.csRank[c] <= 3 ? ' top' : ''}">${P.csRank[c]}</span>`;
       h += `</div></div><table class="cc-t"><thead><tr><th class="l">醫師</th>${cols.map(x => `<th style="color:${dark(x.m.color)};border-bottom:2px solid ${tint(x.m.color, .3)}">${esc(x.m.label)}</th>`).join('')}</tr></thead><tbody>`;
@@ -664,7 +674,7 @@
         const key = r.clinic + '|' + r.doctor; const prev = P.prevMap[key] || P.prevMap['*' + r.doctor];
         h += `<tr><td class="l"><b>${esc(r.doctor)}</b><small>${esc(r.title || '')}</small></td>` + cols.map(x => {
           const rk = (P.ranks[key] || {})[x.m.k];
-          return `<td>${x.v ? `<div class="pv">${fmt(r[x.m.k], x.m.fmt, pd) || '<span class="na">—</span>'}</div>` : ''}<div class="ps">${x.d ? prettyDiff(diffOf(r, prev, x.m.k), x.m.fmt, pd) : ''}</div>${x.r && prettyRank(rk, x.m, topC, lim) ? `<div class="prk">${prettyRank(rk, x.m, topC, lim)}</div>` : ''}</td>`;
+          return `<td class="rcell">${rankCell(x.v ? (fmt(r[x.m.k], x.m.fmt, pd) || '<span class="na">—</span>') : '', x.d ? prettyDiff(diffOf(r, prev, x.m.k), x.m.fmt, pd) : '', x.r ? prettyRank(rk, x.m, topC, lim) : '')}</td>`;
         }).join('') + '</tr>';
       });
       h += '</tbody></table></div>';
@@ -690,7 +700,10 @@
   .pretty .p-avg .al{font-size:15px;color:#7b7a72}
   .pretty .p-avg .av{font-size:34px;font-weight:700;color:#1e3d3a;margin-top:6px;line-height:1.1}
   .pretty .gsub{font-size:13px;font-weight:500;color:#7b7a72;letter-spacing:0}
-  .pretty .p-kpi{background:#fff;border:1px solid #e3dfd5;border-radius:16px;padding:16px 20px 14px}
+  .pretty .p-kpi{background:#fff;border:1px solid #e3dfd5;border-radius:16px;padding:16px 20px 14px;display:flex;flex-direction:column}
+  .pretty .p-kpi.tot .v{margin-top:auto;padding-top:14px}
+  .pretty .p-kpi.tot .s{font-size:14px}
+  .pretty .p-kpi.tot .s{margin-top:6px}
   .pretty .p-kpi .l{font-size:17px;color:#7b7a72}
   .pretty .p-kpi .v{font-size:38px;font-weight:700;margin-top:14px;line-height:1.1;color:#1e3d3a}
   .pretty .p-kpi .s{font-size:15px;min-height:18px}
@@ -716,6 +729,14 @@
   .pretty .pd{font-size:14.5px;font-weight:500}
   .pretty .pd.up{color:#4f8f6c}.pretty .pd.dn{color:#c0735f}.pretty .pd.z{color:#9a988f}
   .pretty .prk{margin-top:5px}
+  .pretty td.rcell{position:relative}
+  .pretty .cmp{font-size:12.5px;color:#9a988f;margin-right:2px}
+  .pretty .rm{display:inline-grid;place-items:center;min-width:32px;height:32px;padding:0 5px;border-radius:16px;font-size:17px;font-weight:800;vertical-align:2px;margin-left:4px;border:1.5px solid transparent;background:#fff;line-height:1}
+  .pretty .rt{display:inline-flex;align-items:center;gap:6px;font-size:16px;font-weight:700}
+  .pretty .rt i{display:inline-block;width:10px;height:10px;border-radius:50%}
+  .pretty .rt em{font-style:normal;font-weight:400;font-size:12px;opacity:.75}
+  .pretty .rc{position:absolute;top:0;right:0;min-width:30px;padding:3px 8px;border-radius:0 0 0 10px;font-size:15px;font-weight:800;line-height:18px}
+  .pretty .rc i{font-style:normal;font-weight:500;font-size:11.5px;opacity:.75;margin-left:1px}
   .pretty .pr{display:inline-block;font-size:15px;font-weight:700;border:2px solid;border-radius:8px;padding:2px 10px;line-height:22px;white-space:nowrap}
   .pretty .pr b{font-size:19px;font-weight:800;margin:0 1px}
   .pretty .pr i{font-style:normal;font-weight:500;font-size:13px;opacity:.8;margin-left:3px}
