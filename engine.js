@@ -151,7 +151,8 @@
     const slowN = numOrNull(o.slowN), backN = numOrNull(o.backN), nRevN = numOrNull(o.nRevN), wRevN = numOrNull(o.wRevN);
     const out = Object.assign({}, o, { hours, patients, visits, slowN, backN, nRevN, wRevN });
     out.slowRate = visits && slowN !== null ? r4(slowN / visits) : null;
-    out.vph = hours && patients !== null ? r2(patients / hours) : null;
+    const vv = visits !== null ? visits : patients;   // 平均人次/hr ＝ 看診人次 ÷ 上診時數
+    out.vph = hours && vv !== null ? r2(vv / hours) : null;
     out.backRate = visits && backN !== null ? r4(backN / visits) : null;
     out.nRevRate = backN && nRevN !== null ? r4(nRevN / backN) : null;
     out.wRevRate = visits && wRevN !== null ? r4(wRevN / visits) : null;
@@ -331,7 +332,7 @@
     if (o.patients === null) o.patients = o.visits;
     const q = (p, f) => p ? f(p[0], p[1]) : null;
     o.slowRate = q(pair('slowN', 'visits'), (a, b) => r4(a / b));
-    o.vph = q(pair('patients', 'hours'), (a, b) => r2(a / b));
+    o.vph = q(pair('visits', 'hours'), (a, b) => r2(a / b));
     o.backRate = q(pair('backN', 'visits'), (a, b) => r4(a / b));
     o.nRevRate = q(pair('nRevN', 'backN'), (a, b) => r4(a / b));
     o.wRevRate = q(pair('wRevN', 'visits'), (a, b) => r4(a / b));

@@ -625,20 +625,19 @@ function selectClinic(cl) {
     </div>
     <div>
       <div class="tbl-wrap"><table class="dt">
-        <thead><tr><th>醫師</th><th>上診時數</th><th>系統病患數</th><th>看診人次</th><th>慢專人次</th><th>慢專比例</th><th>平均人次/hr</th><th>BACK開立</th><th>開立率</th><th>個人回診數</th><th>個人回診率</th><th>院所回診數</th><th>院所回診率</th></tr></thead>
+        <thead><tr><th>醫師</th><th>上診時數</th><th>看診人次</th><th>慢專人次</th><th>慢專比例</th><th>平均人次/hr</th><th>BACK開立</th><th>開立率</th><th>個人回診數</th><th>個人回診率</th><th>院所回診數</th><th>院所回診率</th></tr></thead>
         <tbody>${rows.map(r => {
           const inp = c.inputs[r.doctor] || {};
           return `<tr><td class="k">${esc(r.doctor)}<span class="hint">${esc(r.title)}</span></td>
           <td><input data-f="hours" data-d="${esc(r.doctor)}" value="${r.hours ?? ''}" class="${inp.hoursManual ? 'man' : (r.hours !== null ? 'auto' : '')}" title="預設帶入班表時數，可手動修改"></td>
-          <td class="m">${r.patients ?? '-'}</td>
-          <td><input data-f="visits" data-d="${esc(r.doctor)}" value="${r.visits ?? ''}" class="${inp.visitsManual ? 'man' : (r.visits !== null ? 'auto' : '')}" title="預設帶入系統病患數，請依實際看診人次修改"></td>
+          <td><input data-f="visits" data-d="${esc(r.doctor)}" value="${r.visits ?? ''}" class="${inp.visitsManual ? 'man' : (r.visits !== null ? 'auto' : '')}" title="預設帶入系統依看診名單計算的人次${r.patients !== null && r.patients !== undefined ? '（' + r.patients + '）' : ''}，可手動修改"></td>
           <td><input data-f="slowN" data-d="${esc(r.doctor)}" value="${inp.slowN !== undefined && inp.slowN !== '' ? inp.slowN : (r.slowN ?? '')}" placeholder="輸入"></td>
           <td>${f(r.slowRate, 'pct')}</td><td>${f(r.vph, 'n2')}</td>
           <td>${r.backN ?? ''}</td><td>${f(r.backRate, 'pct')}</td>
           <td>${r.nRevN ?? ''}</td><td>${f(r.nRevRate, 'pct')}${r.backRate !== null && r.backRate < THRESH() ? ' <span class="tag y" title="開立率未達門檻，不列排名">不排名</span>' : ''}</td>
-          <td>${r.wRevN ?? ''}</td><td>${f(r.wRevRate, 'pct')}</td></tr>`; }).join('') || '<tr><td colspan="13" class="empty-state">此院區尚無醫師，請到後台「醫師清單」新增</td></tr>'}
+          <td>${r.wRevN ?? ''}</td><td>${f(r.wRevRate, 'pct')}</td></tr>`; }).join('') || '<tr><td colspan="12" class="empty-state">此院區尚無醫師，請到後台「醫師清單」新增</td></tr>'}
         </tbody></table></div>
-      <div class="hint" style="margin-top:6px">綠底＝系統帶入；黃底＝已手動修改（清空即恢復系統值）。平均人次/hr＝系統病患數 ÷ 上診時數；慢專比例、BACK開立率、院所回診率以「看診人次」為分母。</div>
+      <div class="hint" style="margin-top:6px">綠底＝系統帶入；黃底＝已手動修改（清空即恢復系統值）。看診人次預設由看診名單自動計算，可手動修改；平均人次/hr、慢專比例、BACK開立率、院所回診率都以「看診人次」計算。</div>
       <div class="sum">
         <div class="box"><div class="l">院區總人次（手動輸入，老闆看）</div><input id="sumTotal" value="${sm.total ?? ''}" placeholder="輸入"></div>
         <div class="box"><div class="l">院區慢箋人次 ${c.summary.slowManual ? '<span class="tag y">手動</span>' : '<span class="tag g">醫師加總</span>'}</div><input id="sumSlow" value="${sm.slow ?? ''}"></div>
