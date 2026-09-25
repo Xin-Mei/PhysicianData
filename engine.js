@@ -621,8 +621,11 @@
     P.cols.forEach(c => h += `<th class="m">${c.m.label === c.m.group || groups.find(g => g.g === c.m.group).cols.length === 1 ? '數值' : esc(c.m.label.replace('BACK', ''))}</th>`);
     csCols.forEach(x => h += `<th class="m cs">${x[1]}</th>`);
     h += '</tr></thead><tbody>';
+    let shown = 0;
+    const span = 2 + P.cols.length + csCols.length;
     P.clinics.forEach((cl, ci) => {
       const rows = P.rowsOf(cl); if (!rows.length) return;
+      if (shown++) h += `<tr class="sep"><td colspan="${span}"></td></tr>`;   // 院區之間的分隔
       rows.forEach((r, ri) => {
         const key = r.clinic + '|' + r.doctor;
         const prev = P.prevMap[key];
@@ -724,7 +727,8 @@
   .pretty .p-tb th.m{font-size:15px;color:#7b7a72;font-weight:500;background:#f6f4ef;border-bottom:1px solid #e3dfd5}
   .pretty .p-tb td{padding:10px 10px;text-align:center;border-bottom:1px solid #efece5;white-space:nowrap;vertical-align:middle}
   .pretty .p-tb tr.band td{background:#fbfaf7}
-  .pretty .p-tb tr.first td{border-top:2px solid #e3ece9}
+  .pretty .p-tb tr.first td{border-top:0}
+  .pretty .p-tb tr.sep td{height:2px;padding:0;background:#2b5a54!important;border:0;line-height:0;font-size:0}
   .pretty .p-tb tr.avg td{background:#fdf1d8;font-weight:700;color:#7a5412;font-size:15px}
   .pretty .p-tb td.c-cl{background:#e6efed!important;font-weight:700;color:#1e3d3a;font-size:21px;width:56px;letter-spacing:2px}
   .pretty .p-tb td.c-cl span{writing-mode:vertical-rl}
