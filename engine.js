@@ -265,17 +265,17 @@
 
   /* ---------------- 排名、增減、平均 ---------------- */
   const METRICS = [
-    { k: 'hours',    group: '上診時數',   label: '上診時數', fmt: 'h',   color: '#6b7280' },
-    { k: 'visits',   group: '看診人次',   label: '看診人次', fmt: 'int', color: '#6b7280' },
-    { k: 'slowN',    group: '醫師慢專比例', label: '慢專人次', fmt: 'int', color: '#d98b0b' },
-    { k: 'slowRate', group: '醫師慢專比例', label: '慢專比例', fmt: 'pct', color: '#d98b0b', avg: true },
-    { k: 'vph',      group: '平均人次/hr', label: '平均人次/hr', fmt: 'n2', color: '#2f6fb3', avg: true },
-    { k: 'backN',    group: 'BACK開立',   label: 'BACK開立數', fmt: 'int', color: '#7c5cc4' },
-    { k: 'backRate', group: 'BACK開立',   label: 'BACK開立率', fmt: 'pct', color: '#7c5cc4', avg: true },
-    { k: 'nRevN',    group: '個人回診率(醫師黏著度)', label: '個人回診數', fmt: 'int', color: '#e07a2e' },
-    { k: 'nRevRate', group: '個人回診率(醫師黏著度)', label: '個人回診率', fmt: 'pct', color: '#e07a2e', avg: true, gated: true },
-    { k: 'wRevN',    group: '院所回診率(品牌忠誠度)', label: '院所回診數', fmt: 'int', color: '#3f9b5a' },
-    { k: 'wRevRate', group: '院所回診率(品牌忠誠度)', label: '院所回診率', fmt: 'pct', color: '#3f9b5a', avg: true }
+    { k: 'hours',    group: '上診時數',   label: '上診時數', fmt: 'h',   color: '#9AA5A1' },
+    { k: 'visits',   group: '看診人次',   label: '看診人次', fmt: 'int', color: '#9AA5A1' },
+    { k: 'slowN',    group: '醫師慢專比例', label: '慢專人次', fmt: 'int', color: '#C8A56E' },
+    { k: 'slowRate', group: '醫師慢專比例', label: '慢專比例', fmt: 'pct', color: '#C8A56E', avg: true },
+    { k: 'vph',      group: '平均人次/hr', label: '平均人次/hr', fmt: 'n2', color: '#7FA2BF', avg: true },
+    { k: 'backN',    group: 'BACK開立',   label: 'BACK開立數', fmt: 'int', color: '#A79CC2' },
+    { k: 'backRate', group: 'BACK開立',   label: 'BACK開立率', fmt: 'pct', color: '#A79CC2', avg: true },
+    { k: 'nRevN',    group: '個人回診率(醫師黏著度)', label: '個人回診數', fmt: 'int', color: '#D29B82' },
+    { k: 'nRevRate', group: '個人回診率(醫師黏著度)', label: '個人回診率', fmt: 'pct', color: '#D29B82', avg: true, gated: true },
+    { k: 'wRevN',    group: '院所回診率(品牌忠誠度)', label: '院所回診數', fmt: 'int', color: '#86B29A' },
+    { k: 'wRevRate', group: '院所回診率(品牌忠誠度)', label: '院所回診率', fmt: 'pct', color: '#86B29A', avg: true }
   ];
   const METRIC = {}; METRICS.forEach(m => METRIC[m.k] = m);
 
@@ -398,7 +398,7 @@
     const title = monthLabel(data.month) + (data.analysisDate ? '<br><small>(' + esc(data.analysisDate) + '分析)</small>' : '');
     let h = '<table class="rpt"><thead>';
     h += '<tr><th class="t-title" colspan="2" rowspan="3">' + title + '</th>';
-    groups.forEach(gp => h += '<th colspan="' + gp.cols.length + '" class="g">' + esc(gp.g) + '</th>');
+    groups.forEach(gp => h += '<th colspan="' + gp.cols.length + '" class="g">' + groupHtml(gp.g) + '</th>');
     if (csCols.length) h += '<th class="gap" rowspan="' + (3 + 0) + '"></th>' + csCols.map(x => '<th rowspan="3" class="cs-h">' + x[1].replace(/(院區)/, '$1<br>') + '</th>').join('');
     h += '</tr><tr>';
     groups.forEach(gp => {
@@ -454,7 +454,7 @@
             if (!rk) h += '<td class="r"></td>';
             else if (rk.none) h += '<td class="r none">無</td>';
             else if (rk.rank > lim) h += '<td class="r"></td>';
-            else h += '<td class="r' + (rk.rank <= topC ? ' top' : '') + '"' + (rk.rank <= topC ? ' style="--c:' + m.color + '"' : '') + '><b>' + rk.rank + '</b><sub>/' + rk.n + '</sub></td>';
+            else h += '<td class="r' + (rk.rank <= topC ? ' top' : '') + '"' + (rk.rank <= topC ? ' style="background:' + tint(m.color, .55) + ';color:' + dark(m.color) + '"' : '') + '><b>' + rk.rank + '</b><sub>/' + rk.n + '</sub></td>';
           }
         });
         if (csCols.length && ri === 0) {
@@ -488,7 +488,8 @@
   .rpt{border-collapse:collapse;font-size:11px;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;color:#111;background:#fff}
   .rpt th,.rpt td{border:1px solid #333;padding:3px 5px;text-align:center;white-space:nowrap;height:22px}
   .rpt thead th{background:#fff;font-weight:700}
-  .rpt th.g{font-size:12px}
+  .rpt th.g{font-size:12px;line-height:1.2}
+  .rpt th.g .gsub{font-size:9.5px;font-weight:500;color:#555}
   .rpt th.s{font-weight:500;font-size:10.5px}
   .rpt th.m .note{color:#d11;font-size:9px;font-weight:500}
   .rpt th.t-title{min-width:120px;font-size:12px}
@@ -502,9 +503,8 @@
   .rpt td.r{min-width:36px;position:relative}
   .rpt td.r b{font-weight:700;font-size:13px}
   .rpt td.r sub{font-size:8.5px;color:#444;margin-left:1px}
-  .rpt td.r.top{background:var(--c)}
-  .rpt td.r.top b{color:#fff;font-weight:800}
-  .rpt td.r.top sub{color:#fff!important}
+  .rpt td.r.top b{color:inherit;font-weight:800}
+  .rpt td.r.top sub{color:inherit!important}
   .rpt td.gap,.rpt th.gap{border:none;background:transparent;width:10px;min-width:10px;padding:0}
   .rpt td.cs{font-size:11px}
   .rpt td.cs-avg{background:#fdf1d8;font-weight:700}
@@ -515,6 +515,10 @@
   `;
 
   /* ---------------- 美化圖片版報表（給股東／老闆，下載 PNG / JPEG） ---------------- */
+  const hexMix = (hex, t, w) => { const f = h => { h = h.replace('#', ''); const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }; const a = f(hex), b = f(t); return 'rgb(' + a.map((x, i) => Math.round(x * (1 - w) + b[i] * w)).join(',') + ')'; };
+  const dark = hex => hexMix(hex, '#1d2a28', .45);
+  const tint = (hex, w) => hexMix(hex, '#ffffff', w);
+  const groupHtml = g => { const m = String(g).match(/^(.*?)[（(](.*)[)）]$/); return m ? esc(m[1]) + '<br><small class="gsub">（' + esc(m[2]) + '）</small>' : esc(g); };
   const hexA = (hex, a) => { const h = hex.replace('#', ''); const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; };
 
   function prettyPrep(data, cfg) {
@@ -552,7 +556,7 @@
     if (rk.none) return '';
     if (rk.rank > lim) return '';
     const top = rk.rank <= topC;
-    return `<span class="pr${top ? ' top' : ''}" style="${top ? `background:${m.color};border-color:${m.color};color:#fff` : `background:${hexA(m.color, .1)};border-color:${m.color};color:${m.color}`}">第 <b>${rk.rank}</b> 名<i>/${rk.n}</i></span>`;
+    return `<span class="pr${top ? ' top' : ''}" style="${top ? `background:${tint(m.color, .55)};border-color:${m.color};color:${dark(m.color)}` : `background:#fff;border-color:${tint(m.color, .35)};color:${dark(m.color)}`}">第 <b>${rk.rank}</b> 名<i>/${rk.n}</i></span>`;
   }
 
   /**
@@ -564,18 +568,20 @@
     const P = prettyPrep(data, cfg);
     const topC = +cfg.topColor || 5, lim = +cfg.showLimit || 10;
     const month = monthLabel(data.month);
-    const kpis = [];
-    if (P.grand) kpis.push(['全院區總人次', P.grand.toLocaleString(), P.pgrand ? prettyDiff(P.grand - P.pgrand, 'int') + '<em>較上月</em>' : '']);
-    if (P.csAvg !== null) kpis.push(['集團平均 院區慢箋比例', fmt(P.csAvg, 'pct', pd), '']);
-    [['slowRate', '集團平均 醫師慢專比例'], ['vph', '集團平均 人次/hr'], ['nRevRate', '集團平均 個人回診率'], ['wRevRate', '集團平均 院所回診率']].forEach(([k, l]) => {
-      if (P.avg[k] !== null) kpis.push([l, fmt(P.avg[k], METRIC[k].fmt, pd), '']);
+    const avgs = [];
+    if (P.csAvg !== null) avgs.push(['院區慢箋比例', fmt(P.csAvg, 'pct', pd)]);
+    [['slowRate', '醫師慢專比例'], ['vph', '平均人次/hr'], ['nRevRate', '個人回診率'], ['wRevRate', '院所回診率']].forEach(([k, l]) => {
+      if (P.avg[k] !== null) avgs.push([l, fmt(P.avg[k], METRIC[k].fmt, pd)]);
     });
     let h = `<div class="pretty pv-${variant}">
       <div class="p-head">
         <img src="${LOGO}" class="p-logo" alt="">
         <div class="p-t"><div class="p-org">金鶯診所 Elite Clinic</div><div class="p-title">${esc(month)} 醫師回診率分析結果${data.analysisDate ? '<small>（' + esc(data.analysisDate) + '分析）</small>' : ''}</div></div>
       </div>
-      <div class="p-kpis" style="grid-template-columns:repeat(${kpis.length},1fr)">${kpis.map(k => `<div class="p-kpi"><div class="l">${k[0]}</div><div class="v">${k[1]}</div><div class="s">${k[2]}</div></div>`).join('')}</div>`;
+      <div class="p-kpis">
+        ${P.grand ? `<div class="p-kpi"><div class="l">全院區總人次</div><div class="v">${P.grand.toLocaleString()}</div><div class="s">${P.pgrand ? prettyDiff(P.grand - P.pgrand, 'int') + '<em>較上月</em>' : ''}</div></div>` : ''}
+        ${avgs.length ? `<div class="p-kpi p-avg"><div class="l">集團平均</div><div class="avg-row">${avgs.map(a => `<div class="ai"><div class="al">${a[0]}</div><div class="av">${a[1]}</div></div>`).join('')}</div></div>` : ''}
+      </div>`;
 
     if (variant === 'cards') h += prettyCards(P, cfg, pd, topC, lim);
     else h += prettyTable(P, cfg, pd, topC, lim, data);
@@ -588,7 +594,7 @@
     const csCols = [['total', '院區總人次'], ['slow', '慢箋人次'], ['rate', '慢箋比例'], ['rank', '院區排名']].filter(x => P.cs[x[0]]);
     const groups = []; P.cols.forEach(c => { const l = groups[groups.length - 1]; if (l && l.g === c.m.group) l.cols.push(c); else groups.push({ g: c.m.group, cols: [c], color: c.m.color }); });
     let h = '<div class="p-card"><table class="p-tb"><thead><tr><th class="c-cl" rowspan="2">院區</th><th class="c-doc" rowspan="2" style="width:120px">醫師</th>';
-    groups.forEach(g => h += `<th colspan="${g.cols.length}" class="g" style="border-bottom:3px solid ${g.color}">${esc(g.g)}</th>`);
+    groups.forEach(g => h += `<th colspan="${g.cols.length}" class="g" style="border-bottom:3px solid ${g.color}">${groupHtml(g.g)}</th>`);
     if (csCols.length) h += `<th colspan="${csCols.length}" class="g cs" style="border-bottom:3px solid #1e3d3a">院區統計</th>`;
     h += '</tr><tr>';
     P.cols.forEach(c => h += `<th class="m">${c.m.label === c.m.group || groups.find(g => g.g === c.m.group).cols.length === 1 ? '數值' : esc(c.m.label.replace('BACK', ''))}</th>`);
@@ -653,7 +659,7 @@
       if (P.cs.total && s.total) h += `<span>總人次 <b>${(+s.total).toLocaleString()}</b></span>`;
       if (P.cs.rate && s.slowRate !== '' && s.slowRate != null) h += `<span>慢箋 <b>${fmt(s.slowRate, 'pct', pd)}</b></span>`;
       if (P.cs.rank && P.csRank[c]) h += `<span class="crk${P.csRank[c] <= 3 ? ' top' : ''}">${P.csRank[c]}</span>`;
-      h += `</div></div><table class="cc-t"><thead><tr><th class="l">醫師</th>${cols.map(x => `<th style="color:${x.m.color}">${esc(x.m.label)}</th>`).join('')}</tr></thead><tbody>`;
+      h += `</div></div><table class="cc-t"><thead><tr><th class="l">醫師</th>${cols.map(x => `<th style="color:${dark(x.m.color)};border-bottom:2px solid ${tint(x.m.color, .3)}">${esc(x.m.label)}</th>`).join('')}</tr></thead><tbody>`;
       rows.forEach(r => {
         const key = r.clinic + '|' + r.doctor; const prev = P.prevMap[key] || P.prevMap['*' + r.doctor];
         h += `<tr><td class="l"><b>${esc(r.doctor)}</b><small>${esc(r.title || '')}</small></td>` + cols.map(x => {
@@ -677,7 +683,13 @@
   .pretty .p-title small{font-size:20px;font-weight:500;color:#cfe0dc;letter-spacing:0;margin-left:6px}
   .pretty .p-meta{margin-left:auto;text-align:right;font-size:18px;font-weight:500;line-height:1.6}
   .pretty .p-meta span{font-size:14px;color:#9fd4c7;font-weight:400}
-  .pretty .p-kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin:18px 0}
+  .pretty .p-kpis{display:grid;grid-template-columns:1fr 4.6fr;gap:14px;margin:18px 0}
+  .pretty .p-avg .avg-row{display:flex;margin-top:10px}
+  .pretty .p-avg .ai{flex:1;padding:0 18px;border-left:1px solid #ece9e1}
+  .pretty .p-avg .ai:first-child{border-left:0;padding-left:0}
+  .pretty .p-avg .al{font-size:15px;color:#7b7a72}
+  .pretty .p-avg .av{font-size:34px;font-weight:700;color:#1e3d3a;margin-top:6px;line-height:1.1}
+  .pretty .gsub{font-size:13px;font-weight:500;color:#7b7a72;letter-spacing:0}
   .pretty .p-kpi{background:#fff;border:1px solid #e3dfd5;border-radius:16px;padding:16px 20px 14px}
   .pretty .p-kpi .l{font-size:17px;color:#7b7a72}
   .pretty .p-kpi .v{font-size:38px;font-weight:700;margin-top:14px;line-height:1.1;color:#1e3d3a}
@@ -686,15 +698,15 @@
   .pretty .p-card{background:#fff;border:1px solid #e3dfd5;border-radius:18px;padding:10px 12px;overflow:hidden}
   .pretty .p-tb{width:100%;border-collapse:collapse;font-size:17px}
   .pretty .p-tb th{font-weight:700;color:#35504c;padding:12px 10px;text-align:center;white-space:nowrap}
-  .pretty .p-tb th.g{font-size:19px}
+  .pretty .p-tb th.g{font-size:19px;line-height:1.25}
   .pretty .p-tb th.m{font-size:15px;color:#7b7a72;font-weight:500;background:#f6f4ef;border-bottom:1px solid #e3dfd5}
   .pretty .p-tb td{padding:10px 10px;text-align:center;border-bottom:1px solid #efece5;white-space:nowrap;vertical-align:middle}
   .pretty .p-tb tr.band td{background:#fbfaf7}
-  .pretty .p-tb tr.first td{border-top:2px solid #d8e6e2}
+  .pretty .p-tb tr.first td{border-top:2px solid #e3ece9}
   .pretty .p-tb tr.avg td{background:#fdf1d8;font-weight:700;color:#7a5412;font-size:15px}
   .pretty .p-tb td.c-cl{background:#e6efed!important;font-weight:700;color:#1e3d3a;font-size:21px;width:56px;letter-spacing:2px}
   .pretty .p-tb td.c-cl span{writing-mode:vertical-rl}
-  .pretty .p-tb td.c-doc{text-align:center;padding:10px 8px;width:120px;font-size:19px}
+  .pretty .p-tb td.c-doc{text-align:center;padding:10px 8px;width:130px;font-size:23px}
   .pretty .p-tb td.c-doc small{display:block;margin:0!important}
   .pretty .p-tb td.c-doc small{color:#7b7a72;font-size:14px;margin-left:3px}
   .pretty em.new{font-style:normal;background:#fde68a;color:#7a5412;font-size:11px;border-radius:6px;padding:1px 6px;margin-left:5px}
@@ -702,7 +714,7 @@
   .pretty .pv.big{font-size:23px;font-weight:700;color:#1e3d3a}
   .pretty .ps{display:flex;gap:4px;justify-content:center;align-items:center;margin-top:2px;min-height:0}
   .pretty .pd{font-size:14.5px;font-weight:500}
-  .pretty .pd.up{color:#2b7a5f}.pretty .pd.dn{color:#c0392b}.pretty .pd.z{color:#9a988f}
+  .pretty .pd.up{color:#4f8f6c}.pretty .pd.dn{color:#c0735f}.pretty .pd.z{color:#9a988f}
   .pretty .prk{margin-top:5px}
   .pretty .pr{display:inline-block;font-size:15px;font-weight:700;border:2px solid;border-radius:8px;padding:2px 10px;line-height:22px;white-space:nowrap}
   .pretty .pr b{font-size:19px;font-weight:800;margin:0 1px}
@@ -731,7 +743,7 @@
   .pretty .cc-t{width:100%;border-collapse:collapse;font-size:17px}
   .pretty .cc-t th{font-size:15px;font-weight:700;padding:6px 4px;text-align:center;white-space:nowrap}
   .pretty .cc-t td{padding:10px 6px;text-align:center;border-top:1px solid #efece5;white-space:nowrap}
-  .pretty .cc-t .l{text-align:center}
+  .pretty .cc-t .l{text-align:center;font-size:20px}
   .pretty .cc-t td.l small{color:#7b7a72;font-size:13.5px;margin-left:3px}
   `;
 
