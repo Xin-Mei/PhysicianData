@@ -133,7 +133,7 @@
       const d = docOf(v.code); if (!d || d === '不列入') return;
       if (hasRevisit(v.id + '|' + d, v.day)) ensure(d).wRevN++;
     });
-    // BACK 開立數與狹義回診
+    // BACK 開立數與個人回診
     backs.forEach(b => {
       const d = backDocOf(b.code);
       if (!d) { unmappedB[b.code] = (unmappedB[b.code] || 0) + 1; return; }
@@ -272,14 +272,14 @@
     { k: 'vph',      group: '平均人次/hr', label: '平均人次/hr', fmt: 'n2', color: '#2f6fb3', avg: true },
     { k: 'backN',    group: 'BACK開立',   label: 'BACK開立數', fmt: 'int', color: '#7c5cc4' },
     { k: 'backRate', group: 'BACK開立',   label: 'BACK開立率', fmt: 'pct', color: '#7c5cc4', avg: true },
-    { k: 'nRevN',    group: '狹義回診率', label: '狹義回診數', fmt: 'int', color: '#e07a2e' },
-    { k: 'nRevRate', group: '狹義回診率', label: '狹義回診率', fmt: 'pct', color: '#e07a2e', avg: true, gated: true },
-    { k: 'wRevN',    group: '廣義回診率', label: '廣義回診數', fmt: 'int', color: '#3f9b5a' },
-    { k: 'wRevRate', group: '廣義回診率', label: '廣義回診率', fmt: 'pct', color: '#3f9b5a', avg: true }
+    { k: 'nRevN',    group: '個人回診率(醫師黏著度)', label: '個人回診數', fmt: 'int', color: '#e07a2e' },
+    { k: 'nRevRate', group: '個人回診率(醫師黏著度)', label: '個人回診率', fmt: 'pct', color: '#e07a2e', avg: true, gated: true },
+    { k: 'wRevN',    group: '院所回診率(品牌忠誠度)', label: '院所回診數', fmt: 'int', color: '#3f9b5a' },
+    { k: 'wRevRate', group: '院所回診率(品牌忠誠度)', label: '院所回診率', fmt: 'pct', color: '#3f9b5a', avg: true }
   ];
   const METRIC = {}; METRICS.forEach(m => METRIC[m.k] = m);
 
-  /** 依集團全院區排名（數值大者名次前；同值同名次）。狹義回診率需 BACK 開立率 ≥ 門檻 */
+  /** 依集團全院區排名（數值大者名次前；同值同名次）。個人回診率需 BACK 開立率 ≥ 門檻 */
   function rankAll(records, threshold) {
     const out = {};
     METRICS.forEach(m => {
@@ -500,11 +500,11 @@
   .rpt td.doc{min-width:80px}
   .rpt td.doc.new{background:#fff200}
   .rpt td.r{min-width:36px;position:relative}
-  .rpt td.r b{font-weight:500}
+  .rpt td.r b{font-weight:700;font-size:13px}
   .rpt td.r sub{font-size:8.5px;color:#444;margin-left:1px}
-  .rpt td.r.top{background:color-mix(in srgb,var(--c) 18%,#fff)}
-  .rpt td.r.top b{color:var(--c);font-weight:700}
-  .rpt td.r.top sub{color:var(--c)}
+  .rpt td.r.top{background:var(--c)}
+  .rpt td.r.top b{color:#fff;font-weight:800}
+  .rpt td.r.top sub{color:#fff!important}
   .rpt td.gap,.rpt th.gap{border:none;background:transparent;width:10px;min-width:10px;padding:0}
   .rpt td.cs{font-size:11px}
   .rpt td.cs-avg{background:#fdf1d8;font-weight:700}
@@ -552,7 +552,7 @@
     if (rk.none) return '';
     if (rk.rank > lim) return '';
     const top = rk.rank <= topC;
-    return `<span class="pr${top ? ' top' : ''}" style="${top ? `background:${m.color};border-color:${m.color};color:#fff` : `border-color:${hexA(m.color, .55)};color:${m.color}`}">${rk.rank}<i>/${rk.n}</i></span>`;
+    return `<span class="pr${top ? ' top' : ''}" style="${top ? `background:${m.color};border-color:${m.color};color:#fff` : `background:${hexA(m.color, .1)};border-color:${m.color};color:${m.color}`}">第 <b>${rk.rank}</b> 名<i>/${rk.n}</i></span>`;
   }
 
   /**
@@ -565,30 +565,29 @@
     const topC = +cfg.topColor || 5, lim = +cfg.showLimit || 10;
     const month = monthLabel(data.month);
     const kpis = [];
-    if (P.grand) kpis.push(['全院區總人次', P.grand.toLocaleString(), (P.pgrand ? prettyDiff(P.grand - P.pgrand, 'int') + '<em>較上月</em>' : '') + (P.cs.rate && P.csAvg !== null ? `<em>院區慢箋平均 ${fmt(P.csAvg, 'pct', pd)}</em>` : '')]);
-    kpis.push(['列入醫師', String(P.clinics.reduce((a, c) => a + P.rowsOf(c).length, 0)), `<em>${P.clinics.length} 個院區</em>`]);
-    [['slowRate', '集團平均 慢專比例'], ['vph', '集團平均 人次/hr'], ['nRevRate', '集團平均 狹義回診率'], ['wRevRate', '集團平均 廣義回診率']].forEach(([k, l]) => {
+    if (P.grand) kpis.push(['全院區總人次', P.grand.toLocaleString(), P.pgrand ? prettyDiff(P.grand - P.pgrand, 'int') + '<em>較上月</em>' : '']);
+    if (P.csAvg !== null) kpis.push(['集團平均 院區慢箋比例', fmt(P.csAvg, 'pct', pd), '']);
+    [['slowRate', '集團平均 醫師慢專比例'], ['vph', '集團平均 人次/hr'], ['nRevRate', '集團平均 個人回診率'], ['wRevRate', '集團平均 院所回診率']].forEach(([k, l]) => {
       if (P.avg[k] !== null) kpis.push([l, fmt(P.avg[k], METRIC[k].fmt, pd), '']);
     });
     let h = `<div class="pretty pv-${variant}">
       <div class="p-head">
         <img src="${LOGO}" class="p-logo" alt="">
-        <div class="p-t"><div class="p-org">金鶯診所 Elite Clinic</div><div class="p-title">${esc(month)} 醫師回診率分析結果</div></div>
-        <div class="p-meta">${data.analysisDate ? esc(data.analysisDate) + ' 分析' : ''}</div>
+        <div class="p-t"><div class="p-org">金鶯診所 Elite Clinic</div><div class="p-title">${esc(month)} 醫師回診率分析結果${data.analysisDate ? '<small>（' + esc(data.analysisDate) + '分析）</small>' : ''}</div></div>
       </div>
       <div class="p-kpis" style="grid-template-columns:repeat(${kpis.length},1fr)">${kpis.map(k => `<div class="p-kpi"><div class="l">${k[0]}</div><div class="v">${k[1]}</div><div class="s">${k[2]}</div></div>`).join('')}</div>`;
 
     if (variant === 'cards') h += prettyCards(P, cfg, pd, topC, lim);
     else h += prettyTable(P, cfg, pd, topC, lim, data);
 
-    h += `<div class="p-foot"><span>排名：集團全院區醫師排名，前 ${topC} 名實心標示、${lim} 名以後不顯示；狹義回診率僅排 BACK 開立率 ≥ ${Math.round((cfg.threshold == null ? .3 : cfg.threshold) * 100)}% 之醫師。▲▼ 為與上月相比。</span><span>金鶯診所˙醫師回診率分析系統</span></div></div>`;
+    h += `<div class="p-foot"><span>排名：集團全院區醫師排名，前 ${topC} 名實心標示、${lim} 名以後不顯示；個人回診率僅排 BACK 開立率 ≥ ${Math.round((cfg.threshold == null ? .3 : cfg.threshold) * 100)}% 之醫師。▲▼ 為與上月相比。</span><span>金鶯診所˙醫師回診率分析系統</span></div></div>`;
     return h;
   }
 
   function prettyTable(P, cfg, pd, topC, lim, data) {
     const csCols = [['total', '院區總人次'], ['slow', '慢箋人次'], ['rate', '慢箋比例'], ['rank', '院區排名']].filter(x => P.cs[x[0]]);
     const groups = []; P.cols.forEach(c => { const l = groups[groups.length - 1]; if (l && l.g === c.m.group) l.cols.push(c); else groups.push({ g: c.m.group, cols: [c], color: c.m.color }); });
-    let h = '<div class="p-card"><table class="p-tb"><thead><tr><th class="c-cl" rowspan="2">院區</th><th class="c-doc" rowspan="2">醫師</th>';
+    let h = '<div class="p-card"><table class="p-tb"><thead><tr><th class="c-cl" rowspan="2">院區</th><th class="c-doc" rowspan="2" style="width:120px">醫師</th>';
     groups.forEach(g => h += `<th colspan="${g.cols.length}" class="g" style="border-bottom:3px solid ${g.color}">${esc(g.g)}</th>`);
     if (csCols.length) h += `<th colspan="${csCols.length}" class="g cs" style="border-bottom:3px solid #1e3d3a">院區統計</th>`;
     h += '</tr><tr>';
@@ -608,8 +607,10 @@
           const m = c.m; const rk = (P.ranks[key] || {})[m.k];
           let inner = '';
           if (c.v) inner += `<div class="pv">${fmt(r[m.k], m.fmt, pd) || '<span class="na">—</span>'}</div>`;
-          const sub = (c.d ? prettyDiff(diffOf(r, prev, m.k), m.fmt, pd) : '') + (c.r ? prettyRank(rk, m, topC, lim) : '');
-          if (sub) inner += `<div class="ps">${sub}</div>`;
+          const dd = c.d ? prettyDiff(diffOf(r, prev, m.k), m.fmt, pd) : '';
+          const rr = c.r ? prettyRank(rk, m, topC, lim) : '';
+          if (dd) inner += `<div class="ps">${dd}</div>`;
+          if (rr) inner += `<div class="prk">${rr}</div>`;
           h += `<td>${inner}</td>`;
         });
         if (csCols.length && ri === 0) {
@@ -657,7 +658,7 @@
         const key = r.clinic + '|' + r.doctor; const prev = P.prevMap[key] || P.prevMap['*' + r.doctor];
         h += `<tr><td class="l"><b>${esc(r.doctor)}</b><small>${esc(r.title || '')}</small></td>` + cols.map(x => {
           const rk = (P.ranks[key] || {})[x.m.k];
-          return `<td>${x.v ? `<div class="pv">${fmt(r[x.m.k], x.m.fmt, pd) || '<span class="na">—</span>'}</div>` : ''}<div class="ps">${x.d ? prettyDiff(diffOf(r, prev, x.m.k), x.m.fmt, pd) : ''}${x.r ? prettyRank(rk, x.m, topC, lim) : ''}</div></td>`;
+          return `<td>${x.v ? `<div class="pv">${fmt(r[x.m.k], x.m.fmt, pd) || '<span class="na">—</span>'}</div>` : ''}<div class="ps">${x.d ? prettyDiff(diffOf(r, prev, x.m.k), x.m.fmt, pd) : ''}</div>${x.r && prettyRank(rk, x.m, topC, lim) ? `<div class="prk">${prettyRank(rk, x.m, topC, lim)}</div>` : ''}</td>`;
         }).join('') + '</tr>';
       });
       h += '</tbody></table></div>';
@@ -673,12 +674,13 @@
   .pretty .p-logo{width:78px;height:78px;border-radius:50%;background:#fff;padding:3px}
   .pretty .p-org{font-size:17px;color:#9fd4c7;letter-spacing:2px}
   .pretty .p-title{font-size:34px;font-weight:700;letter-spacing:1px;margin-top:2px}
+  .pretty .p-title small{font-size:20px;font-weight:500;color:#cfe0dc;letter-spacing:0;margin-left:6px}
   .pretty .p-meta{margin-left:auto;text-align:right;font-size:18px;font-weight:500;line-height:1.6}
   .pretty .p-meta span{font-size:14px;color:#9fd4c7;font-weight:400}
   .pretty .p-kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin:18px 0}
-  .pretty .p-kpi{background:#fff;border:1px solid #e3dfd5;border-radius:16px;padding:14px 18px}
+  .pretty .p-kpi{background:#fff;border:1px solid #e3dfd5;border-radius:16px;padding:16px 20px 14px}
   .pretty .p-kpi .l{font-size:17px;color:#7b7a72}
-  .pretty .p-kpi .v{font-size:38px;font-weight:700;margin-top:2px;color:#1e3d3a}
+  .pretty .p-kpi .v{font-size:38px;font-weight:700;margin-top:14px;line-height:1.1;color:#1e3d3a}
   .pretty .p-kpi .s{font-size:15px;min-height:18px}
   .pretty .p-kpi em{font-style:normal;color:#7b7a72;margin-left:6px}
   .pretty .p-card{background:#fff;border:1px solid #e3dfd5;border-radius:18px;padding:10px 12px;overflow:hidden}
@@ -692,7 +694,8 @@
   .pretty .p-tb tr.avg td{background:#fdf1d8;font-weight:700;color:#7a5412;font-size:15px}
   .pretty .p-tb td.c-cl{background:#e6efed!important;font-weight:700;color:#1e3d3a;font-size:21px;width:56px;letter-spacing:2px}
   .pretty .p-tb td.c-cl span{writing-mode:vertical-rl}
-  .pretty .p-tb td.c-doc{text-align:left;padding-left:14px;min-width:150px;font-size:19px}
+  .pretty .p-tb td.c-doc{text-align:center;padding:10px 8px;width:120px;font-size:19px}
+  .pretty .p-tb td.c-doc small{display:block;margin:0!important}
   .pretty .p-tb td.c-doc small{color:#7b7a72;font-size:14px;margin-left:3px}
   .pretty em.new{font-style:normal;background:#fde68a;color:#7a5412;font-size:11px;border-radius:6px;padding:1px 6px;margin-left:5px}
   .pretty .pv{font-size:20px;font-weight:500}
@@ -700,8 +703,10 @@
   .pretty .ps{display:flex;gap:4px;justify-content:center;align-items:center;margin-top:2px;min-height:0}
   .pretty .pd{font-size:14.5px;font-weight:500}
   .pretty .pd.up{color:#2b7a5f}.pretty .pd.dn{color:#c0392b}.pretty .pd.z{color:#9a988f}
-  .pretty .pr{display:inline-block;font-size:14.5px;font-weight:700;border:1.5px solid;border-radius:99px;padding:1px 9px;line-height:20px}
-  .pretty .pr i{font-style:normal;font-weight:400;font-size:12px;opacity:.85}
+  .pretty .prk{margin-top:5px}
+  .pretty .pr{display:inline-block;font-size:15px;font-weight:700;border:2px solid;border-radius:8px;padding:2px 10px;line-height:22px;white-space:nowrap}
+  .pretty .pr b{font-size:19px;font-weight:800;margin:0 1px}
+  .pretty .pr i{font-style:normal;font-weight:500;font-size:13px;opacity:.8;margin-left:3px}
   .pretty .pr.none{border-color:#d9d4c8;color:#9a988f;font-weight:400}
   .pretty .na{color:#c9c5bb}
   .pretty td.cs,.pretty th.cs{background:#f3f8f6}
@@ -726,7 +731,7 @@
   .pretty .cc-t{width:100%;border-collapse:collapse;font-size:17px}
   .pretty .cc-t th{font-size:15px;font-weight:700;padding:6px 4px;text-align:center;white-space:nowrap}
   .pretty .cc-t td{padding:10px 6px;text-align:center;border-top:1px solid #efece5;white-space:nowrap}
-  .pretty .cc-t .l{text-align:left}
+  .pretty .cc-t .l{text-align:center}
   .pretty .cc-t td.l small{color:#7b7a72;font-size:13.5px;margin-left:3px}
   `;
 

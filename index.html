@@ -391,7 +391,7 @@ async function start() {
 }
 function setConn(ok, t) { $('#connPill').className = 'pill ' + (ok ? 'ok' : 'bad'); $('#connText').textContent = t; }
 function refreshRule() {
-  $('#ruleText').innerHTML = `回診判定：看診日後 <b>1～${DAYS()}</b> 天內回同一位醫師；狹義回診率排名門檻：BACK 開立率 ≥ <b>${Math.round(THRESH() * 100)}%</b>。<br>規則可在後台「系統設定」調整。`;
+  $('#ruleText').innerHTML = `回診判定：看診日後 <b>1～${DAYS()}</b> 天內回同一位醫師；個人回診率排名門檻：BACK 開立率 ≥ <b>${Math.round(THRESH() * 100)}%</b>。<br>規則可在後台「系統設定」調整。`;
 }
 
 $('#month').addEventListener('change', e => {
@@ -506,7 +506,7 @@ function recompute(cl) {
   if (raw.visit) {
     const inR = E.computeClinic(allV.filter(inRange), [], { clinic: cl, visitMap: CFG.visitMap, backMap: CFG.backMap, doctors: [], days: DAYS() });
     Object.keys(r.doctors).forEach(d => { r.doctors[d].patients = (inR.doctors[d] || {}).patients || 0; });
-    // 廣義回診：起始看診需在區間內
+    // 院所回診：起始看診需在區間內
     const w = countWide(allV, cl, start, end);
     Object.keys(r.doctors).forEach(d => r.doctors[d].wRevN = w[d] || 0);
     Object.keys(w).forEach(d => { if (!r.doctors[d]) r.doctors[d] = { patients: (inR.doctors[d] || {}).patients || 0, backN: 0, nRevN: 0, wRevN: w[d] }; });
@@ -589,7 +589,7 @@ function selectClinic(cl) {
     </div>
     <div>
       <div class="tbl-wrap"><table class="dt">
-        <thead><tr><th>醫師</th><th>上診時數</th><th>系統病患數</th><th>看診人次</th><th>慢專人次</th><th>慢專比例</th><th>平均人次/hr</th><th>BACK開立</th><th>開立率</th><th>狹義回診數</th><th>狹義回診率</th><th>廣義回診數</th><th>廣義回診率</th></tr></thead>
+        <thead><tr><th>醫師</th><th>上診時數</th><th>系統病患數</th><th>看診人次</th><th>慢專人次</th><th>慢專比例</th><th>平均人次/hr</th><th>BACK開立</th><th>開立率</th><th>個人回診數</th><th>個人回診率</th><th>院所回診數</th><th>院所回診率</th></tr></thead>
         <tbody>${rows.map(r => {
           const inp = c.inputs[r.doctor] || {};
           return `<tr><td class="k">${esc(r.doctor)}<span class="hint">${esc(r.title)}</span></td>
@@ -602,7 +602,7 @@ function selectClinic(cl) {
           <td>${r.nRevN ?? ''}</td><td>${f(r.nRevRate, 'pct')}${r.backRate !== null && r.backRate < THRESH() ? ' <span class="tag y" title="開立率未達門檻，不列排名">不排名</span>' : ''}</td>
           <td>${r.wRevN ?? ''}</td><td>${f(r.wRevRate, 'pct')}</td></tr>`; }).join('') || '<tr><td colspan="13" class="empty-state">此院區尚無醫師，請到後台「醫師清單」新增</td></tr>'}
         </tbody></table></div>
-      <div class="hint" style="margin-top:6px">綠底＝系統帶入；黃底＝已手動修改（清空即恢復系統值）。平均人次/hr＝系統病患數 ÷ 上診時數；慢專比例、BACK開立率、廣義回診率以「看診人次」為分母。</div>
+      <div class="hint" style="margin-top:6px">綠底＝系統帶入；黃底＝已手動修改（清空即恢復系統值）。平均人次/hr＝系統病患數 ÷ 上診時數；慢專比例、BACK開立率、院所回診率以「看診人次」為分母。</div>
       <div class="sum">
         <div class="box"><div class="l">院區總人次（手動輸入，老闆看）</div><input id="sumTotal" value="${sm.total ?? ''}" placeholder="輸入"></div>
         <div class="box"><div class="l">院區慢箋人次 ${c.summary.slowManual ? '<span class="tag y">手動</span>' : '<span class="tag g">醫師加總</span>'}</div><input id="sumSlow" value="${sm.slow ?? ''}"></div>
@@ -770,8 +770,8 @@ function renderKpi() {
   $('#kpi').innerHTML = `
     <div class="card"><div class="l">全院區總人次</div><div class="v">${grand.toLocaleString()}${pg ? ` <small>上月 ${pg.toLocaleString()}（${grand - pg >= 0 ? '+' : ''}${(grand - pg).toLocaleString()}）</small>` : ''}</div></div>
     <div class="card"><div class="l">已完成院區 / 醫師</div><div class="v">${clinicsDone}<small> / ${activeClinics().length} 院區　${d.records.length} 位醫師</small></div></div>
-    <div class="card"><div class="l">集團平均 狹義回診率</div><div class="v">${E.fmt(avg.nRevRate, 'pct') || '-'}</div></div>
-    <div class="card"><div class="l">集團平均 廣義回診率</div><div class="v">${E.fmt(avg.wRevRate, 'pct') || '-'}</div></div>`;
+    <div class="card"><div class="l">集團平均 個人回診率</div><div class="v">${E.fmt(avg.nRevRate, 'pct') || '-'}</div></div>
+    <div class="card"><div class="l">集團平均 院所回診率</div><div class="v">${E.fmt(avg.wRevRate, 'pct') || '-'}</div></div>`;
 }
 function draw() {
   if (!RPT.data) return;
