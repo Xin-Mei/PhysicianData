@@ -109,7 +109,7 @@ body.locked header.top,body.locked main{visibility:hidden}
   <input id="lgPass" type="password" placeholder="密碼" autocomplete="current-password" required>
   <button type="submit" id="lgBtn">登入</button>
   <div class="lg-err" id="lgErr"></div>
-  <div class="lg-note">登入後 6 小時內有效；關閉瀏覽器即登出。</div>
+  <div class="lg-note">閒置 30 分鐘或關閉頁面即自動登出。</div>
 </form></div>
 <header class="top">
   <div class="logo"><img id="hdLogo" alt="">金鶯診所 ˙ 醫師回診率分析系統 <small>後台</small></div>
@@ -244,7 +244,7 @@ const TOK_KEY = 'rr_admin_tok';
 let TOKEN = (() => { try { return sessionStorage.getItem(TOK_KEY) || ''; } catch (e) { return ''; } })();
 let WHO = (() => { try { return JSON.parse(sessionStorage.getItem(TOK_KEY + '_who') || 'null'); } catch (e) { return null; } })();
 function showLogin(msg) {
-  TOKEN = ''; try { sessionStorage.removeItem(TOK_KEY); } catch (e) {}
+  TOKEN = ''; clearTimeout(idleTimer); try { sessionStorage.removeItem(TOK_KEY); } catch (e) {}
   document.body.classList.add('locked'); $('#login').classList.remove('hide');
   $('#lgErr').textContent = msg || ''; setTimeout(() => $('#lgUser').focus(), 50);
 }
@@ -263,6 +263,11 @@ $('#lgForm').addEventListener('submit', async ev => {
   } catch (e) { $('#lgErr').textContent = e.message || '登入失敗'; }
   btn.disabled = false; btn.textContent = '登入';
 });
+/* ---------- 閒置 30 分鐘自動登出（關閉分頁即清除登入）---------- */
+const IDLE_MIN = 30;
+let idleTimer = null;
+function resetIdle() { if (!TOKEN) return; clearTimeout(idleTimer); idleTimer = setTimeout(async () => { try { await api('logout'); } catch (e) {} showLogin('閒置超過 ' + IDLE_MIN + ' 分鐘，已自動登出'); }, IDLE_MIN * 60 * 1000); }
+['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'wheel'].forEach(ev => window.addEventListener(ev, () => { if (!idleTimer || Date.now() - (resetIdle._t || 0) > 5000) { resetIdle._t = Date.now(); resetIdle(); } }, { passive: true }));
 async function logout() { try { await api('logout'); } catch (e) {} try { sessionStorage.removeItem(TOK_KEY); sessionStorage.removeItem(TOK_KEY + '_who'); } catch (e) {} location.reload(); }
 const LOGIN_ROLE = 'admin';
 $('#hdLogo').src = E.LOGO;
@@ -274,6 +279,7 @@ function init() {
   document.body.classList.remove('locked'); start();
 }
 async function start() {
+  resetIdle();
   $('#whoName').textContent = WHO ? WHO.user : '';
   const now = new Date(); const cur = now.getFullYear() + '-' + String(now.getMonth()).padStart(2, '0');
   const lastM = now.getMonth() === 0 ? (now.getFullYear() - 1) + '-12' : cur;
@@ -415,7 +421,7 @@ $('#mGo').onclick = async () => {
     M.forEach(x => { const s = P[x.k] || ''; cols[x.k] = { v: s.includes('v'), d: s.includes('d'), r: s.includes('r') }; });
     $('#rptStyle').textContent = E.REPORT_CSS;
     $('#mOut').innerHTML = E.renderReport(Object.assign(d, { clinicOrder: CFG.clinics.map(c => c.name), doctorOrder: ord, titles, analysisDate: m ? (+m[1]) + '/' + (+m[2]) : ad }),
-      { cols, showClinic: { total: 1, slow: 1, rate: 1, rank: 1 }, showAvg: true, showGrand: true, markNew: true, threshold: THRESH(), topColor: +setting('排名標色名次', 5), showLimit: +setting('排名顯示名次', 10), pctDigits: +setting('百分比小數位數', 2) }) +
+      { cols, showClinic: { total: 1, slow: 1, rate: 1, rank: 1 }, showAvg: true, showGrand: true, markNew: false, threshold: THRESH(), topColor: +setting('排名標色名次', 5), showLimit: +setting('排名顯示名次', 10), pctDigits: +setting('百分比小數位數', 2) }) +
       '<p class="hint noprint">要調整顯示欄位、院區或醫師，請到前台「結果報表」。</p>';
   } catch (e) { toast(e.message, true); }
   busy(b, false);

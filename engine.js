@@ -441,7 +441,7 @@
       rows.forEach((r, ri) => {
         const key = r.clinic + '|' + r.doctor;
         const prev = prevMap[key] || prevMap['*' + r.doctor];
-        const isNew = cfg.markNew && (data.prev || []).length && !prev;
+        const isNew = false;
         h += '<tr' + (ri === 0 ? ' class="first"' : '') + '>';
         if (ri === 0) h += '<td class="clinic" rowspan="' + rows.length + '"><span>' + esc(cl) + '</span></td>';
         h += '<td class="doc' + (isNew ? ' new' : '') + '">' + esc(r.doctor) + esc(r.title || (data.titles || {})[key] || '醫師') + '</td>';
@@ -606,7 +606,7 @@
       rows.forEach((r, ri) => {
         const key = r.clinic + '|' + r.doctor;
         const prev = P.prevMap[key] || P.prevMap['*' + r.doctor];
-        const isNew = cfg.markNew && (data.prev || []).length && !prev;
+        const isNew = false;
         h += `<tr class="${ci % 2 ? 'band' : ''}${ri === 0 ? ' first' : ''}">`;
         if (ri === 0) h += `<td class="c-cl" rowspan="${rows.length}">${esc(cl).split('').join('<br>')}</td>`;
         h += `<td class="c-doc"><b>${esc(r.doctor)}</b><small>${esc(r.title || '醫師')}</small>${isNew ? '<em class="new">新進</em>' : ''}</td>`;

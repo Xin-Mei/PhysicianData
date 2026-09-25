@@ -177,7 +177,7 @@ body.locked header.top,body.locked main{visibility:hidden}
   <input id="lgPass" type="password" placeholder="密碼" autocomplete="current-password" required>
   <button type="submit" id="lgBtn">登入</button>
   <div class="lg-err" id="lgErr"></div>
-  <div class="lg-note">登入後 6 小時內有效；關閉瀏覽器即登出。</div>
+  <div class="lg-note">閒置 30 分鐘或關閉頁面即自動登出。</div>
 </form></div>
 <header class="top">
   <div class="logo"><img id="hdLogo" alt="">金鶯診所 ˙ 醫師回診率分析系統</div>
@@ -269,7 +269,6 @@ body.locked header.top,body.locked main{visibility:hidden}
       <h4>其他</h4>
       <label class="ck"><input type="checkbox" id="optAvg">集團平均值列</label>
       <label class="ck"><input type="checkbox" id="optGrand">全院區總人次加總</label>
-      <label class="ck"><input type="checkbox" id="optNew">新進醫師（無上月資料）黃底標示</label>
     </div>
 
     <div class="card preview">
@@ -344,7 +343,7 @@ const TOK_KEY = 'rr_tok';
 let TOKEN = (() => { try { return sessionStorage.getItem(TOK_KEY) || ''; } catch (e) { return ''; } })();
 let WHO = (() => { try { return JSON.parse(sessionStorage.getItem(TOK_KEY + '_who') || 'null'); } catch (e) { return null; } })();
 function showLogin(msg) {
-  TOKEN = ''; try { sessionStorage.removeItem(TOK_KEY); } catch (e) {}
+  TOKEN = ''; clearTimeout(idleTimer); try { sessionStorage.removeItem(TOK_KEY); } catch (e) {}
   document.body.classList.add('locked'); $('#login').classList.remove('hide');
   $('#lgErr').textContent = msg || ''; setTimeout(() => $('#lgUser').focus(), 50);
 }
@@ -363,6 +362,11 @@ $('#lgForm').addEventListener('submit', async ev => {
   } catch (e) { $('#lgErr').textContent = e.message || '登入失敗'; }
   btn.disabled = false; btn.textContent = '登入';
 });
+/* ---------- 閒置 30 分鐘自動登出（關閉分頁即清除登入）---------- */
+const IDLE_MIN = 30;
+let idleTimer = null;
+function resetIdle() { if (!TOKEN) return; clearTimeout(idleTimer); idleTimer = setTimeout(async () => { try { await api('logout'); } catch (e) {} showLogin('閒置超過 ' + IDLE_MIN + ' 分鐘，已自動登出'); }, IDLE_MIN * 60 * 1000); }
+['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'wheel'].forEach(ev => window.addEventListener(ev, () => { if (!idleTimer || Date.now() - (resetIdle._t || 0) > 5000) { resetIdle._t = Date.now(); resetIdle(); } }, { passive: true }));
 async function logout() { try { await api('logout'); } catch (e) {} try { sessionStorage.removeItem(TOK_KEY); sessionStorage.removeItem(TOK_KEY + '_who'); } catch (e) {} location.reload(); }
 const LOGIN_ROLE = 'front';
 $('#hdLogo').src = E.LOGO;
@@ -374,6 +378,7 @@ function init() {
   document.body.classList.remove('locked'); start();
 }
 async function start() {
+  resetIdle();
   $('#whoName').textContent = WHO ? WHO.user + (WHO.role === 'admin' ? '（管理者）' : '') : '';
   const now = new Date(); now.setMonth(now.getMonth() - 1);
   S.month = LS.get('rr_month', now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
@@ -665,10 +670,10 @@ async function saveClinic(cl) {
 
 /* ================= 結果報表 ================= */
 const PRESETS = {
-  '完整版': { cols: { hours: 'vd', visits: 'vd', slowN: 'v', slowRate: 'vr', vph: 'vdr', backN: 'v', backRate: 'v', nRevN: 'vd', nRevRate: 'vdr', wRevN: 'vd', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 1 },
-  '老闆版': { cols: { hours: 'vd', visits: 'vd', slowN: 'v', slowRate: 'vr', vph: 'vdr', backN: 'v', backRate: 'v', nRevN: 'vd', nRevRate: 'vdr', wRevN: 'vd', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 1 },
+  '完整版': { cols: { hours: 'vd', visits: 'vd', slowN: 'v', slowRate: 'vr', vph: 'vdr', backN: 'v', backRate: 'v', nRevN: 'vd', nRevRate: 'vdr', wRevN: 'vd', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 0 },
+  '老闆版': { cols: { hours: 'vd', visits: 'vd', slowN: 'v', slowRate: 'vr', vph: 'vdr', backN: 'v', backRate: 'v', nRevN: 'vd', nRevRate: 'vdr', wRevN: 'vd', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 0 },
   '院長版': { cols: { slowRate: 'vr', vph: 'vdr', backRate: 'v', nRevRate: 'vdr', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 0, markNew: 0 },
-  '全部欄位': { cols: Object.fromEntries(E.METRICS.map(m => [m.k, 'vdr'])), cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 1 }
+  '全部欄位': { cols: Object.fromEntries(E.METRICS.map(m => [m.k, 'vdr'])), cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 0 }
 };
 let RPT = { data: null, cfg: LS.get('rr_rptcfg', null), preset: LS.get('rr_preset', '完整版') };
 function presetToCfg(p) {
@@ -692,10 +697,9 @@ function buildCfgUI() {
   $('#colMatrix').innerHTML = h;
   $$('#colMatrix input').forEach(el => el.onchange = () => { RPT.cfg.cols[el.dataset.col] = RPT.cfg.cols[el.dataset.col] || {}; RPT.cfg.cols[el.dataset.col][el.dataset.s] = el.checked; custom(); });
   $$('[data-cs]').forEach(el => { el.checked = !!RPT.cfg.showClinic[el.dataset.cs]; el.onchange = () => { RPT.cfg.showClinic[el.dataset.cs] = el.checked; custom(); }; });
-  $('#optAvg').checked = RPT.cfg.showAvg; $('#optGrand').checked = RPT.cfg.showGrand; $('#optNew').checked = RPT.cfg.markNew;
+  $('#optAvg').checked = RPT.cfg.showAvg; $('#optGrand').checked = RPT.cfg.showGrand;
   $('#optAvg').onchange = e => { RPT.cfg.showAvg = e.target.checked; custom(); };
   $('#optGrand').onchange = e => { RPT.cfg.showGrand = e.target.checked; custom(); };
-  $('#optNew').onchange = e => { RPT.cfg.markNew = e.target.checked; custom(); };
   buildFilterUI();
 }
 function buildFilterUI() {
