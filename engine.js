@@ -267,11 +267,11 @@
   const METRICS = [
     { k: 'hours',    group: '上診時數',   label: '上診時數', fmt: 'h',   color: '#9AA5A1' },
     { k: 'visits',   group: '看診人次',   label: '看診人次', fmt: 'int', color: '#9AA5A1' },
-    { k: 'slowN',    group: '醫師慢專比例', label: '慢專人次', fmt: 'int', color: '#C8A56E' },
-    { k: 'slowRate', group: '醫師慢專比例', label: '慢專比例', fmt: 'pct', color: '#C8A56E', avg: true },
+    { k: 'slowN',    group: '醫師慢專比例', label: '慢專人次', fmt: 'int', color: '#A79CC2' },
+    { k: 'slowRate', group: '醫師慢專比例', label: '慢專比例', fmt: 'pct', color: '#A79CC2', avg: true },
     { k: 'vph',      group: '平均人次/hr', label: '平均人次/hr', fmt: 'n2', color: '#7FA2BF', avg: true },
-    { k: 'backN',    group: 'BACK開立',   label: 'BACK開立數', fmt: 'int', color: '#A79CC2' },
-    { k: 'backRate', group: 'BACK開立',   label: 'BACK開立率', fmt: 'pct', color: '#A79CC2', avg: true },
+    { k: 'backN',    group: 'BACK開立',   label: 'BACK開立數', fmt: 'int', color: '#C8A56E' },
+    { k: 'backRate', group: 'BACK開立',   label: 'BACK開立率', fmt: 'pct', color: '#C8A56E', avg: true },
     { k: 'nRevN',    group: '個人回診率(醫師黏著度)', label: '個人回診數', fmt: 'int', color: '#D29B82' },
     { k: 'nRevRate', group: '個人回診率(醫師黏著度)', label: '個人回診率', fmt: 'pct', color: '#D29B82', avg: true, gated: true },
     { k: 'wRevN',    group: '院所回診率(品牌忠誠度)', label: '院所回診數', fmt: 'int', color: '#86B29A' },
@@ -454,7 +454,7 @@
             if (!rk) h += '<td class="r"></td>';
             else if (rk.none) h += '<td class="r none">無</td>';
             else if (rk.rank > lim) h += '<td class="r"></td>';
-            else h += '<td class="r' + (rk.rank <= topC ? ' top' : '') + '"' + (rk.rank <= topC ? ' style="background:' + tint(m.color, .55) + ';color:' + dark(m.color) + '"' : '') + '><b>' + rk.rank + '</b><sub>/' + rk.n + '</sub></td>';
+            else h += '<td class="r' + (rk.rank <= topC ? ' top' : '') + '"' + (rk.rank <= topC ? ' style="background:' + tint(m.color, .72) + ';color:' + hexMix(m.color, '#1d2a28', .72) + '"' : '') + '><b>' + rk.rank + '</b><sub>/' + rk.n + '</sub></td>';
           }
         });
         if (csCols.length && ri === 0) {
@@ -552,7 +552,7 @@
     if (Math.abs(v) < 1e-9) return `<span class="pd z">－ ${t}</span>`;
     return `<span class="pd ${v > 0 ? 'up' : 'dn'}">${v > 0 ? '▲' : '▼'} ${t}</span>`;
   }
-  let RANK_STYLE = 'medal';
+  let RANK_STYLE = 'corner';
   function prettyRank(rk, m, topC, lim) {
     if (!rk || rk.none || rk.rank > lim) return '';
     const top = rk.rank <= topC;
@@ -561,7 +561,7 @@
     if (RANK_STYLE === 'text')    // 純文字：數值下方一行
       return `<span class="rt" style="color:${top ? dark(m.color) : '#8a8880'}"><i style="background:${top ? m.color : tint(m.color, .35)}"></i>第 ${rk.rank} 名<em>／${rk.n}</em></span>`;
     if (RANK_STYLE === 'corner')  // 角標：格子右上角
-      return `<span class="rc" style="background:${top ? tint(m.color, .35) : '#f3f1ec'};color:${top ? dark(m.color) : '#8a8880'}">${rk.rank}<i>/${rk.n}</i></span>`;
+      return `<span class="rc" style="background:${top ? tint(m.color, .72) : '#f3f1ec'};color:${top ? hexMix(m.color, '#1d2a28', .72) : '#8a8880'}">${rk.rank}<i>/${rk.n}</i></span>`;
     return `<span class="pr${top ? ' top' : ''}" style="${top ? `background:${tint(m.color, .55)};border-color:${m.color};color:${dark(m.color)}` : `background:#fff;border-color:${tint(m.color, .35)};color:${dark(m.color)}`}">第 <b>${rk.rank}</b> 名<i>/${rk.n}</i></span>`;
   }
   function rankCell(val, dd, rr) {   // 依排名樣式組合一格內容
@@ -577,7 +577,7 @@
   function renderPretty(data, cfg, variant) {
     const pd = cfg.pctDigits == null ? 2 : +cfg.pctDigits;
     const P = prettyPrep(data, cfg);
-    RANK_STYLE = cfg.rankStyle || 'medal';
+    RANK_STYLE = cfg.rankStyle || 'corner';
     const topC = +cfg.topColor || 5, lim = +cfg.showLimit || 10;
     const month = monthLabel(data.month);
     const avgs = [];
