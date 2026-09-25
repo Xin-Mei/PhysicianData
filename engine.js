@@ -374,7 +374,7 @@
     GROUP_THRESH = cfg.threshold == null ? 0.3 : +cfg.threshold;
     const ranks = rankAll(all, cfg.threshold == null ? 0.3 : +cfg.threshold, cfg.slowExclude);
     const avg = averages(all);
-    const prevMap = {}; (data.prev || []).forEach(r => { prevMap[r.clinic + '|' + r.doctor] = r; prevMap['*' + r.doctor] = prevMap['*' + r.doctor] || r; });
+    const prevMap = {}; (data.prev || []).forEach(r => { prevMap[r.clinic + '|' + r.doctor] = r; prevMap['#' + r.doctor] = prevMap['#' + r.doctor] || r; });
     const csMap = {}; (data.clinicSum || []).forEach(c => csMap[c.clinic] = c);
     // 院區排名（院區慢箋比例）
     const csList = (data.clinicSum || []).filter(c => numOrNull(c.slowRate) !== null);
@@ -445,7 +445,7 @@
       if (!rows.length) return;
       rows.forEach((r, ri) => {
         const key = r.clinic + '|' + r.doctor;
-        const prev = prevMap[key] || prevMap['*' + r.doctor];
+        const prev = prevMap[key];   // 只和「同院區同醫師」比較；換院區視為新醫師
         const isNew = false;
         h += '<tr' + (ri === 0 ? ' class="first"' : '') + '>';
         if (ri === 0) h += '<td class="clinic" rowspan="' + rows.length + '"><span>' + esc(cl) + '</span></td>';
@@ -534,7 +534,7 @@
     GROUP_THRESH = cfg.threshold == null ? 0.3 : +cfg.threshold;
     const ranks = rankAll(all, cfg.threshold == null ? 0.3 : +cfg.threshold, cfg.slowExclude);
     const avg = averages(all);
-    const prevMap = {}; (data.prev || []).forEach(r => { prevMap[r.clinic + '|' + r.doctor] = r; prevMap['*' + r.doctor] = prevMap['*' + r.doctor] || r; });
+    const prevMap = {}; (data.prev || []).forEach(r => { prevMap[r.clinic + '|' + r.doctor] = r; prevMap['#' + r.doctor] = prevMap['#' + r.doctor] || r; });
     const csMap = {}; (data.clinicSum || []).forEach(c => csMap[c.clinic] = c);
     const pcsMap = {}; (data.prevClinicSum || []).forEach(c => pcsMap[c.clinic] = c);
     const csList = (data.clinicSum || []).filter(c => numOrNull(c.slowRate) !== null);
@@ -624,7 +624,7 @@
       const rows = P.rowsOf(cl); if (!rows.length) return;
       rows.forEach((r, ri) => {
         const key = r.clinic + '|' + r.doctor;
-        const prev = P.prevMap[key] || P.prevMap['*' + r.doctor];
+        const prev = P.prevMap[key];
         const isNew = false;
         h += `<tr class="${ci % 2 ? 'band' : ''}${ri === 0 ? ' first' : ''}">`;
         if (ri === 0) h += `<td class="c-cl" rowspan="${rows.length}">${esc(cl).split('').join('<br>')}</td>`;
@@ -679,7 +679,7 @@
       if (P.cs.rank && P.csRank[c]) h += rankBadge(P.csRank[c], P.csRank[c] <= 3);
       h += `</div></div><table class="cc-t"><thead><tr><th class="l">醫師</th>${cols.map(x => `<th style="color:${dark(x.m.color)};border-bottom:2px solid ${tint(x.m.color, .3)}">${esc(x.m.label)}</th>`).join('')}</tr></thead><tbody>`;
       rows.forEach(r => {
-        const key = r.clinic + '|' + r.doctor; const prev = P.prevMap[key] || P.prevMap['*' + r.doctor];
+        const key = r.clinic + '|' + r.doctor; const prev = P.prevMap[key];
         h += `<tr><td class="l"><b>${esc(r.doctor)}</b><small>${esc(r.title || '')}</small></td>` + cols.map(x => {
           const rk = (P.ranks[key] || {})[x.m.k];
           return `<td class="rcell">${rankCell(x.v ? (fmt(r[x.m.k], x.m.fmt, pd) || '<span class="na">—</span>') : '', x.d ? prettyDiff(diffOf(r, prev, x.m.k), x.m.fmt, pd) : '', x.r ? prettyRank(rk, x.m, topC, lim) : '')}</td>`;
@@ -783,7 +783,7 @@
   /* ---------------- 全院區看診總人次圖（依院區總人次排序） ---------------- */
   function rankBadge(n, top) {   // 用 SVG 畫圓圈，確保下載圖片時數字垂直置中
     const fill = top ? '#2b5a54' : '#ffffff', txt = top ? '#ffffff' : '#2b5a54';
-    return `<svg class="crk-svg" width="40" height="40" viewBox="0 0 40 40" style="vertical-align:middle"><circle cx="20" cy="20" r="18" fill="${fill}" stroke="#2b5a54" stroke-width="2"/><text x="20" y="21" text-anchor="middle" dominant-baseline="middle" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" fill="${txt}">${n}</text></svg>`;
+    return `<svg class="crk-svg" width="40" height="40" viewBox="0 0 40 40" style="vertical-align:middle"><circle cx="20" cy="20" r="18" fill="${fill}" stroke="#2b5a54" stroke-width="2"/><text x="20" y="26.8" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" fill="${txt}">${n}</text></svg>`;
   }
 
   function renderVisits(data, opt) {

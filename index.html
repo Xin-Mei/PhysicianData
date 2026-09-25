@@ -126,6 +126,10 @@ table.dt td.m{color:var(--muted)}
 .toast{position:fixed;right:24px;bottom:24px;background:#1e3d3a;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px #0003;opacity:0;transform:translateY(10px);transition:.25s;z-index:99;max-width:420px}
 .toast.show{opacity:1;transform:none}.toast.err{background:#9b2c20}
 .hide{display:none!important}
+.hmonth{display:inline-flex;align-items:center;gap:4px;background:#2b4c48;border-radius:99px;padding:3px 4px}
+.hmonth button{background:transparent;border:0;color:#cfe0dc;font-size:17px;width:26px;height:26px;border-radius:50%;cursor:pointer;line-height:1}
+.hmonth button:hover{background:#3a615c;color:#fff}
+.hmonth span{color:#fff;font-weight:500;padding:0 4px}
 .mbtns{display:flex;gap:6px;margin-top:6px}.mbtns .btn{flex:1;padding:5px 6px}
 .viewtabs{display:inline-flex;background:#f1eee7;border-radius:10px;padding:3px}
 .viewtabs button{border:0;background:transparent;padding:7px 12px;border-radius:8px;cursor:pointer;font-weight:500;color:#55605d;white-space:nowrap}
@@ -192,7 +196,7 @@ body.locked header.top,body.locked main{visibility:hidden}
     <a href="admin.html" target="_blank">後台管理 ↗</a>
   </nav>
   <div class="right">
-    <span id="monthTag"></span>
+    <span class="hmonth"><button type="button" data-mm="-1" title="上個月">‹</button><span id="monthTag"></span><button type="button" data-mm="1" title="下個月">›</button></span>
     <span class="pill" id="connPill"><span class="dot"></span><span id="connText">連線中…</span></span>
     <span class="who"><span id="whoName"></span><button onclick="logout()">登出</button></span>
   </div>
@@ -397,7 +401,14 @@ async function start() {
   catch (e) { setConn(false, '後台連線失敗'); if (!TOKEN) return; toast('後台連線失敗：' + e.message, true); }
   $('#schedUrl').value = LS.get('rr_sched_' + S.month, '') || setting('最近班表連結', '');
   loadLocal(); refreshRule(); renderChips(); selectClinic(S.current || (activeClinics()[0] || {}).name); renderSchedStatus();
+  loadSaved();
   $('#monthTag').textContent = E.monthLabel(S.month);
+}
+async function loadSaved() {
+  const m = S.month;
+  try { const d = await api('getMonth', { month: m }); if (m !== S.month) return; S.saved = { records: d.records || [], clinicSum: d.clinicSum || [] }; }
+  catch (e) { S.saved = null; }
+  renderChips(); if (S.current) selectClinic(S.current);
 }
 function setConn(ok, t) { $('#connPill').className = 'pill ' + (ok ? 'ok' : 'bad'); $('#connText').textContent = t; }
 function refreshRule() {
@@ -416,7 +427,7 @@ $('#month').addEventListener('change', e => {
   saveLocal(); S.month = e.target.value; LS.set('rr_month', S.month);
   $('#monthTag').textContent = E.monthLabel(S.month);
   $('#schedUrl').value = LS.get('rr_sched_' + S.month, '') || setting('最近班表連結', '');
-  loadLocal(); renderChips(); selectClinic(S.current); renderSchedStatus();
+  S.saved = null; loadLocal(); renderChips(); selectClinic(S.current); renderSchedStatus(); loadSaved();
   if (!$('#pageReport').classList.contains('hide')) loadReport();
 });
 ['#analysisDate', '#dStart', '#dEnd'].forEach(id => $(id).addEventListener('change', () => { saveLocal(); if (id !== '#analysisDate') { recomputeAll(); toast('區間已變更，如需請重新讀取班表'); } }));
@@ -529,7 +540,7 @@ function recompute(cl) {
     Object.keys(w).forEach(d => { if (!r.doctors[d]) r.doctors[d] = { patients: (inR.doctors[d] || {}).patients || 0, backN: 0, nRevN: 0, wRevN: w[d] }; });
   }
   c.counts = r.doctors; c.unmappedVisit = r.unmappedVisit; c.unmappedBack = r.unmappedBack; c.outside = r.outside;
-  c.hasVisit = !!raw.visit; c.hasBack = !!raw.back;
+  c.hasVisit = !!raw.visit; c.hasBack = !!raw.back; c.dirty = true;
   if (c.vStats) c.vStats.inRange = allV.filter(inRange).length;
   if (c.bStats && raw.back) c.bStats.inRange = raw.back.rows.filter(inRange).length;
   c.savedAt = null;
@@ -548,16 +559,21 @@ function countWide(visits, cl, start, end) {
 }
 function recomputeAll() { Object.keys(RAW).forEach(recompute); saveLocal(); renderChips(); selectClinic(S.current); }
 
+function savedRec(cl, name) { return ((S.saved || {}).records || []).find(r => r.clinic === cl && r.doctor === name) || null; }
+function savedSum(cl) { return ((S.saved || {}).clinicSum || []).find(r => r.clinic === cl) || null; }
 function doctorRow(cl, d) {
   const c = cs(cl); const inp = c.inputs[d.name] || (c.inputs[d.name] = {});
   const cnt = c.counts ? (c.counts[d.name] || { patients: 0, backN: 0, nRevN: 0, wRevN: 0 }) : null;
+  const sv = cnt ? null : savedRec(cl, d.name);   // 沒放檔案時，帶入後台已儲存的資料
+  const svn = k => sv ? E.numOrNull(sv[k]) : null;
   const schedH = (S.schedHours[cl] || {})[d.name];
-  const hours = inp.hoursManual ? inp.hours : (schedH !== undefined ? schedH : (inp.hours !== undefined ? inp.hours : null));
-  const patients = cnt && c.hasVisit ? cnt.patients : null;
-  const visits = inp.visitsManual ? inp.visits : patients;
+  const hours = inp.hoursManual ? inp.hours : (schedH !== undefined ? schedH : (inp.hours !== undefined ? inp.hours : svn('hours')));
+  const patients = cnt && c.hasVisit ? cnt.patients : svn('patients');
+  const visits = inp.visitsManual ? inp.visits : (cnt && c.hasVisit ? patients : svn('visits'));
+  const slowN = inp.slowN !== undefined && inp.slowN !== '' ? inp.slowN : svn('slowN');
   const base = {
-    doctor: d.name, title: d.title, hours: E.numOrNull(hours), patients, visits: E.numOrNull(visits), slowN: E.numOrNull(inp.slowN),
-    backN: cnt && c.hasBack ? cnt.backN : null, nRevN: cnt && c.hasBack && c.hasVisit ? cnt.nRevN : null, wRevN: cnt && c.hasVisit ? cnt.wRevN : null
+    doctor: d.name, title: d.title, hours: E.numOrNull(hours), patients, visits: E.numOrNull(visits), slowN: E.numOrNull(slowN),
+    backN: cnt && c.hasBack ? cnt.backN : svn('backN'), nRevN: cnt && c.hasBack && c.hasVisit ? cnt.nRevN : svn('nRevN'), wRevN: cnt && c.hasVisit ? cnt.wRevN : svn('wRevN')
   };
   if (base.patients === null) base.patients = base.visits;
   return E.metrics(base);
@@ -565,16 +581,19 @@ function doctorRow(cl, d) {
 function clinicSummary(cl, rows) {
   const c = cs(cl); const s = c.summary || (c.summary = {});
   const autoSlow = rows.reduce((a, r) => a + (r.slowN || 0), 0);
-  const slow = s.slowManual ? E.numOrNull(s.slow) : (rows.some(r => r.slowN !== null) ? autoSlow : null);
-  const total = E.numOrNull(s.total);
+  const ss = savedSum(cl);
+  const localSlow = Object.values(c.inputs || {}).some(i => i.slowN !== undefined && i.slowN !== '');
+  const slow = s.slowManual ? E.numOrNull(s.slow) : (!localSlow && ss && E.numOrNull(ss.slow) !== null ? E.numOrNull(ss.slow) : (rows.some(r => r.slowN !== null) ? autoSlow : null));
+  const total = s.total !== undefined && s.total !== '' ? E.numOrNull(s.total) : (ss ? E.numOrNull(ss.total) : null);
   return { total, slow, slowRate: total && slow !== null ? E.r4(slow / total) : null, autoSlow };
 }
 
 /* ---------- 院區畫面 ---------- */
-function status(cl) { const c = S.clinics[cl]; if (!c) return ''; if (c.savedAt) return 'st-saved'; if (c.visitFile || c.backFile || Object.values(c.inputs || {}).some(i => i.slowN !== undefined && i.slowN !== '')) return 'st-file'; return ''; }
+function status(cl) { const c = S.clinics[cl]; const hasSv = !!savedSum(cl) || ((S.saved || {}).records || []).some(r => r.clinic === cl);
+  if (!c) return hasSv ? 'st-saved' : ''; if (c.savedAt || (hasSv && !c.dirty)) return 'st-saved'; if (c.visitFile || c.backFile || Object.values(c.inputs || {}).some(i => i.slowN !== undefined && i.slowN !== '')) return 'st-file'; return ''; }
 function renderChips() {
   $('#clinicChips').innerHTML = activeClinics().map(c => `<button class="chip ${status(c.name)} ${S.current === c.name ? 'on' : ''}" data-cl="${esc(c.name)}"><span class="s"></span>${esc(c.name)}</button>`).join('') +
-    `<span class="hint" style="align-self:center;margin-left:8px">已儲存 ${activeClinics().filter(c => (S.clinics[c.name] || {}).savedAt).length} / ${activeClinics().length} 院區</span>`;
+    `<span class="hint" style="align-self:center;margin-left:8px">已儲存 ${activeClinics().filter(c => status(c.name) === 'st-saved').length} / ${activeClinics().length} 院區</span>`;
   $$('#clinicChips .chip').forEach(b => b.onclick = () => selectClinic(b.dataset.cl));
 }
 function selectClinic(cl) {
@@ -613,7 +632,7 @@ function selectClinic(cl) {
           <td><input data-f="hours" data-d="${esc(r.doctor)}" value="${r.hours ?? ''}" class="${inp.hoursManual ? 'man' : (r.hours !== null ? 'auto' : '')}" title="預設帶入班表時數，可手動修改"></td>
           <td class="m">${r.patients ?? '-'}</td>
           <td><input data-f="visits" data-d="${esc(r.doctor)}" value="${r.visits ?? ''}" class="${inp.visitsManual ? 'man' : (r.visits !== null ? 'auto' : '')}" title="預設帶入系統病患數，請依實際看診人次修改"></td>
-          <td><input data-f="slowN" data-d="${esc(r.doctor)}" value="${inp.slowN ?? ''}" placeholder="輸入"></td>
+          <td><input data-f="slowN" data-d="${esc(r.doctor)}" value="${inp.slowN !== undefined && inp.slowN !== '' ? inp.slowN : (r.slowN ?? '')}" placeholder="輸入"></td>
           <td>${f(r.slowRate, 'pct')}</td><td>${f(r.vph, 'n2')}</td>
           <td>${r.backN ?? ''}</td><td>${f(r.backRate, 'pct')}</td>
           <td>${r.nRevN ?? ''}</td><td>${f(r.nRevRate, 'pct')}${r.backRate !== null && r.backRate < THRESH() ? ' <span class="tag y" title="開立率未達門檻，不列排名">不排名</span>' : ''}</td>
@@ -627,7 +646,7 @@ function selectClinic(cl) {
         <div class="box"><div class="l">全院區總人次（目前已輸入）</div><div class="v">${grandTotal().toLocaleString()}</div></div>
       </div>
       <div class="bar">
-        <span class="hint grow">${c.savedAt ? '<span class="tag g">已儲存</span> ' + esc(c.savedAt) : '尚未儲存到後台'}</span>
+        <span class="hint grow">${c.savedAt ? '<span class="tag g">已儲存</span> ' + esc(c.savedAt) : (!c.counts && (savedSum(cl) || docs.some(d => savedRec(cl, d.name))) ? '<span class="tag g">已載入後台資料</span> 目前顯示的是後台已儲存的數字；重新放入檔案或修改後再儲存即可覆蓋' : '尚未儲存到後台')}</span>
         <button class="btn" id="btnClear">清除本院區</button>
         <button class="btn pri" id="btnSave">儲存本院區到後台</button>
       </div>
@@ -639,15 +658,15 @@ function selectClinic(cl) {
     if (k === 'slowN') inp.slowN = v;
     else if (v === '') { delete inp[k]; delete inp[k + 'Manual']; }
     else { inp[k] = v; inp[k + 'Manual'] = true; }
-    c.savedAt = null; saveLocal(); selectClinic(cl);
+    c.savedAt = null; c.dirty = true; saveLocal(); selectClinic(cl);
   }));
-  $('#sumTotal').addEventListener('change', e => { c.summary.total = e.target.value.trim(); c.savedAt = null; saveLocal(); selectClinic(cl); });
-  $('#sumSlow').addEventListener('change', e => { const v = e.target.value.trim(); if (v === '') { c.summary.slowManual = false; delete c.summary.slow; } else { c.summary.slow = v; c.summary.slowManual = true; } c.savedAt = null; saveLocal(); selectClinic(cl); });
+  $('#sumTotal').addEventListener('change', e => { c.summary.total = e.target.value.trim(); c.savedAt = null; c.dirty = true; saveLocal(); selectClinic(cl); });
+  $('#sumSlow').addEventListener('change', e => { const v = e.target.value.trim(); if (v === '') { c.summary.slowManual = false; delete c.summary.slow; } else { c.summary.slow = v; c.summary.slowManual = true; } c.savedAt = null; c.dirty = true; saveLocal(); selectClinic(cl); });
   $('#btnSave').onclick = () => saveClinic(cl);
   $('#btnClear').onclick = () => { if (!confirm('清除「' + cl + '」本月已放入的檔案與輸入值？（不影響後台已儲存資料）')) return; delete S.clinics[cl]; delete RAW[cl]; saveLocal(); selectClinic(cl); };
   const bm = $('#btnMap'); if (bm) bm.onclick = () => saveMaps(cl);
 }
-function grandTotal() { return activeClinics().reduce((a, c) => a + (E.numOrNull((S.clinics[c.name] || {}).summary?.total) || 0), 0); }
+function grandTotal() { return activeClinics().reduce((a, c) => { const s = (S.clinics[c.name] || {}).summary || {}; const v = s.total !== undefined && s.total !== '' ? E.numOrNull(s.total) : E.numOrNull((savedSum(c.name) || {}).total); return a + (v || 0); }, 0); }
 
 async function saveMaps(cl) {
   const items = $$('#clinicPanel select[data-map]').filter(s => s.value).map(s => ({ clinic: cl, type: s.dataset.map, code: s.dataset.code, doctor: s.value }));
@@ -680,7 +699,7 @@ async function saveClinic(cl) {
   const btn = $('#btnSave'); busy(btn, true, '儲存中');
   try {
     await api('saveClinicMonth', payload);
-    c.savedAt = new Date().toLocaleString('zh-TW'); saveLocal(); selectClinic(cl);
+    c.savedAt = new Date().toLocaleString('zh-TW'); c.dirty = false; saveLocal(); loadSaved();
     toast(cl + ' 已儲存（' + rows.length + ' 位醫師）');
   } catch (e) { toast('儲存失敗：' + e.message, true); busy(btn, false); }
 }
@@ -879,7 +898,7 @@ $$('nav.tabs button').forEach(b => b.onclick = () => {
   $$('nav.tabs button').forEach(x => x.classList.toggle('on', x === b));
   $('#pageAnalyze').classList.toggle('hide', b.dataset.page !== 'Analyze');
   $('#pageReport').classList.toggle('hide', b.dataset.page !== 'Report');
-  if (b.dataset.page === 'Report') loadReport();
+  if (b.dataset.page === 'Report') { RPT.preset = '完整版'; RPT.cfg = Object.assign(presetToCfg(PRESETS['完整版']), RPT.cfg ? { clinics: RPT.cfg.clinics, doctors: RPT.cfg.doctors } : {}); RPT.view = 'image'; LS.set('rr_preset', '完整版'); LS.set('rr_rptcfg', RPT.cfg); LS.set('rr_view2', 'image'); loadReport(); }
 });
 
 init();
