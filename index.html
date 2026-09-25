@@ -126,6 +126,10 @@ table.dt td.m{color:var(--muted)}
 .toast{position:fixed;right:24px;bottom:24px;background:#1e3d3a;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px #0003;opacity:0;transform:translateY(10px);transition:.25s;z-index:99;max-width:420px}
 .toast.show{opacity:1;transform:none}.toast.err{background:#9b2c20}
 .hide{display:none!important}
+.viewtabs{display:inline-flex;background:#f1eee7;border-radius:10px;padding:3px}
+.viewtabs button{border:0;background:transparent;padding:7px 12px;border-radius:8px;cursor:pointer;font-weight:500;color:#55605d;white-space:nowrap}
+.viewtabs button.on{background:#fff;color:var(--brand);box-shadow:0 1px 3px #0002}
+#reportArea .pretty,#reportArea .vz{transform-origin:top left}
 .imgbox{display:inline-flex;align-items:center;border:1px solid #d9d4c8;border-radius:10px;overflow:hidden;background:#fff}
 .imgbox select{border:0;padding:9px 8px 9px 12px;background:#fff;font-weight:500;outline:none}
 .imgbox .btn{border:0;border-left:1px solid #e3dfd5;border-radius:0;padding:9px 12px}
@@ -274,12 +278,15 @@ body.locked header.top,body.locked main{visibility:hidden}
     <div class="card preview">
       <div class="preview-bar">
         <b id="repTitle" style="font-size:16px"></b>
+        <span class="viewtabs" id="viewTabs"><button data-v="table">表格（Excel）</button><button data-v="image">美化圖片</button><button data-v="visits">全院區總人次圖</button></span>
+        <select id="imgStyle" class="inp" style="width:auto;padding:7px 10px"><option value="table">表格版</option><option value="cards">院區卡片版</option></select>
+        <input id="visitNote" class="inp hide" style="width:260px;padding:7px 10px" placeholder="備註／決議（選填，會印在圖下方）">
         <span class="grow" style="flex:1"></span>
         <select id="paper" class="inp" style="width:auto;padding:7px 10px"><option value="portrait">A4 直印</option><option value="landscape">A4 橫印</option></select>
         <label class="ck" style="margin:0 6px"><input type="checkbox" id="fitScreen" checked>縮放符合畫面</label>
         <button class="btn" id="btnReload">重新載入資料</button>
         <button class="btn" id="btnXlsx">下載 Excel</button>
-        <span class="imgbox"><select id="imgStyle"><option value="table">圖片：表格版</option><option value="cards">圖片：院區卡片版</option></select><button class="btn" id="btnPng">PNG</button><button class="btn" id="btnJpg">JPEG</button></span>
+        <span class="imgbox"><button class="btn" id="btnPng">下載 PNG</button><button class="btn" id="btnJpg">JPEG</button></span>
         <button class="btn pri" id="btnPrint">列印 / 存成 PDF</button>
       </div>
       <div id="repWarn" class="warnbox mb hide"></div>
@@ -676,7 +683,7 @@ const PRESETS = {
   '院長版': { cols: { slowRate: 'vr', vph: 'vdr', backRate: 'v', nRevRate: 'vdr', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 0, markNew: 0 },
   '全部欄位': { cols: Object.fromEntries(E.METRICS.map(m => [m.k, 'vdr'])), cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 0 }
 };
-let RPT = { data: null, cfg: LS.get('rr_rptcfg', null), preset: LS.get('rr_preset', '完整版') };
+let RPT = { view: LS.get('rr_view', 'table'), data: null, cfg: LS.get('rr_rptcfg', null), preset: LS.get('rr_preset', '完整版') };
 function presetToCfg(p) {
   const cols = {}; E.METRICS.forEach(m => { const s = p.cols[m.k] || ''; cols[m.k] = { v: s.includes('v'), d: s.includes('d'), r: s.includes('r') }; });
   const csSet = p.cs.split(',');
@@ -709,10 +716,10 @@ function buildFilterUI() {
   const sel = RPT.cfg.clinics || [];
   $('#ckAllClinic').checked = !sel.length;
   $('#clinicCks').innerHTML = clinics.map(c => `<label class="ck"><input type="checkbox" data-fc="${esc(c)}" ${!sel.length || sel.includes(c) ? 'checked' : ''}>${esc(c)}</label>`).join('') || '<span class="hint">尚無資料</span>';
-  $('#ckAllClinic').onchange = e => { RPT.cfg.clinics = []; RPT.cfg.doctors = []; buildFilterUI(); custom(true); };
+  $('#ckAllClinic').onchange = e => { RPT.cfg.clinics = e.target.checked ? [] : ['__none__']; RPT.cfg.doctors = []; buildFilterUI(); custom(true); };
   $$('[data-fc]').forEach(el => el.onchange = () => {
     const on = $$('[data-fc]').filter(x => x.checked).map(x => x.dataset.fc);
-    RPT.cfg.clinics = on.length === clinics.length ? [] : on; buildFilterUI(); custom(true);
+    RPT.cfg.clinics = on.length === clinics.length ? [] : on.length ? on : ['__none__']; RPT.cfg.doctors = []; buildFilterUI(); custom(true);
   });
   const dsel = RPT.cfg.doctors || [];
   const shownClinics = clinics.filter(c => !RPT.cfg.clinics || !RPT.cfg.clinics.length || RPT.cfg.clinics.includes(c));
@@ -723,8 +730,22 @@ function applyPreset(name) {
   const keepF = RPT.cfg ? { clinics: RPT.cfg.clinics, doctors: RPT.cfg.doctors } : {};
   if (name.startsWith('c:')) RPT.cfg = JSON.parse(JSON.stringify(LS.get('rr_custom', {})[name.slice(2)]));
   else RPT.cfg = Object.assign(presetToCfg(PRESETS[name]), keepF);
-  RPT.preset = name; LS.set('rr_preset', name); LS.set('rr_rptcfg', RPT.cfg); buildCfgUI(); draw();
+  RPT.preset = name; LS.set('rr_preset', name); LS.set('rr_rptcfg', RPT.cfg);
+  setView(name === '院長版' ? 'image' : 'table', true);
+  buildCfgUI(); draw();
 }
+function setView(v, silent) {
+  RPT.view = v; LS.set('rr_view', v);
+  $$('#viewTabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  $('#imgStyle').classList.toggle('hide', v !== 'image');
+  $('#visitNote').classList.toggle('hide', v !== 'visits');
+  $('#btnXlsx').classList.toggle('hide', v !== 'table');
+  $('#paper').classList.toggle('hide', v !== 'table');
+  if (!silent) draw();
+}
+$$('#viewTabs button').forEach(b => b.onclick = () => setView(b.dataset.v));
+$('#imgStyle').onchange = () => draw();
+$('#visitNote').addEventListener('input', () => { LS.set('rr_note_' + S.month, $('#visitNote').value); clearTimeout(RPT._nt); RPT._nt = setTimeout(draw, 400); });
 function custom(filterOnly) { if (!filterOnly && !RPT.preset.startsWith('c:')) { RPT.preset = '自訂'; $$('#presetBtns .btn').forEach(b => b.classList.remove('on')); } LS.set('rr_preset', RPT.preset); LS.set('rr_rptcfg', RPT.cfg); draw(); }
 $('#customSel').onchange = e => { if (e.target.value) applyPreset('c:' + e.target.value); };
 $('#btnSavePreset').onclick = () => { const n = prompt('版型名稱（例如：給院長、給老闆）', ''); if (!n) return; const c = LS.get('rr_custom', {}); c[n] = RPT.cfg; LS.set('rr_custom', c); RPT.preset = 'c:' + n; LS.set('rr_preset', RPT.preset); buildCfgUI(); toast('已儲存版型「' + n + '」（存在這台電腦的瀏覽器）'); };
@@ -749,6 +770,7 @@ async function loadReport() {
   const ad = (data.records.find(r => r.analysisDate) || {}).analysisDate || $('#analysisDate').value;
   RPT.data = Object.assign(data, { clinicOrder: activeClinics().map(c => c.name), doctorOrder: ord, titles, analysisDate: shortDate(ad) });
   if (!RPT.cfg) RPT.cfg = presetToCfg(PRESETS['完整版']);
+  $('#visitNote').value = LS.get('rr_note_' + S.month, '');
   buildCfgUI(); draw(); renderKpi();
 }
 function shortDate(s) { s = String(s || '').trim(); const m = s.match(/(?:^\d{3,4}[\/\-])?(\d{1,2})[\/\-](\d{1,2})/); return m ? (+m[1]) + '/' + (+m[2]) : s; }
@@ -777,27 +799,33 @@ function renderKpi() {
 function draw() {
   if (!RPT.data) return;
   if (!RPT.data.records.length) { $('#reportArea').innerHTML = '<div class="empty-state">這個月份還沒有資料。請先在「資料分析」放入檔案並儲存各院區。</div>'; return; }
-  const cfg = Object.assign({}, RPT.cfg, { threshold: THRESH(), slowExclude: SLOW_EX(), topColor: +setting('排名標色名次', 5), showLimit: +setting('排名顯示名次', 10), pctDigits: +setting('百分比小數位數', 2) });
-  $('#reportArea').innerHTML = E.renderReport(RPT.data, cfg);
+  setView(RPT.view, true);
+  const cfg = fullCfg();
+  if (RPT.view !== 'visits' && (RPT.cfg.clinics || [])[0] === '__none__') { $('#reportArea').innerHTML = '<div class="empty-state">請在左側勾選要顯示的院區</div>'; return; }
+  if (RPT.view === 'image') $('#reportArea').innerHTML = '<style>' + E.PRETTY_CSS + '</style>' + E.renderPretty(RPT.data, cfg, $('#imgStyle').value);
+  else if (RPT.view === 'visits') $('#reportArea').innerHTML = '<style>' + E.VISITS_CSS + '</style>' + E.renderVisits(RPT.data, { note: $('#visitNote').value.trim(), noteLabel: '決議' });
+  else $('#reportArea').innerHTML = E.renderReport(RPT.data, cfg);
   fitPaper();
 }
+function fullCfg() { return Object.assign({}, RPT.cfg, { threshold: THRESH(), slowExclude: SLOW_EX(), topColor: +setting('排名標色名次', 5), showLimit: +setting('排名顯示名次', 10), pctDigits: +setting('百分比小數位數', 2), days: DAYS() }); }
 function fitPaper() {
   const land = $('#paper').value === 'landscape';
   $('#pageStyle').textContent = `@media print{@page{size:A4 ${land ? 'landscape' : 'portrait'};margin:8mm}}`;
-  const t = $('#reportArea table'); if (!t) return;
+  const t = $('#reportArea .pretty') || $('#reportArea .vz') || $('#reportArea table'); if (!t) return;
+  const sel = t.classList.contains('pretty') ? '#reportArea .pretty' : t.classList.contains('vz') ? '#reportArea .vz' : '#reportArea table';
   $('#rptStyle').textContent = E.REPORT_CSS;
   const pagePx = (land ? 297 : 210) * 3.78 - 16 * 3.78;
   const z = Math.min(1, pagePx * 0.95 / t.scrollWidth);
   const box = $('#reportWrap').clientWidth || 1000;
   const zs = $('#fitScreen').checked ? Math.min(1, box / t.scrollWidth) : 1;
-  $('#rptStyle').textContent = E.REPORT_CSS + `@media screen{#reportArea table{zoom:${zs.toFixed(3)}}}@media print{#reportArea table{zoom:${z.toFixed(3)}}}`;
+  $('#rptStyle').textContent = E.REPORT_CSS + `@media screen{${sel}{zoom:${zs.toFixed(3)}}}@media print{${sel}{zoom:${z.toFixed(3)}}}`;
 }
 $('#paper').onchange = fitPaper; $('#fitScreen').onchange = fitPaper; window.addEventListener('resize', () => { if (RPT.data) fitPaper(); });
 $('#btnPrint').onclick = () => { fitPaper(); window.print(); };
 $('#btnReload').onclick = loadReport;
 function imageName() {   // 觀音_115.08；多院區用「、」連接；全部為「全院區」
   const [y, m] = S.month.split('-');
-  let cls = RPT.cfg.clinics && RPT.cfg.clinics.length ? RPT.cfg.clinics.slice() : [];
+  let cls = RPT.cfg.clinics && RPT.cfg.clinics.length ? RPT.cfg.clinics.filter(c => c !== '__none__') : [];
   if (RPT.cfg.doctors && RPT.cfg.doctors.length) cls = Array.from(new Set(RPT.cfg.doctors.map(k => k.split('|')[0])));
   const name = !cls.length ? '全院區' : cls.length > 3 ? cls.slice(0, 3).join('、') + '等' + cls.length + '院區' : cls.join('、');
   return name + '_' + (+y - 1911) + '.' + m;
@@ -806,22 +834,23 @@ async function downloadImage(type) {
   if (!RPT.data || !RPT.data.records.length) return toast('目前沒有報表資料', true);
   if (typeof html2canvas === 'undefined') return toast('圖片元件載入失敗，請確認網路後重新整理', true);
   const btn = type === 'png' ? $('#btnPng') : $('#btnJpg'); busy(btn, true, '產生中');
-  const style = $('#imgStyle').value;
+  const style = $('#imgStyle').value, isV = RPT.view === 'visits';
+  if (!isV && (RPT.cfg.clinics || [])[0] === '__none__') { busy(btn, false); return toast('請先勾選院區', true); }
   const host = document.createElement('div');
   host.style.cssText = 'position:fixed;left:-20000px;top:0;z-index:-1';
-  const cfg = Object.assign({}, RPT.cfg, { threshold: THRESH(), slowExclude: SLOW_EX(), topColor: +setting('排名標色名次', 5), showLimit: +setting('排名顯示名次', 10), pctDigits: +setting('百分比小數位數', 2), days: DAYS() });
-  host.innerHTML = '<style>' + E.PRETTY_CSS + '</style>' + E.renderPretty(RPT.data, cfg, style);
+  host.innerHTML = isV ? '<style>' + E.VISITS_CSS + '</style>' + E.renderVisits(RPT.data, { note: $('#visitNote').value.trim(), noteLabel: '決議' })
+                       : '<style>' + E.PRETTY_CSS + '</style>' + E.renderPretty(RPT.data, fullCfg(), style);
   document.body.appendChild(host);
   try {
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     await Promise.all(Array.from(host.querySelectorAll('img')).map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; })));
-    const el = host.querySelector('.pretty');
-    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#f2f0eb', useCORS: true, logging: false });
+    const el = host.querySelector(isV ? '.vz' : '.pretty');
+    const canvas = await html2canvas(el, { scale: 2, backgroundColor: isV ? '#ffffff' : '#f2f0eb', useCORS: true, logging: false });
     const mime = type === 'png' ? 'image/png' : 'image/jpeg';
     const blob = await new Promise(r => canvas.toBlob(r, mime, 0.95));
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = imageName() + (type === 'png' ? '.png' : '.jpg');
+    a.download = (isV ? '全院區看診總人次_' + (+S.month.split('-')[0] - 1911) + '.' + S.month.split('-')[1] : imageName()) + (type === 'png' ? '.png' : '.jpg');
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     toast('圖片已下載');
@@ -831,7 +860,7 @@ async function downloadImage(type) {
 $('#btnPng').onclick = () => downloadImage('png');
 $('#btnJpg').onclick = () => downloadImage('jpeg');
 $('#btnXlsx').onclick = () => {
-  const t = $('#reportArea table'); if (!t) return;
+  const t = RPT.view === 'table' && $('#reportArea table.rpt'); if (!t) return toast('請切換到「表格」檢視再下載 Excel', true);
   const wb = XLSX.utils.table_to_book(t, { raw: true });
   XLSX.writeFile(wb, '醫師回診率分析結果_' + E.monthLabel(S.month) + '.xlsx');
 };
