@@ -794,6 +794,13 @@ function fitPaper() {
 $('#paper').onchange = fitPaper; $('#fitScreen').onchange = fitPaper; window.addEventListener('resize', () => { if (RPT.data) fitPaper(); });
 $('#btnPrint').onclick = () => { fitPaper(); window.print(); };
 $('#btnReload').onclick = loadReport;
+function imageName() {   // 觀音_115.08；多院區用「、」連接；全部為「全院區」
+  const [y, m] = S.month.split('-');
+  let cls = RPT.cfg.clinics && RPT.cfg.clinics.length ? RPT.cfg.clinics.slice() : [];
+  if (RPT.cfg.doctors && RPT.cfg.doctors.length) cls = Array.from(new Set(RPT.cfg.doctors.map(k => k.split('|')[0])));
+  const name = !cls.length ? '全院區' : cls.length > 3 ? cls.slice(0, 3).join('、') + '等' + cls.length + '院區' : cls.join('、');
+  return name + '_' + (+y - 1911) + '.' + m;
+}
 async function downloadImage(type) {
   if (!RPT.data || !RPT.data.records.length) return toast('目前沒有報表資料', true);
   if (typeof html2canvas === 'undefined') return toast('圖片元件載入失敗，請確認網路後重新整理', true);
@@ -813,7 +820,7 @@ async function downloadImage(type) {
     const blob = await new Promise(r => canvas.toBlob(r, mime, 0.95));
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = '醫師回診率分析結果_' + E.monthLabel(S.month) + '_' + (style === 'cards' ? '院區卡片版' : '表格版') + (type === 'png' ? '.png' : '.jpg');
+    a.download = imageName() + (type === 'png' ? '.png' : '.jpg');
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     toast('圖片已下載');

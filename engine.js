@@ -565,7 +565,7 @@
     const topC = +cfg.topColor || 5, lim = +cfg.showLimit || 10;
     const month = monthLabel(data.month);
     const kpis = [];
-    if (P.grand) kpis.push(['全院區總人次', P.grand.toLocaleString(), P.pgrand ? prettyDiff(P.grand - P.pgrand, 'int') + '<em>較上月</em>' : '']);
+    if (P.grand) kpis.push(['全院區總人次', P.grand.toLocaleString(), (P.pgrand ? prettyDiff(P.grand - P.pgrand, 'int') + '<em>較上月</em>' : '') + (P.cs.rate && P.csAvg !== null ? `<em>院區慢箋平均 ${fmt(P.csAvg, 'pct', pd)}</em>` : '')]);
     kpis.push(['列入醫師', String(P.clinics.reduce((a, c) => a + P.rowsOf(c).length, 0)), `<em>${P.clinics.length} 個院區</em>`]);
     [['slowRate', '集團平均 慢專比例'], ['vph', '集團平均 人次/hr'], ['nRevRate', '集團平均 狹義回診率'], ['wRevRate', '集團平均 廣義回診率']].forEach(([k, l]) => {
       if (P.avg[k] !== null) kpis.push([l, fmt(P.avg[k], METRIC[k].fmt, pd), '']);
@@ -574,7 +574,7 @@
       <div class="p-head">
         <img src="${LOGO}" class="p-logo" alt="">
         <div class="p-t"><div class="p-org">金鶯診所 Elite Clinic</div><div class="p-title">${esc(month)} 醫師回診率分析結果</div></div>
-        <div class="p-meta">${data.analysisDate ? esc(data.analysisDate) + ' 分析' : ''}<br><span>回診判定：看診後 1～${esc(cfg.days || 5)} 天回同一醫師</span></div>
+        <div class="p-meta">${data.analysisDate ? esc(data.analysisDate) + ' 分析' : ''}</div>
       </div>
       <div class="p-kpis" style="grid-template-columns:repeat(${kpis.length},1fr)">${kpis.map(k => `<div class="p-kpi"><div class="l">${k[0]}</div><div class="v">${k[1]}</div><div class="s">${k[2]}</div></div>`).join('')}</div>`;
 
@@ -595,12 +595,6 @@
     P.cols.forEach(c => h += `<th class="m">${c.m.label === c.m.group || groups.find(g => g.g === c.m.group).cols.length === 1 ? '數值' : esc(c.m.label.replace('BACK', ''))}</th>`);
     csCols.forEach(x => h += `<th class="m cs">${x[1]}</th>`);
     h += '</tr></thead><tbody>';
-    if (cfg.showAvg !== false) {
-      h += '<tr class="avg"><td colspan="2">集團平均值</td>';
-      P.cols.forEach(c => h += `<td>${c.m.avg && c.v ? fmt(P.avg[c.m.k], c.m.fmt, pd) : ''}</td>`);
-      csCols.forEach(x => h += `<td class="cs">${x[0] === 'rate' ? fmt(P.csAvg, 'pct', pd) : ''}</td>`);
-      h += '</tr>';
-    }
     P.clinics.forEach((cl, ci) => {
       const rows = P.rowsOf(cl); if (!rows.length) return;
       rows.forEach((r, ri) => {
@@ -673,7 +667,7 @@
   }
 
   const PRETTY_CSS = `
-  .pretty{width:1680px;background:#f2f0eb;padding:36px 40px 28px;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;color:#1d2a28;box-sizing:border-box}
+  .pretty{width:max-content;min-width:1680px;background:#f2f0eb;padding:36px 40px 28px;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;color:#1d2a28;box-sizing:border-box}
   .pretty *{box-sizing:border-box}
   .pretty .p-head{display:flex;align-items:center;gap:22px;background:#1e3d3a;color:#fff;border-radius:22px;padding:22px 30px}
   .pretty .p-logo{width:78px;height:78px;border-radius:50%;background:#fff;padding:3px}
@@ -683,57 +677,57 @@
   .pretty .p-meta span{font-size:14px;color:#9fd4c7;font-weight:400}
   .pretty .p-kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin:18px 0}
   .pretty .p-kpi{background:#fff;border:1px solid #e3dfd5;border-radius:16px;padding:14px 18px}
-  .pretty .p-kpi .l{font-size:14px;color:#7b7a72}
-  .pretty .p-kpi .v{font-size:32px;font-weight:700;margin-top:2px;color:#1e3d3a}
-  .pretty .p-kpi .s{font-size:13px;min-height:18px}
-  .pretty .p-kpi em{font-style:normal;color:#7b7a72;margin-left:4px}
+  .pretty .p-kpi .l{font-size:17px;color:#7b7a72}
+  .pretty .p-kpi .v{font-size:38px;font-weight:700;margin-top:2px;color:#1e3d3a}
+  .pretty .p-kpi .s{font-size:15px;min-height:18px}
+  .pretty .p-kpi em{font-style:normal;color:#7b7a72;margin-left:6px}
   .pretty .p-card{background:#fff;border:1px solid #e3dfd5;border-radius:18px;padding:10px 12px;overflow:hidden}
-  .pretty .p-tb{width:100%;border-collapse:collapse;font-size:14px}
-  .pretty .p-tb th{font-weight:700;color:#35504c;padding:9px 6px;text-align:center;white-space:nowrap}
-  .pretty .p-tb th.g{font-size:15px}
-  .pretty .p-tb th.m{font-size:12px;color:#7b7a72;font-weight:500;background:#f6f4ef;border-bottom:1px solid #e3dfd5}
-  .pretty .p-tb td{padding:6px 6px;text-align:center;border-bottom:1px solid #efece5;white-space:nowrap;vertical-align:middle}
+  .pretty .p-tb{width:100%;border-collapse:collapse;font-size:17px}
+  .pretty .p-tb th{font-weight:700;color:#35504c;padding:12px 10px;text-align:center;white-space:nowrap}
+  .pretty .p-tb th.g{font-size:19px}
+  .pretty .p-tb th.m{font-size:15px;color:#7b7a72;font-weight:500;background:#f6f4ef;border-bottom:1px solid #e3dfd5}
+  .pretty .p-tb td{padding:10px 10px;text-align:center;border-bottom:1px solid #efece5;white-space:nowrap;vertical-align:middle}
   .pretty .p-tb tr.band td{background:#fbfaf7}
   .pretty .p-tb tr.first td{border-top:2px solid #d8e6e2}
   .pretty .p-tb tr.avg td{background:#fdf1d8;font-weight:700;color:#7a5412;font-size:15px}
-  .pretty .p-tb td.c-cl{background:#e6efed!important;font-weight:700;color:#1e3d3a;font-size:16px;width:46px;letter-spacing:2px}
+  .pretty .p-tb td.c-cl{background:#e6efed!important;font-weight:700;color:#1e3d3a;font-size:21px;width:56px;letter-spacing:2px}
   .pretty .p-tb td.c-cl span{writing-mode:vertical-rl}
-  .pretty .p-tb td.c-doc{text-align:left;padding-left:12px;min-width:120px}
-  .pretty .p-tb td.c-doc small{color:#7b7a72;font-size:12px;margin-left:3px}
+  .pretty .p-tb td.c-doc{text-align:left;padding-left:14px;min-width:150px;font-size:19px}
+  .pretty .p-tb td.c-doc small{color:#7b7a72;font-size:14px;margin-left:3px}
   .pretty em.new{font-style:normal;background:#fde68a;color:#7a5412;font-size:11px;border-radius:6px;padding:1px 6px;margin-left:5px}
-  .pretty .pv{font-size:15px;font-weight:500}
-  .pretty .pv.big{font-size:18px;font-weight:700;color:#1e3d3a}
+  .pretty .pv{font-size:20px;font-weight:500}
+  .pretty .pv.big{font-size:23px;font-weight:700;color:#1e3d3a}
   .pretty .ps{display:flex;gap:4px;justify-content:center;align-items:center;margin-top:2px;min-height:0}
-  .pretty .pd{font-size:11.5px;font-weight:500}
+  .pretty .pd{font-size:14.5px;font-weight:500}
   .pretty .pd.up{color:#2b7a5f}.pretty .pd.dn{color:#c0392b}.pretty .pd.z{color:#9a988f}
-  .pretty .pr{display:inline-block;font-size:11.5px;font-weight:700;border:1.5px solid;border-radius:99px;padding:0 7px;line-height:17px}
-  .pretty .pr i{font-style:normal;font-weight:400;font-size:10px;opacity:.85}
+  .pretty .pr{display:inline-block;font-size:14.5px;font-weight:700;border:1.5px solid;border-radius:99px;padding:1px 9px;line-height:20px}
+  .pretty .pr i{font-style:normal;font-weight:400;font-size:12px;opacity:.85}
   .pretty .pr.none{border-color:#d9d4c8;color:#9a988f;font-weight:400}
   .pretty .na{color:#c9c5bb}
   .pretty td.cs,.pretty th.cs{background:#f3f8f6}
-  .pretty .crk{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;border:2px solid #2b5a54;color:#2b5a54;font-weight:700;font-size:15px}
+  .pretty .crk{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;border:2px solid #2b5a54;color:#2b5a54;font-weight:700;font-size:19px}
   .pretty .crk.top{background:#2b5a54;color:#fff}
-  .pretty .p-foot{display:flex;justify-content:space-between;gap:20px;font-size:12.5px;color:#7b7a72;margin-top:14px}
+  .pretty .p-foot{display:flex;justify-content:space-between;gap:20px;font-size:14px;color:#7b7a72;margin-top:14px}
   .pretty .p-bars{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-  .pretty .p-h{font-weight:700;font-size:17px;color:#1e3d3a;margin:6px 6px 10px}
+  .pretty .p-h{font-weight:700;font-size:21px;color:#1e3d3a;margin:6px 6px 10px}
   .pretty .p-h small{font-weight:400;font-size:13px;color:#7b7a72;margin-left:8px}
-  .pretty .bar{display:flex;align-items:center;gap:10px;margin:5px 6px;font-size:14px}
-  .pretty .bar .bl{width:44px;font-weight:500}
-  .pretty .bar .bt{flex:1;height:16px;background:#f2f0eb;border-radius:8px;overflow:hidden}
+  .pretty .bar{display:flex;align-items:center;gap:10px;margin:6px 6px;font-size:17px}
+  .pretty .bar .bl{width:54px;font-weight:500}
+  .pretty .bar .bt{flex:1;height:20px;background:#f2f0eb;border-radius:8px;overflow:hidden}
   .pretty .bar .bt i{display:block;height:100%;background:#2b5a54;border-radius:8px}
   .pretty .bar .bt i.r{background:#d98b0b}
-  .pretty .bar .bv{width:70px;text-align:right;font-weight:700}
+  .pretty .bar .bv{width:90px;text-align:right;font-weight:700}
   .pretty .p-grid{display:grid;gap:16px}
   .pretty .cc{padding:14px 16px}
   .pretty .cc-h{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #e6efed;padding-bottom:8px;margin-bottom:6px}
-  .pretty .cc-n{font-size:22px;font-weight:700;color:#1e3d3a;letter-spacing:2px}
-  .pretty .cc-s{display:flex;gap:14px;align-items:center;font-size:13.5px;color:#7b7a72}
-  .pretty .cc-s b{color:#1d2a28;font-size:16px}
-  .pretty .cc-t{width:100%;border-collapse:collapse;font-size:13.5px}
-  .pretty .cc-t th{font-size:12px;font-weight:700;padding:6px 4px;text-align:center;white-space:nowrap}
-  .pretty .cc-t td{padding:7px 4px;text-align:center;border-top:1px solid #efece5;white-space:nowrap}
+  .pretty .cc-n{font-size:27px;font-weight:700;color:#1e3d3a;letter-spacing:2px}
+  .pretty .cc-s{display:flex;gap:14px;align-items:center;font-size:16px;color:#7b7a72}
+  .pretty .cc-s b{color:#1d2a28;font-size:20px}
+  .pretty .cc-t{width:100%;border-collapse:collapse;font-size:17px}
+  .pretty .cc-t th{font-size:15px;font-weight:700;padding:6px 4px;text-align:center;white-space:nowrap}
+  .pretty .cc-t td{padding:10px 6px;text-align:center;border-top:1px solid #efece5;white-space:nowrap}
   .pretty .cc-t .l{text-align:left}
-  .pretty .cc-t td.l small{color:#7b7a72;font-size:11.5px;margin-left:3px}
+  .pretty .cc-t td.l small{color:#7b7a72;font-size:13.5px;margin-left:3px}
   `;
 
   // 清單一律由後台（登入後）載入，不在公開的程式碼裡放醫師名單
