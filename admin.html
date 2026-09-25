@@ -11,7 +11,7 @@
 <script>
   /* ====== 後台設定（已寫死）====== */
   const SHEET_ID = '1E87f9NKzV46IT7ReUf1ZFkg-l2vj-m7b-S63-1XRO5s';
-  const GAS_URL  = 'https://script.google.com/macros/s/AKfycbxt1MuUkDj8osmkEO7n0hWpgqQkok73N_Jk4EPDv9nVEvaco0rCKCNspCDfzZ81SkMRMw/exec';   // ← 貼上 https://script.google.com/macros/s/xxxxxxxx/exec（與 index.html 相同）
+  const GAS_URL  = 'https://script.google.com/macros/s/AKfycbxt1MuUkDj8osmkEO7n0hWpgqQkok73N_Jk4EPDv9nVEvaco0rCKCNspCDfzZ81SkMRMw/exec';
 </script>
 <style>
 :root{--bg:#f2f0eb;--card:#fff;--ink:#1d2a28;--muted:#7b7a72;--line:#e3dfd5;--line2:#ece9e1;--brand:#1e3d3a;--brand2:#2b5a54;--brand-soft:#e6efed;--accent:#3aa58f;--ok:#2b7a5f;--ok-soft:#e3f2ea;--warn:#b7791f;--warn-soft:#fbf1dc;--bad:#b42318;--bad-soft:#fbe8e6}
@@ -78,23 +78,53 @@ table.ed tr.off td{opacity:.5}
 @media (max-width:700px){header.top{flex-wrap:wrap;height:auto;padding:10px 16px;gap:8px}main{padding:16px}}
 @media print{@page{size:A4 portrait;margin:8mm}header.top,.noprint,.toast{display:none!important}main{padding:0}.card{border:0;padding:0}
   .rpt td.r.top,.rpt td.d,.rpt td.doc.new,.rpt td.cs-avg{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+/* 登入畫面 */
+.login{position:fixed;inset:0;z-index:100;background:linear-gradient(160deg,#1e3d3a 0%,#2b5a54 55%,#f2f0eb 55.1%);display:grid;place-items:center;padding:20px}
+.lg-card{background:#fff;border-radius:22px;padding:36px 34px 30px;width:100%;max-width:400px;box-shadow:0 20px 50px #0003;text-align:center}
+.lg-card img{width:92px;height:92px;border-radius:50%}
+.lg-card h2{margin:14px 0 4px;font-size:21px;color:var(--brand)}
+.lg-card .role{display:inline-block;background:#fbe8e6;color:#9b2c20;border-radius:99px;padding:3px 12px;font-size:13px;font-weight:500;margin-bottom:20px}
+.lg-card input{width:100%;border:1px solid #d9d4c8;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:15px;outline:none}
+.lg-card input:focus{border-color:var(--brand2);box-shadow:0 0 0 3px #2b5a5422}
+.lg-card button{width:100%;border:0;border-radius:12px;padding:12px;background:var(--brand2);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.lg-card button:hover{background:var(--brand)}
+.lg-err{color:var(--bad);font-size:13px;min-height:20px;margin-top:10px}
+.lg-note{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.6}
+body.locked header.top,body.locked main{visibility:hidden}
+.logo img{width:40px;height:40px;border-radius:50%;background:#fff;padding:1px}
+.who{display:flex;align-items:center;gap:8px}
+.who button{background:#2b4c48;border:0;color:#cfe0dc;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:13px}
+.who button:hover{background:#3a615c;color:#fff}
 </style>
 <style id="rptStyle"></style>
 <style id="pageStyle"></style>
 </head>
-<body>
+<body class="locked">
+<div id="login" class="login hide"><form class="lg-card" id="lgForm" autocomplete="on">
+  <img id="lgLogo" alt="金鶯診所">
+  <h2>金鶯診所˙醫師回診率分析系統</h2>
+  <div class="role">後台管理登入（管理者帳號）</div>
+  <input id="lgUser" placeholder="帳號" autocomplete="username" required>
+  <input id="lgPass" type="password" placeholder="密碼" autocomplete="current-password" required>
+  <button type="submit" id="lgBtn">登入</button>
+  <div class="lg-err" id="lgErr"></div>
+  <div class="lg-note">登入後 6 小時內有效；關閉瀏覽器即登出。</div>
+</form></div>
 <header class="top">
-  <div class="logo"><i>+</i>金鶯診所 ˙ 醫師回診率分析系統 <small>後台</small></div>
+  <div class="logo"><img id="hdLogo" alt="">金鶯診所 ˙ 醫師回診率分析系統 <small>後台</small></div>
   <nav class="tabs">
     <button data-p="Doc" class="on">醫師區間分析</button>
     <button data-p="Clinic">院區區間分析</button>
     <button data-p="Month">月份報表</button>
     <button data-p="Lists">清單維護</button>
     <button data-p="Settings">系統設定</button>
+    <button data-p="Acc">帳號密碼</button>
   </nav>
   <div class="right">
     <a href="index.html" style="color:#cfe0dc">← 回前台</a>
     <span class="pill" id="connPill"><span class="dot"></span><span id="connText">連線中…</span></span>
+    <span class="who"><span id="whoName"></span><button onclick="logout()">登出</button></span>
   </div>
 </header>
 <main>
@@ -169,6 +199,22 @@ table.ed tr.off td{opacity:.5}
       <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn pri" id="sSave">儲存設定</button></div>
     </div>
   </section>
+  <!-- 帳號密碼 -->
+  <section id="pAcc" class="hide">
+    <div class="info">前台帳號：給同仁操作「資料分析、結果報表」。後台帳號：只給管理者，可進入本後台（也能登入前台）。<br>變更後所有人都會被登出，需用新密碼重新登入。忘記密碼時，可在 Google Sheet 上方選單「回診率系統」重新設定。</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+      <div class="card"><p class="step">前台帳號</p>
+        <label class="f">帳號</label><input class="inp" id="aFU" autocomplete="off" style="margin-bottom:10px">
+        <label class="f">新密碼（至少 6 碼）</label><input class="inp" id="aFP" type="password" autocomplete="new-password" style="margin-bottom:10px">
+        <label class="f">再輸入一次新密碼</label><input class="inp" id="aFP2" type="password" autocomplete="new-password" style="margin-bottom:14px">
+        <button class="btn pri" data-acc="front">更新前台帳號密碼</button></div>
+      <div class="card"><p class="step">後台帳號</p>
+        <label class="f">帳號</label><input class="inp" id="aAU" autocomplete="off" style="margin-bottom:10px">
+        <label class="f">新密碼（至少 6 碼）</label><input class="inp" id="aAP" type="password" autocomplete="new-password" style="margin-bottom:10px">
+        <label class="f">再輸入一次新密碼</label><input class="inp" id="aAP2" type="password" autocomplete="new-password" style="margin-bottom:14px">
+        <button class="btn pri" data-acc="admin">更新後台帳號密碼</button></div>
+    </div>
+  </section>
 </main>
 <div class="toast" id="toast"></div>
 
@@ -180,8 +226,10 @@ let CFG = JSON.parse(JSON.stringify(E.DEFAULT_CONFIG));
 function toast(m, err) { const t = $('#toast'); t.textContent = m; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = 'toast', err ? 6000 : 3000); }
 async function api(action, payload) {
   if (!HAS_GAS) throw new Error('尚未設定 GAS_URL');
-  const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, payload: payload || {} }) });
-  const j = await res.json(); if (!j.ok) throw new Error(j.error || '後台錯誤'); return j.data;
+  const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, payload: payload || {}, token: TOKEN }) });
+  const j = await res.json();
+  if (j.auth) { showLogin('登入已逾時，請重新登入'); throw new Error('請重新登入'); }
+  if (!j.ok) throw new Error(j.error || '後台錯誤'); return j.data;
 }
 function busy(b, on) { if (on) { b._t = b.innerHTML; b.disabled = true; b.innerHTML = '<span class="spin"></span>'; } else { b.disabled = false; b.innerHTML = b._t; } }
 const setting = (k, d) => { const v = CFG.settings[k]; return v === undefined || v === '' ? d : v; };
@@ -190,14 +238,48 @@ const M = E.METRICS;
 const COLS = [['hours', '上診時數', 'h'], ['visits', '看診人次', 'int'], ['slowN', '慢專人次', 'int'], ['slowRate', '慢專比例', 'pct'], ['vph', '平均人次/hr', 'n2'], ['backN', 'BACK開立', 'int'], ['backRate', 'BACK開立率', 'pct'], ['nRevN', '狹義回診數', 'int'], ['nRevRate', '狹義回診率', 'pct'], ['wRevN', '廣義回診數', 'int'], ['wRevRate', '廣義回診率', 'pct']];
 const RANKED = ['slowRate', 'vph', 'nRevRate', 'wRevRate'];
 
+
+/* ---------- 登入 ---------- */
+const TOK_KEY = 'rr_admin_tok';
+let TOKEN = (() => { try { return sessionStorage.getItem(TOK_KEY) || ''; } catch (e) { return ''; } })();
+let WHO = (() => { try { return JSON.parse(sessionStorage.getItem(TOK_KEY + '_who') || 'null'); } catch (e) { return null; } })();
+function showLogin(msg) {
+  TOKEN = ''; try { sessionStorage.removeItem(TOK_KEY); } catch (e) {}
+  document.body.classList.add('locked'); $('#login').classList.remove('hide');
+  $('#lgErr').textContent = msg || ''; setTimeout(() => $('#lgUser').focus(), 50);
+}
+$('#lgLogo').src = E.LOGO;
+$('#lgForm').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const btn = $('#lgBtn'); btn.disabled = true; btn.textContent = '登入中…'; $('#lgErr').textContent = '';
+  try {
+    if (!HAS_GAS) throw new Error('尚未設定後台網址 GAS_URL');
+    const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'login', payload: { role: LOGIN_ROLE, user: $('#lgUser').value.trim(), pass: $('#lgPass').value } }) });
+    const j = await res.json(); if (!j.ok) throw new Error(j.error);
+    TOKEN = j.data.token; WHO = j.data;
+    try { sessionStorage.setItem(TOK_KEY, TOKEN); sessionStorage.setItem(TOK_KEY + '_who', JSON.stringify(WHO)); } catch (e) {}
+    $('#lgPass').value = ''; $('#login').classList.add('hide'); document.body.classList.remove('locked');
+    start();
+  } catch (e) { $('#lgErr').textContent = e.message || '登入失敗'; }
+  btn.disabled = false; btn.textContent = '登入';
+});
+async function logout() { try { await api('logout'); } catch (e) {} try { sessionStorage.removeItem(TOK_KEY); sessionStorage.removeItem(TOK_KEY + '_who'); } catch (e) {} location.reload(); }
+const LOGIN_ROLE = 'admin';
+$('#hdLogo').src = E.LOGO;
+
 /* ---------- 初始化 ---------- */
-async function init() {
+function init() {
+  if (!HAS_GAS) { document.body.classList.remove('locked'); $('#noGas').classList.remove('hide'); setConn(false, '未設定'); return; }
+  if (!TOKEN) return showLogin();
+  document.body.classList.remove('locked'); start();
+}
+async function start() {
+  $('#whoName').textContent = WHO ? WHO.user : '';
   const now = new Date(); const cur = now.getFullYear() + '-' + String(now.getMonth()).padStart(2, '0');
   const lastM = now.getMonth() === 0 ? (now.getFullYear() - 1) + '-12' : cur;
   const from = (() => { const d = new Date(now.getFullYear(), now.getMonth() - 6, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
   ['#dFrom', '#cFrom'].forEach(s => $(s).value = from); ['#dTo', '#cTo', '#mMonth'].forEach(s => $(s).value = lastM);
-  if (!HAS_GAS) { $('#noGas').classList.remove('hide'); setConn(false, '未設定'); }
-  else { try { CFG = await api('getConfig'); setConn(true, '後台已連線'); loadMonths(); } catch (e) { setConn(false, '連線失敗'); toast(e.message, true); } }
+  try { CFG = await api('getConfig'); setConn(true, '後台已連線'); loadMonths(); } catch (e) { setConn(false, '連線失敗'); if (!TOKEN) return; toast(e.message, true); }
   fillSelects(); renderLists(); renderSettings();
   $('#lOpen').href = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/edit';
 }
@@ -408,10 +490,23 @@ $('#sSave').onclick = async () => {
   busy(b, false);
 };
 
+/* ---------- 帳號密碼 ---------- */
+$$('[data-acc]').forEach(b => b.onclick = async () => {
+  const role = b.dataset.acc, p = role === 'admin' ? 'aA' : 'aF';
+  const user = $('#' + p + 'U').value.trim(), pass = $('#' + p + 'P').value, pass2 = $('#' + p + 'P2').value;
+  if (!user || !pass) return toast('請輸入帳號與新密碼', true);
+  if (pass.length < 6) return toast('密碼至少 6 碼', true);
+  if (pass !== pass2) return toast('兩次輸入的密碼不一致', true);
+  if (!confirm('確定更新' + (role === 'admin' ? '後台' : '前台') + '帳號密碼？更新後所有人需重新登入。')) return;
+  busy(b, true);
+  try { await api('changeAccount', { role, user, pass }); alert('已更新，請用新的帳號密碼重新登入。'); logout(); }
+  catch (e) { toast(e.message, true); busy(b, false); }
+});
+
 /* ---------- 頁籤 ---------- */
 $$('nav.tabs button').forEach(b => b.onclick = () => {
   $$('nav.tabs button').forEach(x => x.classList.toggle('on', x === b));
-  ['Doc', 'Clinic', 'Month', 'Lists', 'Settings'].forEach(p => $('#p' + p).classList.toggle('hide', p !== b.dataset.p));
+  ['Doc', 'Clinic', 'Month', 'Lists', 'Settings', 'Acc'].forEach(p => $('#p' + p).classList.toggle('hide', p !== b.dataset.p));
 });
 init();
 </script>

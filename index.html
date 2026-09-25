@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="engine.js"></script>
 <script>
   /* ====== 後台設定（已寫死，不需每次綁定）======
@@ -14,7 +15,7 @@
    * GAS_URL ：Apps Script「網頁應用程式」網址，部署後貼上一次即可
    */
   const SHEET_ID = '1E87f9NKzV46IT7ReUf1ZFkg-l2vj-m7b-S63-1XRO5s';
-  const GAS_URL  = 'https://script.google.com/macros/s/AKfycbxt1MuUkDj8osmkEO7n0hWpgqQkok73N_Jk4EPDv9nVEvaco0rCKCNspCDfzZ81SkMRMw/exec';   // ← 貼上 https://script.google.com/macros/s/xxxxxxxx/exec
+  const GAS_URL  = 'https://script.google.com/macros/s/AKfycbxt1MuUkDj8osmkEO7n0hWpgqQkok73N_Jk4EPDv9nVEvaco0rCKCNspCDfzZ81SkMRMw/exec';
 </script>
 <style>
 :root{
@@ -125,6 +126,10 @@ table.dt td.m{color:var(--muted)}
 .toast{position:fixed;right:24px;bottom:24px;background:#1e3d3a;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px #0003;opacity:0;transform:translateY(10px);transition:.25s;z-index:99;max-width:420px}
 .toast.show{opacity:1;transform:none}.toast.err{background:#9b2c20}
 .hide{display:none!important}
+.imgbox{display:inline-flex;align-items:center;border:1px solid #d9d4c8;border-radius:10px;overflow:hidden;background:#fff}
+.imgbox select{border:0;padding:9px 8px 9px 12px;background:#fff;font-weight:500;outline:none}
+.imgbox .btn{border:0;border-left:1px solid #e3dfd5;border-radius:0;padding:9px 12px}
+.imgbox .btn:hover{background:#f3f8f6}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid #fff6;border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
 @keyframes sp{to{transform:rotate(360deg)}}
 .ex-list{font-size:12.5px;color:var(--muted);max-height:180px;overflow:auto;margin-top:6px}
@@ -141,13 +146,41 @@ details summary{cursor:pointer;color:var(--brand2);font-size:13px}
   .rpt td.r.top{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .rpt td.d,.rpt td.doc.new,.rpt td.cs-avg{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+
+/* 登入畫面 */
+.login{position:fixed;inset:0;z-index:100;background:linear-gradient(160deg,#1e3d3a 0%,#2b5a54 55%,#f2f0eb 55.1%);display:grid;place-items:center;padding:20px}
+.lg-card{background:#fff;border-radius:22px;padding:36px 34px 30px;width:100%;max-width:400px;box-shadow:0 20px 50px #0003;text-align:center}
+.lg-card img{width:92px;height:92px;border-radius:50%}
+.lg-card h2{margin:14px 0 4px;font-size:21px;color:var(--brand)}
+.lg-card .role{display:inline-block;background:var(--brand-soft);color:var(--brand2);border-radius:99px;padding:3px 12px;font-size:13px;font-weight:500;margin-bottom:20px}
+.lg-card input{width:100%;border:1px solid #d9d4c8;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:15px;outline:none}
+.lg-card input:focus{border-color:var(--brand2);box-shadow:0 0 0 3px #2b5a5422}
+.lg-card button{width:100%;border:0;border-radius:12px;padding:12px;background:var(--brand2);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.lg-card button:hover{background:var(--brand)}
+.lg-err{color:var(--bad);font-size:13px;min-height:20px;margin-top:10px}
+.lg-note{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.6}
+body.locked header.top,body.locked main{visibility:hidden}
+.logo img{width:40px;height:40px;border-radius:50%;background:#fff;padding:1px}
+.who{display:flex;align-items:center;gap:8px}
+.who button{background:#2b4c48;border:0;color:#cfe0dc;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:13px}
+.who button:hover{background:#3a615c;color:#fff}
 </style>
 <style id="pageStyle"></style>
 <style id="rptStyle"></style>
 </head>
-<body>
+<body class="locked">
+<div id="login" class="login hide"><form class="lg-card" id="lgForm" autocomplete="on">
+  <img id="lgLogo" alt="金鶯診所">
+  <h2>金鶯診所˙醫師回診率分析系統</h2>
+  <div class="role">前台登入</div>
+  <input id="lgUser" placeholder="帳號" autocomplete="username" required>
+  <input id="lgPass" type="password" placeholder="密碼" autocomplete="current-password" required>
+  <button type="submit" id="lgBtn">登入</button>
+  <div class="lg-err" id="lgErr"></div>
+  <div class="lg-note">登入後 6 小時內有效；關閉瀏覽器即登出。</div>
+</form></div>
 <header class="top">
-  <div class="logo"><i>+</i>金鶯診所 ˙ 醫師回診率分析系統</div>
+  <div class="logo"><img id="hdLogo" alt="">金鶯診所 ˙ 醫師回診率分析系統</div>
   <nav class="tabs">
     <button data-page="Analyze" class="on">資料分析</button>
     <button data-page="Report">結果報表</button>
@@ -156,13 +189,14 @@ details summary{cursor:pointer;color:var(--brand2);font-size:13px}
   <div class="right">
     <span id="monthTag"></span>
     <span class="pill" id="connPill"><span class="dot"></span><span id="connText">連線中…</span></span>
+    <span class="who"><span id="whoName"></span><button onclick="logout()">登出</button></span>
   </div>
 </header>
 
 <main>
 <!-- ================= 資料分析 ================= -->
 <section id="pageAnalyze">
-  <div id="noGas" class="warnbox mb hide">尚未設定後台網址（GAS_URL），目前為離線試算模式：可分析與列印，但無法儲存、也無上月增減。部署 Apps Script 後，把網址貼到 index.html 最上方的 GAS_URL 即可。</div>
+  <div id="noGas" class="warnbox mb hide">尚未設定後台網址（GAS_URL）。部署 Apps Script 後，把網址貼到 index.html 最上方的 GAS_URL 即可使用。</div>
   <div class="grid3 mb">
     <div class="card">
       <p class="step">STEP 1 ˙ <b>分析設定</b></p>
@@ -246,6 +280,7 @@ details summary{cursor:pointer;color:var(--brand2);font-size:13px}
         <label class="ck" style="margin:0 6px"><input type="checkbox" id="fitScreen" checked>縮放符合畫面</label>
         <button class="btn" id="btnReload">重新載入資料</button>
         <button class="btn" id="btnXlsx">下載 Excel</button>
+        <span class="imgbox"><select id="imgStyle"><option value="table">圖片：表格版</option><option value="cards">圖片：院區卡片版</option></select><button class="btn" id="btnPng">PNG</button><button class="btn" id="btnJpg">JPEG</button></span>
         <button class="btn pri" id="btnPrint">列印 / 存成 PDF</button>
       </div>
       <div id="repWarn" class="warnbox mb hide"></div>
@@ -266,8 +301,9 @@ const HAS_GAS = /^https:\/\/script\.google\.com\//.test(GAS_URL);
 function toast(msg, err) { const t = $('#toast'); t.textContent = msg; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = 'toast', err ? 6000 : 3000); }
 async function api(action, payload) {
   if (!HAS_GAS) throw new Error('尚未設定後台網址 GAS_URL');
-  const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, payload: payload || {} }) });
+  const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, payload: payload || {}, token: TOKEN }) });
   const j = await res.json();
+  if (j.auth) { showLogin('登入已逾時，請重新登入'); throw new Error('請重新登入'); }
   if (!j.ok) throw new Error(j.error || '後台錯誤');
   return j.data;
 }
@@ -302,16 +338,48 @@ function loadLocal() {
 }
 function cs(cl) { return S.clinics[cl] || (S.clinics[cl] = { inputs: {}, summary: {}, counts: null }); }
 
+
+/* ---------- 登入 ---------- */
+const TOK_KEY = 'rr_tok';
+let TOKEN = (() => { try { return sessionStorage.getItem(TOK_KEY) || ''; } catch (e) { return ''; } })();
+let WHO = (() => { try { return JSON.parse(sessionStorage.getItem(TOK_KEY + '_who') || 'null'); } catch (e) { return null; } })();
+function showLogin(msg) {
+  TOKEN = ''; try { sessionStorage.removeItem(TOK_KEY); } catch (e) {}
+  document.body.classList.add('locked'); $('#login').classList.remove('hide');
+  $('#lgErr').textContent = msg || ''; setTimeout(() => $('#lgUser').focus(), 50);
+}
+$('#lgLogo').src = E.LOGO;
+$('#lgForm').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const btn = $('#lgBtn'); btn.disabled = true; btn.textContent = '登入中…'; $('#lgErr').textContent = '';
+  try {
+    if (!HAS_GAS) throw new Error('尚未設定後台網址 GAS_URL');
+    const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'login', payload: { role: LOGIN_ROLE, user: $('#lgUser').value.trim(), pass: $('#lgPass').value } }) });
+    const j = await res.json(); if (!j.ok) throw new Error(j.error);
+    TOKEN = j.data.token; WHO = j.data;
+    try { sessionStorage.setItem(TOK_KEY, TOKEN); sessionStorage.setItem(TOK_KEY + '_who', JSON.stringify(WHO)); } catch (e) {}
+    $('#lgPass').value = ''; $('#login').classList.add('hide'); document.body.classList.remove('locked');
+    start();
+  } catch (e) { $('#lgErr').textContent = e.message || '登入失敗'; }
+  btn.disabled = false; btn.textContent = '登入';
+});
+async function logout() { try { await api('logout'); } catch (e) {} try { sessionStorage.removeItem(TOK_KEY); sessionStorage.removeItem(TOK_KEY + '_who'); } catch (e) {} location.reload(); }
+const LOGIN_ROLE = 'front';
+$('#hdLogo').src = E.LOGO;
+
 /* ---------- 初始化 ---------- */
-async function init() {
+function init() {
+  if (!HAS_GAS) { document.body.classList.remove('locked'); $('#noGas').classList.remove('hide'); setConn(false, '未設定後台'); return; }
+  if (!TOKEN) return showLogin();
+  document.body.classList.remove('locked'); start();
+}
+async function start() {
+  $('#whoName').textContent = WHO ? WHO.user + (WHO.role === 'admin' ? '（管理者）' : '') : '';
   const now = new Date(); now.setMonth(now.getMonth() - 1);
   S.month = LS.get('rr_month', now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
   $('#month').value = S.month;
-  if (!HAS_GAS) { $('#noGas').classList.remove('hide'); setConn(false, '離線模式'); }
-  else {
-    try { CFG = await api('getConfig'); setConn(true, '後台已連線'); }
-    catch (e) { setConn(false, '後台連線失敗'); toast('後台連線失敗：' + e.message, true); }
-  }
+  try { CFG = await api('getConfig'); setConn(true, '後台已連線'); }
+  catch (e) { setConn(false, '後台連線失敗'); if (!TOKEN) return; toast('後台連線失敗：' + e.message, true); }
   $('#schedUrl').value = LS.get('rr_sched_' + S.month, '') || setting('最近班表連結', '');
   loadLocal(); refreshRule(); renderChips(); selectClinic(S.current || (activeClinics()[0] || {}).name); renderSchedStatus();
   $('#monthTag').textContent = E.monthLabel(S.month);
@@ -440,6 +508,8 @@ function recompute(cl) {
   }
   c.counts = r.doctors; c.unmappedVisit = r.unmappedVisit; c.unmappedBack = r.unmappedBack; c.outside = r.outside;
   c.hasVisit = !!raw.visit; c.hasBack = !!raw.back;
+  if (c.vStats) c.vStats.inRange = allV.filter(inRange).length;
+  if (c.bStats && raw.back) c.bStats.inRange = raw.back.rows.filter(inRange).length;
   c.savedAt = null;
 }
 function countWide(visits, cl, start, end) {
@@ -500,9 +570,9 @@ function selectClinic(cl) {
     <div>
       <div class="slot drop" id="dropOne" style="text-align:left;padding:14px">
         <div class="t"><span>${esc(cl)}_看診名單</span>${c.visitFile ? '<span class="tag g">已讀取</span>' : '<span class="tag y">未放入</span>'}</div>
-        ${c.visitFile ? `<div class="fn">${esc(c.visitFile)}</div><div class="hint">資料 ${vs.total} 筆，排除還卡 ${vs['還卡']}、欠款 ${vs['欠款']}${vs['欠款對沖'] ? '（含對沖 ' + vs['欠款對沖'] + '）' : ''}，納入 <b>${vs.kept}</b> 筆<br>日期 ${vs.from ? E.dayRoc(vs.from) + '～' + E.dayRoc(vs.to) : '-'}</div>` : '<div class="empty">點此或拖曳檔案（可同時放兩個檔）</div>'}
+        ${c.visitFile ? `<div class="fn">${esc(c.visitFile)}</div><div class="hint">資料 ${vs.total} 筆，排除還卡 ${vs['還卡']}、欠款 ${vs['欠款']}${vs['欠款對沖'] ? '（含對沖 ' + vs['欠款對沖'] + '）' : ''}，納入 <b>${vs.kept}</b> 筆<br>日期 ${vs.from ? E.dayRoc(vs.from) + '～' + E.dayRoc(vs.to) : '-'}${vs.inRange !== undefined && vs.inRange < vs.kept ? `<br>區間內 <b>${vs.inRange}</b> 筆列入統計，其餘 ${vs.kept - vs.inRange} 筆僅用來判斷回診` : ''}</div>` : '<div class="empty">點此或拖曳檔案（可同時放兩個檔）</div>'}
         <div class="t" style="margin-top:12px"><span>${esc(cl)}_BACK</span>${c.backFile ? '<span class="tag g">已讀取</span>' : '<span class="tag y">未放入</span>'}</div>
-        ${c.backFile ? `<div class="fn">${esc(c.backFile)}</div><div class="hint">BACK 開立 ${c.bStats.total} 筆</div>` : '<div class="empty">點此或拖曳檔案</div>'}
+        ${c.backFile ? `<div class="fn">${esc(c.backFile)}</div><div class="hint">BACK 開立 ${c.bStats.total} 筆${c.bStats.inRange !== undefined && c.bStats.inRange < c.bStats.total ? `，區間內 <b>${c.bStats.inRange}</b> 筆列入統計` : ''}</div>` : '<div class="empty">點此或拖曳檔案</div>'}
       </div>
       <input type="file" id="fileOne" multiple accept=".xlsx,.xls" class="hide">
       ${stale ? '<div class="warnbox mb">頁面重新開啟後原始檔不在記憶體中，數字仍保留；若要改代碼對照或區間需重新放入檔案。</div>' : ''}
@@ -597,7 +667,7 @@ async function saveClinic(cl) {
 const PRESETS = {
   '完整版': { cols: { hours: 'vd', visits: 'vd', slowN: 'v', slowRate: 'vr', vph: 'vdr', backN: 'v', backRate: 'v', nRevN: 'vd', nRevRate: 'vdr', wRevN: 'vd', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 1 },
   '老闆版': { cols: { hours: 'vd', visits: 'vd', slowN: 'v', slowRate: 'vr', vph: 'vdr', backN: 'v', backRate: 'v', nRevN: 'vd', nRevRate: 'vdr', wRevN: 'vd', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 1 },
-  '院長版': { cols: { slowRate: 'vr', vph: 'vdr', backRate: 'v', nRevRate: 'vdr', wRevRate: 'vdr' }, cs: '', avg: 1, grand: 0, markNew: 0 },
+  '院長版': { cols: { slowRate: 'vr', vph: 'vdr', backRate: 'v', nRevRate: 'vdr', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 0, markNew: 0 },
   '全部欄位': { cols: Object.fromEntries(E.METRICS.map(m => [m.k, 'vdr'])), cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 1 }
 };
 let RPT = { data: null, cfg: LS.get('rr_rptcfg', null), preset: LS.get('rr_preset', '完整版') };
@@ -720,6 +790,34 @@ function fitPaper() {
 $('#paper').onchange = fitPaper; $('#fitScreen').onchange = fitPaper; window.addEventListener('resize', () => { if (RPT.data) fitPaper(); });
 $('#btnPrint').onclick = () => { fitPaper(); window.print(); };
 $('#btnReload').onclick = loadReport;
+async function downloadImage(type) {
+  if (!RPT.data || !RPT.data.records.length) return toast('目前沒有報表資料', true);
+  if (typeof html2canvas === 'undefined') return toast('圖片元件載入失敗，請確認網路後重新整理', true);
+  const btn = type === 'png' ? $('#btnPng') : $('#btnJpg'); busy(btn, true, '產生中');
+  const style = $('#imgStyle').value;
+  const host = document.createElement('div');
+  host.style.cssText = 'position:fixed;left:-20000px;top:0;z-index:-1';
+  const cfg = Object.assign({}, RPT.cfg, { threshold: THRESH(), topColor: +setting('排名標色名次', 5), showLimit: +setting('排名顯示名次', 10), pctDigits: +setting('百分比小數位數', 2), days: DAYS() });
+  host.innerHTML = '<style>' + E.PRETTY_CSS + '</style>' + E.renderPretty(RPT.data, cfg, style);
+  document.body.appendChild(host);
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    await Promise.all(Array.from(host.querySelectorAll('img')).map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; })));
+    const el = host.querySelector('.pretty');
+    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#f2f0eb', useCORS: true, logging: false });
+    const mime = type === 'png' ? 'image/png' : 'image/jpeg';
+    const blob = await new Promise(r => canvas.toBlob(r, mime, 0.95));
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '醫師回診率分析結果_' + E.monthLabel(S.month) + '_' + (style === 'cards' ? '院區卡片版' : '表格版') + (type === 'png' ? '.png' : '.jpg');
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    toast('圖片已下載');
+  } catch (e) { toast('產生圖片失敗：' + e.message, true); }
+  host.remove(); busy(btn, false);
+}
+$('#btnPng').onclick = () => downloadImage('png');
+$('#btnJpg').onclick = () => downloadImage('jpeg');
 $('#btnXlsx').onclick = () => {
   const t = $('#reportArea table'); if (!t) return;
   const wb = XLSX.utils.table_to_book(t, { raw: true });
