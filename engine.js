@@ -270,8 +270,8 @@
     { k: 'slowN',    group: '醫師慢專比例', label: '慢專人次', fmt: 'int', color: '#A79CC2' },
     { k: 'slowRate', group: '醫師慢專比例', label: '慢專比例', fmt: 'pct', color: '#A79CC2', avg: true },
     { k: 'vph',      group: '平均人次/hr', label: '平均人次/hr', fmt: 'n2', color: '#7FA2BF', avg: true },
-    { k: 'backN',    group: 'BACK開立',   label: 'BACK開立數', fmt: 'int', color: '#C8A56E' },
-    { k: 'backRate', group: 'BACK開立',   label: 'BACK開立率', fmt: 'pct', color: '#C8A56E', avg: true },
+    { k: 'backN',    group: 'BACK開立率', label: 'BACK開立數', fmt: 'int', color: '#C8A56E' },
+    { k: 'backRate', group: 'BACK開立率', label: 'BACK開立率', fmt: 'pct', color: '#C8A56E', avg: true },
     { k: 'nRevN',    group: '個人回診率(醫師黏著度)', label: '個人回診數', fmt: 'int', color: '#D29B82' },
     { k: 'nRevRate', group: '個人回診率(醫師黏著度)', label: '個人回診率', fmt: 'pct', color: '#D29B82', avg: true, gated: true },
     { k: 'wRevN',    group: '院所回診率(品牌忠誠度)', label: '院所回診數', fmt: 'int', color: '#86B29A' },
@@ -280,13 +280,17 @@
   const METRIC = {}; METRICS.forEach(m => METRIC[m.k] = m);
 
   /** 依集團全院區排名（數值大者名次前；同值同名次）。個人回診率需 BACK 開立率 ≥ 門檻 */
-  function rankAll(records, threshold) {
+  // 醫師慢專比例排名排除的院區（預設樹林；可在後台系統設定「慢專排名排除院區」調整）
+  const SLOW_KEYS = ['slowN', 'slowRate'];
+  function rankAll(records, threshold, slowExclude) {
     const out = {};
+    const ex = slowExclude == null ? ['樹林'] : slowExclude;
+    const skip = (m, r) => SLOW_KEYS.indexOf(m.k) >= 0 && ex.indexOf(r.clinic) >= 0;
     METRICS.forEach(m => {
       const vals = [];
       records.forEach(r => {
         const v = numOrNull(r[m.k]);
-        if (v === null) return;
+        if (v === null || skip(m, r)) return;
         if (m.gated) { const br = numOrNull(r.backRate); if (br === null || br < threshold) return; }
         vals.push(v);
       });
@@ -295,7 +299,7 @@
         const key = r.clinic + '|' + r.doctor;
         out[key] = out[key] || {};
         const v = numOrNull(r[m.k]);
-        if (v === null) { out[key][m.k] = null; return; }
+        if (v === null || skip(m, r)) { out[key][m.k] = null; return; }
         if (m.gated) { const br = numOrNull(r.backRate); if (br === null || br < threshold) { out[key][m.k] = { none: true }; return; } }
         out[key][m.k] = { rank: 1 + vals.filter(x => x > v + 1e-9).length, n };
       });
@@ -367,7 +371,8 @@
   function renderReport(data, cfg) {
     const pd = cfg.pctDigits == null ? 2 : +cfg.pctDigits;
     const all = data.records || [];
-    const ranks = rankAll(all, cfg.threshold == null ? 0.3 : +cfg.threshold);
+    GROUP_THRESH = cfg.threshold == null ? 0.3 : +cfg.threshold;
+    const ranks = rankAll(all, cfg.threshold == null ? 0.3 : +cfg.threshold, cfg.slowExclude);
     const avg = averages(all);
     const prevMap = {}; (data.prev || []).forEach(r => { prevMap[r.clinic + '|' + r.doctor] = r; prevMap['*' + r.doctor] = prevMap['*' + r.doctor] || r; });
     const csMap = {}; (data.clinicSum || []).forEach(c => csMap[c.clinic] = c);
@@ -519,12 +524,15 @@
   const hexMix = (hex, t, w) => { const f = h => { h = h.replace('#', ''); const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }; const a = f(hex), b = f(t); return 'rgb(' + a.map((x, i) => Math.round(x * (1 - w) + b[i] * w)).join(',') + ')'; };
   const dark = hex => hexMix(hex, '#1d2a28', .45);
   const tint = (hex, w) => hexMix(hex, '#ffffff', w);
-  const groupHtml = g => { const m = String(g).match(/^(.*?)[（(](.*)[)）]$/); return m ? esc(m[1]) + '<br><small class="gsub">（' + esc(m[2]) + '）</small>' : esc(g); };
+  let GROUP_THRESH = 0.3;
+  const groupLabel = g => g === 'BACK開立率' ? g + '(開立率未達' + Math.round(GROUP_THRESH * 100) + '%不列排名)' : g;
+  const groupHtml = g => { g = groupLabel(g); const m = String(g).match(/^(.*?)[（(](.*)[)）]$/); return m ? esc(m[1]) + '<br><small class="gsub">（' + esc(m[2]) + '）</small>' : esc(g); };
   const hexA = (hex, a) => { const h = hex.replace('#', ''); const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; };
 
   function prettyPrep(data, cfg) {
     const all = data.records || [];
-    const ranks = rankAll(all, cfg.threshold == null ? 0.3 : +cfg.threshold);
+    GROUP_THRESH = cfg.threshold == null ? 0.3 : +cfg.threshold;
+    const ranks = rankAll(all, cfg.threshold == null ? 0.3 : +cfg.threshold, cfg.slowExclude);
     const avg = averages(all);
     const prevMap = {}; (data.prev || []).forEach(r => { prevMap[r.clinic + '|' + r.doctor] = r; prevMap['*' + r.doctor] = prevMap['*' + r.doctor] || r; });
     const csMap = {}; (data.clinicSum || []).forEach(c => csMap[c.clinic] = c);
@@ -743,7 +751,7 @@
   .pretty .pr.none{border-color:#d9d4c8;color:#9a988f;font-weight:400}
   .pretty .na{color:#c9c5bb}
   .pretty td.cs,.pretty th.cs{background:#f3f8f6}
-  .pretty .crk{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;border:2px solid #2b5a54;color:#2b5a54;font-weight:700;font-size:19px}
+  .pretty .crk{display:inline-block;width:40px;height:40px;line-height:36px;text-align:center;vertical-align:middle;border-radius:50%;border:2px solid #2b5a54;color:#2b5a54;font-weight:700;font-size:19px;box-sizing:border-box}
   .pretty .crk.top{background:#2b5a54;color:#fff}
   .pretty .p-foot{display:flex;justify-content:space-between;gap:20px;font-size:14px;color:#7b7a72;margin-top:14px}
   .pretty .p-bars{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}

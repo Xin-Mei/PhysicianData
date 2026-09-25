@@ -316,6 +316,7 @@ const RAW = {};   // 院區 → {visit:{rows,...}, back:{rows}}（只存在記�
 
 const setting = (k, d) => { const v = CFG.settings[k]; return v === undefined || v === '' ? d : v; };
 const DAYS = () => +setting('回診判定天數', 5);
+const SLOW_EX = () => String(setting('慢專排名排除院區', '樹林')).split(/[,，、\s]+/).map(x => x.trim()).filter(Boolean);
 const THRESH = () => { let v = +setting('狹義回診排名門檻', 0.3); return v > 1 ? v / 100 : v; };
 const activeClinics = () => CFG.clinics.filter(c => c.active !== false);
 const clinicDoctors = cl => CFG.doctors.filter(d => d.clinic === cl && d.active !== false).sort((a, b) => (+a.order || 999) - (+b.order || 999));
@@ -776,7 +777,7 @@ function renderKpi() {
 function draw() {
   if (!RPT.data) return;
   if (!RPT.data.records.length) { $('#reportArea').innerHTML = '<div class="empty-state">這個月份還沒有資料。請先在「資料分析」放入檔案並儲存各院區。</div>'; return; }
-  const cfg = Object.assign({}, RPT.cfg, { threshold: THRESH(), topColor: +setting('排名標色名次', 5), showLimit: +setting('排名顯示名次', 10), pctDigits: +setting('百分比小數位數', 2) });
+  const cfg = Object.assign({}, RPT.cfg, { threshold: THRESH(), slowExclude: SLOW_EX(), topColor: +setting('排名標色名次', 5), showLimit: +setting('排名顯示名次', 10), pctDigits: +setting('百分比小數位數', 2) });
   $('#reportArea').innerHTML = E.renderReport(RPT.data, cfg);
   fitPaper();
 }
@@ -808,7 +809,7 @@ async function downloadImage(type) {
   const style = $('#imgStyle').value;
   const host = document.createElement('div');
   host.style.cssText = 'position:fixed;left:-20000px;top:0;z-index:-1';
-  const cfg = Object.assign({}, RPT.cfg, { threshold: THRESH(), topColor: +setting('排名標色名次', 5), showLimit: +setting('排名顯示名次', 10), pctDigits: +setting('百分比小數位數', 2), days: DAYS() });
+  const cfg = Object.assign({}, RPT.cfg, { threshold: THRESH(), slowExclude: SLOW_EX(), topColor: +setting('排名標色名次', 5), showLimit: +setting('排名顯示名次', 10), pctDigits: +setting('百分比小數位數', 2), days: DAYS() });
   host.innerHTML = '<style>' + E.PRETTY_CSS + '</style>' + E.renderPretty(RPT.data, cfg, style);
   document.body.appendChild(host);
   try {

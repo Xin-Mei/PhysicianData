@@ -233,6 +233,7 @@ async function api(action, payload) {
 }
 function busy(b, on) { if (on) { b._t = b.innerHTML; b.disabled = true; b.innerHTML = '<span class="spin"></span>'; } else { b.disabled = false; b.innerHTML = b._t; } }
 const setting = (k, d) => { const v = CFG.settings[k]; return v === undefined || v === '' ? d : v; };
+const SLOW_EX = () => String(setting('慢專排名排除院區', '樹林')).split(/[,，、\s]+/).map(x => x.trim()).filter(Boolean);
 const THRESH = () => { let v = +setting('狹義回診排名門檻', 0.3); return v > 1 ? v / 100 : v; };
 const M = E.METRICS;
 const COLS = [['hours', '上診時數', 'h'], ['visits', '看診人次', 'int'], ['slowN', '慢專人次', 'int'], ['slowRate', '慢專比例', 'pct'], ['vph', '平均人次/hr', 'n2'], ['backN', 'BACK開立', 'int'], ['backRate', 'BACK開立率', 'pct'], ['nRevN', '個人回診數', 'int'], ['nRevRate', '個人回診率', 'pct'], ['wRevN', '院所回診數', 'int'], ['wRevRate', '院所回診率', 'pct']];
@@ -304,7 +305,7 @@ async function loadMonths() {
 /* ---------- 共用：月份排名 ---------- */
 function monthRanks(records) {
   const byM = {}; records.forEach(r => (byM[r.month] = byM[r.month] || []).push(r));
-  const out = {}; Object.keys(byM).forEach(m => out[m] = E.rankAll(byM[m], THRESH()));
+  const out = {}; Object.keys(byM).forEach(m => out[m] = E.rankAll(byM[m], THRESH(), SLOW_EX()));
   return out;
 }
 const cell = (r, k, f, rk) => {
@@ -421,7 +422,7 @@ $('#mGo').onclick = async () => {
     M.forEach(x => { const s = P[x.k] || ''; cols[x.k] = { v: s.includes('v'), d: s.includes('d'), r: s.includes('r') }; });
     $('#rptStyle').textContent = E.REPORT_CSS;
     $('#mOut').innerHTML = E.renderReport(Object.assign(d, { clinicOrder: CFG.clinics.map(c => c.name), doctorOrder: ord, titles, analysisDate: m ? (+m[1]) + '/' + (+m[2]) : ad }),
-      { cols, showClinic: { total: 1, slow: 1, rate: 1, rank: 1 }, showAvg: true, showGrand: true, markNew: false, threshold: THRESH(), topColor: +setting('排名標色名次', 5), showLimit: +setting('排名顯示名次', 10), pctDigits: +setting('百分比小數位數', 2) }) +
+      { cols, showClinic: { total: 1, slow: 1, rate: 1, rank: 1 }, showAvg: true, showGrand: true, markNew: false, threshold: THRESH(), slowExclude: SLOW_EX(), topColor: +setting('排名標色名次', 5), showLimit: +setting('排名顯示名次', 10), pctDigits: +setting('百分比小數位數', 2) }) +
       '<p class="hint noprint">要調整顯示欄位、院區或醫師，請到前台「結果報表」。</p>';
   } catch (e) { toast(e.message, true); }
   busy(b, false);
@@ -482,7 +483,7 @@ $('#lSave').onclick = async () => {
 const SET_HELP = {
   '回診判定天數': '看診日後第 1～N 天內回到同一位醫師即算回診', '狹義回診排名門檻': 'BACK 開立率 ≥ 此值才列入個人回診率排名（0.3 = 30%）',
   '排名標色名次': '前幾名以顏色標示', '排名顯示名次': '超過此名次不顯示排名', '班表排除診別關鍵字': '班表 A 欄診別含此文字不計上診時數（逗號分隔）',
-  'BACK醫師別去首碼對應': 'Y = 醫師別找不到對照時，去掉第一碼用醫清單比對', '最近班表連結': '前台預設帶入的班表連結', '百分比小數位數': '報表百分比小數位數'
+  'BACK醫師別去首碼對應': 'Y = 醫師別找不到對照時，去掉第一碼用醫清單比對', '慢專排名排除院區': '這些院區的醫師不列入醫師慢專比例排名（逗號分隔）', '最近班表連結': '前台預設帶入的班表連結', '百分比小數位數': '報表百分比小數位數'
 };
 function renderSettings() {
   const keys = Array.from(new Set(Object.keys(SET_HELP).concat(Object.keys(CFG.settings))));
