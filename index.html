@@ -126,6 +126,7 @@ table.dt td.m{color:var(--muted)}
 .toast{position:fixed;right:24px;bottom:24px;background:#1e3d3a;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px #0003;opacity:0;transform:translateY(10px);transition:.25s;z-index:99;max-width:420px}
 .toast.show{opacity:1;transform:none}.toast.err{background:#9b2c20}
 .hide{display:none!important}
+.mbtns{display:flex;gap:6px;margin-top:6px}.mbtns .btn{flex:1;padding:5px 6px}
 .viewtabs{display:inline-flex;background:#f1eee7;border-radius:10px;padding:3px}
 .viewtabs button{border:0;background:transparent;padding:7px 12px;border-radius:8px;cursor:pointer;font-weight:500;color:#55605d;white-space:nowrap}
 .viewtabs button.on{background:#fff;color:var(--brand);box-shadow:0 1px 3px #0002}
@@ -205,7 +206,8 @@ body.locked header.top,body.locked main{visibility:hidden}
     <div class="card">
       <p class="step">STEP 1 ˙ <b>分析設定</b></p>
       <div class="row mb">
-        <div><label class="f">分析月份</label><input type="month" id="month" class="inp"></div>
+        <div><label class="f">分析月份</label><input type="month" id="month" class="inp">
+          <div class="mbtns"><button type="button" class="btn sm" data-mm="-1">‹ 上月</button><button type="button" class="btn sm" data-mm="0">本月</button><button type="button" class="btn sm" data-mm="1">下月 ›</button></div></div>
         <div><label class="f">分析日期（報表標題）</label><input id="analysisDate" class="inp" placeholder="9/3"></div>
       </div>
       <div class="row mb">
@@ -402,6 +404,13 @@ function refreshRule() {
   $('#ruleText').innerHTML = `回診判定：看診日後 <b>1～${DAYS()}</b> 天內回同一位醫師；個人回診率排名門檻：BACK 開立率 ≥ <b>${Math.round(THRESH() * 100)}%</b>。<br>規則可在後台「系統設定」調整。`;
 }
 
+$$('[data-mm]').forEach(b => b.onclick = () => {
+  const k = +b.dataset.mm; let y, m;
+  if (k === 0) { const t = new Date(); y = t.getFullYear(); m = t.getMonth() + 1; }
+  else { [y, m] = ($('#month').value || S.month).split('-').map(Number); m += k; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } }
+  $('#month').value = y + '-' + String(m).padStart(2, '0');
+  $('#month').dispatchEvent(new Event('change'));
+});
 $('#month').addEventListener('change', e => {
   if (!e.target.value) return;
   saveLocal(); S.month = e.target.value; LS.set('rr_month', S.month);
@@ -683,7 +692,7 @@ const PRESETS = {
   '院長版': { cols: { slowRate: 'vr', vph: 'vdr', backRate: 'v', nRevRate: 'vdr', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 0, markNew: 0 },
   '全部欄位': { cols: Object.fromEntries(E.METRICS.map(m => [m.k, 'vdr'])), cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 0 }
 };
-let RPT = { view: LS.get('rr_view', 'table'), data: null, cfg: LS.get('rr_rptcfg', null), preset: LS.get('rr_preset', '完整版') };
+let RPT = { view: LS.get('rr_view2', 'image'), data: null, cfg: LS.get('rr_rptcfg', null), preset: LS.get('rr_preset', '完整版') };
 function presetToCfg(p) {
   const cols = {}; E.METRICS.forEach(m => { const s = p.cols[m.k] || ''; cols[m.k] = { v: s.includes('v'), d: s.includes('d'), r: s.includes('r') }; });
   const csSet = p.cs.split(',');
@@ -731,11 +740,11 @@ function applyPreset(name) {
   if (name.startsWith('c:')) RPT.cfg = JSON.parse(JSON.stringify(LS.get('rr_custom', {})[name.slice(2)]));
   else RPT.cfg = Object.assign(presetToCfg(PRESETS[name]), keepF);
   RPT.preset = name; LS.set('rr_preset', name); LS.set('rr_rptcfg', RPT.cfg);
-  setView(name === '院長版' ? 'image' : 'table', true);
+  setView(RPT.view === 'visits' ? 'visits' : 'image', true);
   buildCfgUI(); draw();
 }
 function setView(v, silent) {
-  RPT.view = v; LS.set('rr_view', v);
+  RPT.view = v; LS.set('rr_view2', v);
   $$('#viewTabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   $('#imgStyle').classList.toggle('hide', v !== 'image');
   $('#visitNote').classList.toggle('hide', v !== 'visits');

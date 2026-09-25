@@ -635,7 +635,7 @@
           const dd = c.d ? prettyDiff(diffOf(r, prev, m.k), m.fmt, pd) : '';
           const rr = c.r ? prettyRank(rk, m, topC, lim) : '';
           const inner = rankCell(val, dd, rr);
-          h += `<td class="rcell">${inner}</td>`;
+          h += `<td class="rcell${rr && RANK_STYLE === 'corner' ? ' hasrk' : ''}">${inner}</td>`;
         });
         if (csCols.length && ri === 0) {
           const c = P.csMap[cl] || {};
@@ -739,6 +739,8 @@
   .pretty .prk{margin-top:5px}
   .pretty td.rcell{position:relative}
   .pretty.pv-cards td.rcell{padding-top:26px}
+  .pretty .p-tb td.rcell.hasrk{padding-top:28px;padding-right:14px}
+  .pretty .p-tb td.rcell{min-width:96px}
   .pretty.pv-cards .rc{font-size:13px;padding:2px 6px}
   .pretty .cmp{font-size:12.5px;color:#9a988f;margin-right:2px}
   .pretty .rm{display:inline-grid;place-items:center;min-width:32px;height:32px;padding:0 5px;border-radius:16px;font-size:17px;font-weight:800;vertical-align:2px;margin-left:4px;border:1.5px solid transparent;background:#fff;line-height:1}
@@ -811,7 +813,6 @@
           <div class="vz-cmp">${prev[c.clinic] !== undefined ? diff(c.total, prev[c.clinic]) : '<span class="vz-d">上月無資料</span>'}</div>
         </div>`).join('')}</div>
       ${opt.note ? `<div class="vz-note"><span class="tag">${esc(opt.noteLabel || '備註')}</span><span>${esc(opt.note)}</span></div>` : ''}
-      <div class="vz-ft"><span>${today}　金鶯診所</span><span>Confidential — 內部會議使用</span></div>
     </div></div>`;
     return h;
   }
@@ -820,7 +821,7 @@
   .vz{width:1920px;background:#fff;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;color:#1f2a27}
   .vz *{box-sizing:border-box}
   .vz-top{height:16px;background:#1d5c4a}
-  .vz-in{padding:34px 80px 34px}
+  .vz-in{padding:34px 80px 60px}
   .vz-hd{display:flex;justify-content:space-between;align-items:center}
   .vz-brand{display:flex;align-items:center;gap:12px;font-size:24px;font-weight:700;color:#1d5c4a}
   .vz-brand img{width:40px;height:40px;border-radius:50%}
