@@ -243,6 +243,7 @@ body.locked header.top,body.locked main{visibility:hidden}
       <div class="legend"><span><i style="background:#cfcabd"></i>未放檔案</span><span><i style="background:#e0a32e"></i>已分析未儲存</span><span><i style="background:#2fa074"></i>已儲存到後台</span></div>
     </div>
     <div class="chips" id="clinicChips"></div>
+    <div style="text-align:right;margin:-8px 0 10px"><button class="btn sm ghost" id="btnResetLocal" title="清除這台電腦上本月份放過的檔案與輸入值，改顯示後台已儲存的資料">↺ 清除本月暫存，改看後台資料</button></div>
     <div id="clinicPanel"></div>
   </div>
 </section>
@@ -495,6 +496,13 @@ async function handleFiles(files, forceClinic) {
       let parsed;
       if (type !== 'back') { try { parsed = E.parseVisitRows(rows); type = 'visit'; } catch (e) { if (type === 'visit') throw e; } }
       if (!parsed) { parsed = E.parseBackRows(rows); type = 'back'; }
+      // 檢查檔案日期是否落在分析區間（避免放錯月份）
+      const st = E.isoDay($('#dStart').value), en = E.isoDay($('#dEnd').value);
+      const inR = parsed.rows.filter(r => r.day >= st && r.day <= en).length;
+      if (parsed.rows.length && !inR) {
+        const ds = parsed.rows.map(r => r.day);
+        throw new Error('檔案日期 ' + E.dayRoc(Math.min(...ds)) + '～' + E.dayRoc(Math.max(...ds)) + ' 不在分析區間（' + E.monthLabel(S.month) + '），請確認月份或檔案');
+      }
       RAW[cl] = RAW[cl] || {};
       RAW[cl][type] = parsed;
       const c = cs(cl);
@@ -517,6 +525,11 @@ function bindDrop(el, input, clinic) {
   el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('hover'); handleFiles(Array.from(e.dataTransfer.files), clinic); });
 }
 bindDrop($('#dropAll'), $('#fileAll'));
+$('#btnResetLocal').onclick = () => {
+  if (!confirm('清除 ' + E.monthLabel(S.month) + ' 在這台電腦上放過的檔案與輸入值？\n（後台已儲存的資料不受影響，畫面會改顯示後台資料）')) return;
+  S.clinics = {}; Object.keys(RAW).forEach(k => delete RAW[k]); saveLocal(); renderChips(); selectClinic(S.current); loadSaved();
+  toast('已清除本月暫存');
+};
 
 /* ---------- 計算 ---------- */
 function recompute(cl) {
