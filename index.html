@@ -243,7 +243,7 @@ body.locked header.top,body.locked main{visibility:hidden}
       <div class="legend"><span><i style="background:#cfcabd"></i>未放檔案</span><span><i style="background:#e0a32e"></i>已分析未儲存</span><span><i style="background:#2fa074"></i>已儲存到後台</span></div>
     </div>
     <div class="chips" id="clinicChips"></div>
-    <div style="text-align:right;margin:-8px 0 10px"><button class="btn sm ghost" id="btnResetLocal" title="清除這台電腦上本月份放過的檔案與輸入值，改顯示後台已儲存的資料">↺ 清除本月暫存，改看後台資料</button></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin:-8px 0 10px"><button class="btn sm pri" id="btnSaveAll" title="把本月有放檔案或修改過、還沒儲存的院區一次存到後台">⇪ 全部儲存到後台</button><button class="btn sm ghost" id="btnResetLocal" title="清除這台電腦上本月份放過的檔案與輸入值，改顯示後台已儲存的資料">↺ 清除本月暫存，改看後台資料</button></div>
     <div id="clinicPanel"></div>
   </div>
 </section>
@@ -525,6 +525,7 @@ function bindDrop(el, input, clinic) {
   el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('hover'); handleFiles(Array.from(e.dataTransfer.files), clinic); });
 }
 bindDrop($('#dropAll'), $('#fileAll'));
+$('#btnSaveAll').onclick = saveAll;
 $('#btnResetLocal').onclick = () => {
   if (!confirm('清除 ' + E.monthLabel(S.month) + ' 在這台電腦上放過的檔案與輸入值？\n（後台已儲存的資料不受影響，畫面會改顯示後台資料）')) return;
   S.clinics = {}; Object.keys(RAW).forEach(k => delete RAW[k]); saveLocal(); renderChips(); selectClinic(S.current); loadSaved();
@@ -696,24 +697,54 @@ async function saveMaps(cl) {
   } catch (e) { toast('儲存失敗：' + e.message, true); busy(btn, false); }
 }
 
-async function saveClinic(cl) {
+function buildPayload(cl) {
   const c = cs(cl);
   const rows = clinicDoctors(cl).map(d => doctorRow(cl, d)).filter(r => [r.hours, r.visits, r.slowN, r.backN].some(v => v !== null));
-  if (!rows.length) return toast('本院區沒有可儲存的資料', true);
-  const miss = rows.filter(r => r.slowN === null).map(r => r.doctor);
-  if (miss.length && !confirm('以下醫師尚未輸入慢專人次：' + miss.join('、') + '\n仍要儲存嗎？')) return;
+  if (!rows.length) return null;
   const sm = clinicSummary(cl, rows);
-  const payload = { month: S.month, clinic: cl, analysisDate: $('#analysisDate').value.trim(),
+  const ad = $('#analysisDate').value.trim();
+  return { rows, payload: { month: S.month, clinic: cl, analysisDate: ad,
     rows: rows.map(r => ({ doctor: r.doctor, title: r.title, hours: r.hours, patients: r.patients, visits: r.visits, slowN: r.slowN, slowRate: r.slowRate, vph: r.vph,
-      backN: r.backN, backRate: r.backRate, nRevN: r.nRevN, nRevRate: r.nRevRate, wRevN: r.wRevN, wRevRate: r.wRevRate, analysisDate: $('#analysisDate').value.trim(),
+      backN: r.backN, backRate: r.backRate, nRevN: r.nRevN, nRevRate: r.nRevRate, wRevN: r.wRevN, wRevRate: r.wRevRate, analysisDate: ad,
       source: '前台分析 ' + [c.visitFile, c.backFile].filter(Boolean).join(' / ') })),
-    summary: { total: sm.total, slow: sm.slow, slowRate: sm.slowRate } };
+    summary: { total: sm.total, slow: sm.slow, slowRate: sm.slowRate } } };
+}
+async function saveClinic(cl) {
+  const c = cs(cl);
+  const b = buildPayload(cl);
+  if (!b) return toast('本院區沒有可儲存的資料', true);
+  const miss = b.rows.filter(r => r.slowN === null).map(r => r.doctor);
+  if (miss.length && !confirm('以下醫師尚未輸入慢專人次：' + miss.join('、') + '\n仍要儲存嗎？')) return;
   const btn = $('#btnSave'); busy(btn, true, '儲存中');
   try {
-    await api('saveClinicMonth', payload);
+    await api('saveClinicMonth', b.payload);
     c.savedAt = new Date().toLocaleString('zh-TW'); c.dirty = false; saveLocal(); loadSaved();
-    toast(cl + ' 已儲存（' + rows.length + ' 位醫師）');
+    toast(cl + ' 已儲存（' + b.rows.length + ' 位醫師）');
   } catch (e) { toast('儲存失敗：' + e.message, true); busy(btn, false); }
+}
+/** 批次儲存：把本月「有放檔案或改過數字、還沒儲存」的院區一次存到後台 */
+async function saveAll() {
+  const todo = activeClinics().map(c => c.name).filter(cl => { const c = S.clinics[cl]; return c && c.dirty && !c.savedAt; });
+  if (!todo.length) return toast('目前沒有需要儲存的院區（都已儲存，或尚未放入檔案／修改）');
+  const plans = todo.map(cl => ({ cl, b: buildPayload(cl) })).filter(x => x.b);
+  const miss = [];
+  plans.forEach(x => { const m = x.b.rows.filter(r => r.slowN === null).map(r => r.doctor); if (m.length) miss.push(x.cl + '：' + m.join('、')); });
+  const noTotal = plans.filter(x => x.b.payload.summary.total === null).map(x => x.cl);
+  let msg = '將儲存以下 ' + plans.length + ' 個院區到後台：\n' + plans.map(x => x.cl).join('、');
+  if (miss.length) msg += '\n\n⚠ 尚未輸入慢專人次：\n' + miss.join('\n');
+  if (noTotal.length) msg += '\n\n⚠ 尚未輸入院區總人次：' + noTotal.join('、');
+  if (!confirm(msg + '\n\n確定儲存嗎？')) return;
+  const btn = $('#btnSaveAll'); busy(btn, true, '儲存中');
+  const ok = [], fail = [];
+  for (let i = 0; i < plans.length; i++) {
+    const { cl, b } = plans[i];
+    btn.innerHTML = '<span class="spin"></span> 儲存中 ' + (i + 1) + '/' + plans.length;
+    try { await api('saveClinicMonth', b.payload); const c = cs(cl); c.savedAt = new Date().toLocaleString('zh-TW'); c.dirty = false; ok.push(cl); }
+    catch (e) { fail.push(cl + '（' + e.message + '）'); if (/重新登入/.test(e.message)) break; }
+  }
+  saveLocal(); busy(btn, false); loadSaved();
+  if (fail.length) toast('已儲存 ' + ok.length + ' 院區；失敗：' + fail.join('、'), true);
+  else toast('已儲存 ' + ok.length + ' 個院區：' + ok.join('、'));
 }
 
 /* ================= 結果報表 ================= */
