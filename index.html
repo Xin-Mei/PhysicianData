@@ -350,6 +350,20 @@ function loadLocal() {
   }
   Object.keys(RAW).forEach(k => delete RAW[k]);
 }
+/* ---------- 原始檔案內容保存在這台電腦（IndexedDB），重新整理後不用再放一次檔案 ---------- */
+const IDB = {
+  db() { return new Promise((ok, no) => { try { const q = indexedDB.open('rr_raw_db', 1); q.onupgradeneeded = () => q.result.createObjectStore('raw'); q.onsuccess = () => ok(q.result); q.onerror = () => no(q.error); } catch (e) { no(e); } }); },
+  async put(k, v) { try { const d = await this.db(); await new Promise((ok, no) => { const t = d.transaction('raw', 'readwrite'); t.objectStore('raw').put(v, k); t.oncomplete = ok; t.onerror = () => no(t.error); }); } catch (e) {} },
+  async get(k) { try { const d = await this.db(); return await new Promise(ok => { const q = d.transaction('raw').objectStore('raw').get(k); q.onsuccess = () => ok(q.result); q.onerror = () => ok(null); }); } catch (e) { return null; } }
+};
+const rawKey = () => 'raw_' + S.month;
+function persistRaw() { const o = {}; Object.keys(RAW).forEach(k => o[k] = RAW[k]); IDB.put(rawKey(), o); }
+async function restoreRaw() {
+  const m = S.month; const o = await IDB.get(rawKey());
+  if (!o || m !== S.month) return;
+  Object.keys(o).forEach(cl => { RAW[cl] = o[cl]; if (S.clinics[cl]) recompute(cl, true); });
+  renderChips(); if (S.current) selectClinic(S.current);
+}
 function cs(cl) { return S.clinics[cl] || (S.clinics[cl] = { inputs: {}, summary: {}, counts: null }); }
 
 
@@ -402,7 +416,7 @@ async function start() {
   catch (e) { setConn(false, '後台連線失敗'); if (!TOKEN) return; toast('後台連線失敗：' + e.message, true); }
   $('#schedUrl').value = LS.get('rr_sched_' + S.month, '') || setting('最近班表連結', '');
   loadLocal(); refreshRule(); renderChips(); selectClinic(S.current || (activeClinics()[0] || {}).name); renderSchedStatus();
-  loadSaved();
+  loadSaved(); restoreRaw();
   $('#monthTag').textContent = E.monthLabel(S.month);
 }
 async function loadSaved() {
@@ -428,7 +442,7 @@ $('#month').addEventListener('change', e => {
   saveLocal(); S.month = e.target.value; LS.set('rr_month', S.month);
   $('#monthTag').textContent = E.monthLabel(S.month);
   $('#schedUrl').value = LS.get('rr_sched_' + S.month, '') || setting('最近班表連結', '');
-  S.saved = null; loadLocal(); renderChips(); selectClinic(S.current); renderSchedStatus(); loadSaved();
+  S.saved = null; loadLocal(); renderChips(); selectClinic(S.current); renderSchedStatus(); loadSaved(); restoreRaw();
   if (!$('#pageReport').classList.contains('hide')) loadReport();
 });
 ['#analysisDate', '#dStart', '#dEnd'].forEach(id => $(id).addEventListener('change', () => { saveLocal(); if (id !== '#analysisDate') { recomputeAll(); toast('區間已變更，如需請重新讀取班表'); } }));
@@ -512,7 +526,7 @@ async function handleFiles(files, forceClinic) {
     } catch (e) { fail.push(f.name + '：' + e.message); }
   }
   new Set(res).forEach(cl => recompute(cl));
-  saveLocal(); renderChips();
+  saveLocal(); persistRaw(); renderChips();
   if (res.length) selectClinic(forceClinic || res[res.length - 1]);
   if (fail.length) toast('部分檔案無法讀取：' + fail.join('；'), true);
   else if (res.length) toast('已讀取 ' + res.length + ' 個檔案');
@@ -528,12 +542,12 @@ bindDrop($('#dropAll'), $('#fileAll'));
 $('#btnSaveAll').onclick = saveAll;
 $('#btnResetLocal').onclick = () => {
   if (!confirm('清除 ' + E.monthLabel(S.month) + ' 在這台電腦上放過的檔案與輸入值？\n（後台已儲存的資料不受影響，畫面會改顯示後台資料）')) return;
-  S.clinics = {}; Object.keys(RAW).forEach(k => delete RAW[k]); saveLocal(); renderChips(); selectClinic(S.current); loadSaved();
+  S.clinics = {}; Object.keys(RAW).forEach(k => delete RAW[k]); saveLocal(); persistRaw(); renderChips(); selectClinic(S.current); loadSaved();
   toast('已清除本月暫存');
 };
 
 /* ---------- 計算 ---------- */
-function recompute(cl) {
+function recompute(cl, keep) {
   const raw = RAW[cl]; if (!raw) return;
   const c = cs(cl);
   const start = E.isoDay($('#dStart').value), end = E.isoDay($('#dEnd').value);
@@ -554,10 +568,10 @@ function recompute(cl) {
     Object.keys(w).forEach(d => { if (!r.doctors[d]) r.doctors[d] = { patients: (inR.doctors[d] || {}).patients || 0, backN: 0, nRevN: 0, wRevN: w[d] }; });
   }
   c.counts = r.doctors; c.unmappedVisit = r.unmappedVisit; c.unmappedBack = r.unmappedBack; c.rawCodes = r.rawCodes; c.outside = r.outside;
-  c.hasVisit = !!raw.visit; c.hasBack = !!raw.back; c.dirty = true;
+  c.hasVisit = !!raw.visit; c.hasBack = !!raw.back;
   if (c.vStats) c.vStats.inRange = allV.filter(inRange).length;
   if (c.bStats && raw.back) c.bStats.inRange = raw.back.rows.filter(inRange).length;
-  c.savedAt = null;
+  if (!keep) { c.dirty = true; c.savedAt = null; }
 }
 function countWide(visits, cl, start, end) {
   const vmap = {}; CFG.visitMap.filter(x => x.clinic === cl && x.active !== false).forEach(x => vmap[E.normCode(x.code)] = x.doctor);
@@ -617,7 +631,10 @@ function selectClinic(cl) {
   const rows = docs.map(d => doctorRow(cl, d));
   const sm = clinicSummary(cl, rows);
   const vs = c.vStats, stale = (c.visitFile && !RAW[cl]?.visit) || (c.backFile && !RAW[cl]?.back);
-  const unV = Object.entries(c.unmappedVisit || {}), unB = Object.entries(c.unmappedBack || {});
+  const mappedV = new Set(CFG.visitMap.filter(x => x.clinic === cl && x.active !== false).map(x => E.normCode(x.code)));
+  const mappedB = new Set(CFG.backMap.filter(x => x.clinic === cl && x.active !== false).map(x => E.normCode(x.code)));
+  const unV = Object.entries(c.unmappedVisit || {}).filter(([k]) => !mappedV.has(E.normCode(k)));
+  const unB = Object.entries(c.unmappedBack || {}).filter(([k]) => !mappedB.has(E.normCode(k)) && !mappedV.has(E.normCode(String(k).slice(1))));
   const docOpts = ['<option value="">— 指定醫師 —</option>'].concat(CFG.doctors.filter(d => d.active !== false).map(d => `<option ${d.clinic === cl ? '' : 'data-other'} value="${esc(d.name)}">${esc(d.name)}${d.clinic === cl ? '' : '（' + esc(d.clinic) + '）'}</option>`)).concat(['<option value="不列入">不列入（支援／其他）</option>']).join('');
   const f = (v, t) => E.fmt(v, t, 2);
   $('#clinicPanel').innerHTML = `
@@ -630,7 +647,7 @@ function selectClinic(cl) {
         ${c.backFile ? `<div class="fn">${esc(c.backFile)}</div><div class="hint">BACK 開立 ${c.bStats.total} 筆${c.bStats.inRange !== undefined && c.bStats.inRange < c.bStats.total ? `，區間內 <b>${c.bStats.inRange}</b> 筆列入統計` : ''}</div>` : '<div class="empty">點此或拖曳檔案</div>'}
       </div>
       <input type="file" id="fileOne" multiple accept=".xlsx,.xls" class="hide">
-      ${stale ? '<div class="warnbox mb">頁面重新開啟後原始檔不在記憶體中，數字仍保留；若要改代碼對照或區間需重新放入檔案。</div>' : ''}
+      ${stale ? '<div class="warnbox mb">⚠ 原始檔案不在這台電腦的暫存中（可能是換電腦或瀏覽器清除過資料），目前數字可能不是最新的對照結果，請重新放入這個院區的檔案。</div>' : ''}
       ${(unV.length || unB.length) ? `<div class="warnbox map"><b>有代碼尚未對應醫師</b>（對應後自動重算並寫入後台清單）<div class="hint">BACK 醫師別會自動去掉第一碼比對（123 → 醫 23；101 → 醫 01），通常只要對應「醫」代碼即可；支援醫師選「不列入」。</div>
         ${unV.map(([k, n]) => { const raw = ((c.rawCodes || {}).visit || {})[k] || k; return `<div class="it"><span class="tag b">醫 ${esc(raw)}</span><span style="white-space:nowrap;flex:0 0 58px">${n} 筆</span><select data-map="visit" data-code="${esc(raw)}">${docOpts}</select></div>`; }).join('')}
         ${unB.map(([k, n]) => { const raw = ((c.rawCodes || {}).back || {})[k] || k; return `<div class="it"><span class="tag p">醫師別 ${esc(raw)}</span><span style="white-space:nowrap;flex:0 0 58px">${n} 筆</span><select data-map="back" data-code="${esc(raw)}">${docOpts}</select></div>`; }).join('')}
@@ -676,7 +693,7 @@ function selectClinic(cl) {
   $('#sumTotal').addEventListener('change', e => { c.summary.total = e.target.value.trim(); c.savedAt = null; c.dirty = true; saveLocal(); selectClinic(cl); });
   $('#sumSlow').addEventListener('change', e => { const v = e.target.value.trim(); if (v === '') { c.summary.slowManual = false; delete c.summary.slow; } else { c.summary.slow = v; c.summary.slowManual = true; } c.savedAt = null; c.dirty = true; saveLocal(); selectClinic(cl); });
   $('#btnSave').onclick = () => saveClinic(cl);
-  $('#btnClear').onclick = () => { if (!confirm('清除「' + cl + '」本月已放入的檔案與輸入值？（不影響後台已儲存資料）')) return; delete S.clinics[cl]; delete RAW[cl]; saveLocal(); selectClinic(cl); };
+  $('#btnClear').onclick = () => { if (!confirm('清除「' + cl + '」本月已放入的檔案與輸入值？（不影響後台已儲存資料）')) return; delete S.clinics[cl]; delete RAW[cl]; persistRaw(); saveLocal(); selectClinic(cl); };
   const bm = $('#btnMap'); if (bm) bm.onclick = () => saveMaps(cl);
 }
 function grandTotal() { return activeClinics().reduce((a, c) => { const s = (S.clinics[c.name] || {}).summary || {}; const v = s.total !== undefined && s.total !== '' ? E.numOrNull(s.total) : E.numOrNull((savedSum(c.name) || {}).total); return a + (v || 0); }, 0); }
