@@ -539,7 +539,7 @@ function recompute(cl) {
     Object.keys(r.doctors).forEach(d => r.doctors[d].wRevN = w[d] || 0);
     Object.keys(w).forEach(d => { if (!r.doctors[d]) r.doctors[d] = { patients: (inR.doctors[d] || {}).patients || 0, backN: 0, nRevN: 0, wRevN: w[d] }; });
   }
-  c.counts = r.doctors; c.unmappedVisit = r.unmappedVisit; c.unmappedBack = r.unmappedBack; c.outside = r.outside;
+  c.counts = r.doctors; c.unmappedVisit = r.unmappedVisit; c.unmappedBack = r.unmappedBack; c.rawCodes = r.rawCodes; c.outside = r.outside;
   c.hasVisit = !!raw.visit; c.hasBack = !!raw.back; c.dirty = true;
   if (c.vStats) c.vStats.inRange = allV.filter(inRange).length;
   if (c.bStats && raw.back) c.bStats.inRange = raw.back.rows.filter(inRange).length;
@@ -617,9 +617,9 @@ function selectClinic(cl) {
       </div>
       <input type="file" id="fileOne" multiple accept=".xlsx,.xls" class="hide">
       ${stale ? '<div class="warnbox mb">頁面重新開啟後原始檔不在記憶體中，數字仍保留；若要改代碼對照或區間需重新放入檔案。</div>' : ''}
-      ${(unV.length || unB.length) ? `<div class="warnbox map"><b>有代碼尚未對應醫師</b>（對應後自動重算並寫入後台清單）<div class="hint">BACK 醫師別會自動去掉第一碼比對（123 → 醫 23），通常只要對應「醫」代碼即可；支援醫師選「不列入」。</div>
-        ${unV.map(([k, n]) => `<div class="it"><span class="tag b">醫 ${esc(k)}</span><span style="white-space:nowrap;flex:0 0 58px">${n} 筆</span><select data-map="visit" data-code="${esc(k)}">${docOpts}</select></div>`).join('')}
-        ${unB.map(([k, n]) => `<div class="it"><span class="tag p">醫師別 ${esc(k)}</span><span style="white-space:nowrap;flex:0 0 58px">${n} 筆</span><select data-map="back" data-code="${esc(k)}">${docOpts}</select></div>`).join('')}
+      ${(unV.length || unB.length) ? `<div class="warnbox map"><b>有代碼尚未對應醫師</b>（對應後自動重算並寫入後台清單）<div class="hint">BACK 醫師別會自動去掉第一碼比對（123 → 醫 23；101 → 醫 01），通常只要對應「醫」代碼即可；支援醫師選「不列入」。</div>
+        ${unV.map(([k, n]) => { const raw = ((c.rawCodes || {}).visit || {})[k] || k; return `<div class="it"><span class="tag b">醫 ${esc(raw)}</span><span style="white-space:nowrap;flex:0 0 58px">${n} 筆</span><select data-map="visit" data-code="${esc(raw)}">${docOpts}</select></div>`; }).join('')}
+        ${unB.map(([k, n]) => { const raw = ((c.rawCodes || {}).back || {})[k] || k; return `<div class="it"><span class="tag p">醫師別 ${esc(raw)}</span><span style="white-space:nowrap;flex:0 0 58px">${n} 筆</span><select data-map="back" data-code="${esc(raw)}">${docOpts}</select></div>`; }).join('')}
         <button class="btn sm pri" id="btnMap" style="margin-top:6px">儲存對照並重算</button></div>` : ''}
       ${(c.outside || []).filter(n => n !== '不列入').length ? `<div class="info" style="margin-top:10px">以下醫師代碼有資料但不屬於本院區醫師清單，不列入報表：${c.outside.map(esc).join('、')}</div>` : ''}
     </div>

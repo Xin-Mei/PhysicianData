@@ -55,7 +55,7 @@
       const pid = id.replace(/^0+(?=\d)/, '');
       const day = rocDay(g(r, '日期'));
       if (day === null) continue;
-      all.push({ id: pid, name: String(g(r, '姓名') || '').trim(), day, code: normCode(g(r, '醫')), note: String(g(r, '說明') == null ? '' : g(r, '說明')),
+      all.push({ id: pid, name: String(g(r, '姓名') || '').trim(), day, code: normCode(g(r, '醫')), rawCode: String(g(r, '醫') == null ? '' : g(r, '醫')).trim(), note: String(g(r, '說明') == null ? '' : g(r, '說明')),
                  debt: num(g(r, '欠款')), sub: num(g(r, '小計')), reg: num(g(r, '掛號費')), line: i + 1 });
     }
     const ex = new Array(all.length).fill('');
@@ -92,7 +92,7 @@
       if (day === null) continue;
       const pid = id.replace(/^0+(?=\d)/, '');
       if (H['藥代'] !== undefined) { const dc = String(g(r, '藥代') || '').toUpperCase(); if (dc && dc.indexOf('BACK') < 0) continue; }
-      out.push({ id: pid, name: String(g(r, '姓名') || '').trim(), day, code: normCode(g(r, '醫師別')), line: i + 1 });
+      out.push({ id: pid, name: String(g(r, '姓名') || '').trim(), day, code: normCode(g(r, '醫師別')), rawCode: String(g(r, '醫師別') == null ? '' : g(r, '醫師別')).trim(), line: i + 1 });
     }
     return { rows: out };
   }
@@ -114,7 +114,7 @@
       if (opt.stripFirst !== false && code.length > 1) { const c2 = normCode(code.slice(1)); if (vmap[c2]) return vmap[c2]; }
       return null;
     };
-    const res = {}; const unmappedV = {}, unmappedB = {};
+    const res = {}; const unmappedV = {}, unmappedB = {}, rawV = {}, rawB = {};  // rawV/rawB：檔案上原本的寫法（如 01）
     const doctorSet = new Set(opt.doctors || []);
     const ensure = n => res[n] || (res[n] = { patients: 0, backN: 0, nRevN: 0, wRevN: 0 });
     // 索引：病患|醫師 → 看診日
@@ -123,7 +123,7 @@
       const d = docOf(v.code);
       const key = v.id + '|' + (d || ('#' + v.code));
       (idx[key] = idx[key] || []).push(v.day);
-      if (!d) { unmappedV[v.code] = (unmappedV[v.code] || 0) + 1; return; }
+      if (!d) { unmappedV[v.code] = (unmappedV[v.code] || 0) + 1; rawV[v.code] = rawV[v.code] || v.rawCode || v.code; return; }
       if (d === '不列入') return;
       ensure(d).patients++;
     });
@@ -136,13 +136,13 @@
     // BACK 開立數與個人回診
     backs.forEach(b => {
       const d = backDocOf(b.code);
-      if (!d) { unmappedB[b.code] = (unmappedB[b.code] || 0) + 1; return; }
+      if (!d) { unmappedB[b.code] = (unmappedB[b.code] || 0) + 1; rawB[b.code] = rawB[b.code] || b.rawCode || b.code; return; }
       if (d === '不列入') return;
       const o = ensure(d); o.backN++;
       if (hasRevisit(b.id + '|' + d, b.day)) o.nRevN++;
     });
     const outside = Object.keys(res).filter(n => !doctorSet.has(n));
-    return { doctors: res, unmappedVisit: unmappedV, unmappedBack: unmappedB, outside };
+    return { doctors: res, unmappedVisit: unmappedV, unmappedBack: unmappedB, rawCodes: { visit: rawV, back: rawB }, outside };
   }
 
   /** 由原始數字算比例（數值皆取至小數點後兩位；比例以小數存，0.1580 = 15.80%） */
