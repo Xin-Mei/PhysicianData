@@ -642,16 +642,20 @@ function doctorRow(cl, d) {
 }
 /** 院區總人次預設＝看診名單分析區間內的總筆數（已排除還卡、欠款；含不列入的支援醫師） */
 function visitTotal(cl) { const v = (S.clinics[cl] || {}).vStats; if (!v || !(S.clinics[cl] || {}).visitFile) return null; return v.inRange !== undefined ? v.inRange : (v.kept ?? null); }
+/** 院區慢箋人次預設＝慢箋檔分析區間內的總筆數（含不列入的支援醫師） */
+function slowFileTotal(cl) { const c = S.clinics[cl] || {}; if (!c.slowFile || !c.sStats) return null; return c.sStats.inRange !== undefined ? c.sStats.inRange : (c.sStats.total ?? null); }
 function clinicSummary(cl, rows) {
   const c = cs(cl); const s = c.summary || (c.summary = {});
   const autoSlow = rows.reduce((a, r) => a + (r.slowN || 0), 0);
   const ss = savedSum(cl);
   const localSlow = !!c.slowCounts || Object.values(c.inputs || {}).some(i => i.slowN !== undefined && i.slowN !== '');
-  const slow = s.slowManual ? E.numOrNull(s.slow) : (!localSlow && ss && E.numOrNull(ss.slow) !== null ? E.numOrNull(ss.slow) : (rows.some(r => r.slowN !== null) ? autoSlow : null));
+  const fileSlow = slowFileTotal(cl);   // 有放慢箋檔：院區慢箋人次＝檔案總筆數（含支援醫師）
+  const slowSrc = s.slowManual ? 'manual' : (fileSlow !== null ? 'file' : (!localSlow && ss && E.numOrNull(ss.slow) !== null ? 'saved' : 'sum'));
+  const slow = slowSrc === 'manual' ? E.numOrNull(s.slow) : slowSrc === 'file' ? fileSlow : slowSrc === 'saved' ? E.numOrNull(ss.slow) : (rows.some(r => r.slowN !== null) ? autoSlow : null);
   const autoTotal = visitTotal(cl);
   const totalManual = s.total !== undefined && s.total !== '';
   const total = totalManual ? E.numOrNull(s.total) : (autoTotal !== null ? autoTotal : (ss ? E.numOrNull(ss.total) : null));
-  return { total, slow, slowRate: total && slow !== null ? E.r4(slow / total) : null, autoSlow, autoTotal, totalManual };
+  return { total, slow, slowRate: total && slow !== null ? E.r4(slow / total) : null, autoSlow, autoTotal, totalManual, slowSrc, fileSlow };
 }
 
 /* ---------- 院區畫面 ---------- */
@@ -708,10 +712,10 @@ function selectClinic(cl) {
           <td>${r.nRevN ?? ''}</td><td>${f(r.nRevRate, 'pct')}${r.backRate !== null && r.backRate < THRESH() ? ' <span class="tag y" title="開立率未達門檻，不列排名">不排名</span>' : ''}</td>
           <td>${r.wRevN ?? ''}</td><td>${f(r.wRevRate, 'pct')}</td></tr>`; }).join('') || '<tr><td colspan="12" class="empty-state">此院區尚無醫師，請到後台「醫師清單」新增</td></tr>'}
         </tbody></table></div>
-      <div class="hint" style="margin-top:6px">綠底＝系統帶入（班表、看診名單、慢箋檔）；黃底＝已手動修改（清空即恢復系統值）。院區總人次預設為看診名單總筆數（含支援醫師，已排除還卡、欠款）。看診人次預設由看診名單自動計算，可手動修改；平均人次/hr、慢專比例、BACK開立率、院所回診率都以「看診人次」計算。</div>
+      <div class="hint" style="margin-top:6px">綠底＝系統帶入（班表、看診名單、慢箋檔）；黃底＝已手動修改（清空即恢復系統值）。院區總人次預設為看診名單總筆數（含支援醫師，已排除還卡、欠款）；院區慢箋人次預設為慢箋檔總筆數（含支援醫師）。看診人次預設由看診名單自動計算，可手動修改；平均人次/hr、慢專比例、BACK開立率、院所回診率都以「看診人次」計算。</div>
       <div class="sum">
         <div class="box"><div class="l">院區總人次 ${sm.totalManual ? '<span class="tag y">手動</span>' : (sm.autoTotal !== null ? '<span class="tag g">看診名單</span>' : '')}</div><input id="sumTotal" class="${sm.totalManual ? 'man' : (sm.autoTotal !== null ? 'auto' : '')}" value="${sm.total ?? ''}" placeholder="輸入" title="${sm.autoTotal !== null ? '預設為看診名單總筆數（' + sm.autoTotal + '，已排除還卡、欠款），可手動修改；清空即恢復' : '放入看診名單後自動帶入，或手動輸入'}"></div>
-        <div class="box"><div class="l">院區慢箋人次 ${c.summary.slowManual ? '<span class="tag y">手動</span>' : '<span class="tag g">醫師加總</span>'}</div><input id="sumSlow" value="${sm.slow ?? ''}"></div>
+        <div class="box"><div class="l">院區慢箋人次 ${sm.slowSrc === 'manual' ? '<span class="tag y">手動</span>' : sm.slowSrc === 'file' ? '<span class="tag g">慢箋檔</span>' : sm.slowSrc === 'saved' ? '<span class="tag g">後台</span>' : '<span class="tag g">醫師加總</span>'}</div><input id="sumSlow" class="${sm.slowSrc === 'manual' ? 'man' : (sm.slowSrc === 'file' ? 'auto' : '')}" value="${sm.slow ?? ''}" title="${sm.fileSlow !== null ? '預設為慢箋檔總筆數（' + sm.fileSlow + '，含支援醫師），可手動修改；清空即恢復' : '沒放慢箋檔時為各醫師慢專人次加總，可手動修改'}"></div>
         <div class="box"><div class="l">院區慢箋比例</div><div class="v">${f(sm.slowRate, 'pct') || '-'}</div></div>
         <div class="box"><div class="l">全院區總人次（目前加總）</div><div class="v">${grandTotal().toLocaleString()}</div></div>
       </div>
