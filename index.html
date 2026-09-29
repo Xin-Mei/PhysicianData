@@ -406,14 +406,21 @@ function init() {
   if (!TOKEN) return showLogin();
   document.body.classList.remove('locked'); start();
 }
+let CFG_OK = false; const cfgWaiters = [];
+const cfgReady = () => CFG_OK ? Promise.resolve(true) : new Promise(r => cfgWaiters.push(r));
 async function start() {
   resetIdle();
   $('#whoName').textContent = WHO ? WHO.user + (WHO.role === 'admin' ? '（管理者）' : '') : '';
   const now = new Date(); now.setMonth(now.getMonth() - 1);
   S.month = LS.get('rr_month', now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
   $('#month').value = S.month;
-  try { CFG = await api('getConfig'); setConn(true, '後台已連線'); }
-  catch (e) { setConn(false, '後台連線失敗'); if (!TOKEN) return; toast('後台連線失敗：' + e.message, true); }
+  const slowT = setTimeout(() => toast('後台連線較慢（Google 伺服器喚醒中），請稍候…'), 6000);
+  let ok = false;
+  for (let i = 0; i < 3 && !ok; i++) {
+    try { CFG = await api('getConfig'); ok = true; setConn(true, '後台已連線'); }
+    catch (e) { if (!TOKEN) { clearTimeout(slowT); return; } if (i === 2) { setConn(false, '後台連線失敗'); toast('後台連線失敗：' + e.message + '（請重新整理）', true); } else await new Promise(r => setTimeout(r, 1500)); }
+  }
+  clearTimeout(slowT); CFG_OK = ok; cfgWaiters.splice(0).forEach(f => f(ok));
   $('#schedUrl').value = LS.get('rr_sched_' + S.month, '') || setting('最近班表連結', '');
   loadLocal(); refreshRule(); renderChips(); selectClinic(S.current || (activeClinics()[0] || {}).name); renderSchedStatus();
   loadSaved(); restoreRaw();
@@ -500,10 +507,11 @@ function guessClinic(fname) {
   return c ? c.name : null;
 }
 async function handleFiles(files, forceClinic) {
+  if (!CFG_OK) { toast('等待後台連線完成後自動讀取檔案…'); const ok = await cfgReady(); if (!ok) return toast('後台未連線，無法判斷院區，請重新整理後再放入檔案', true); }
   const res = []; let fail = [];
   for (const f of files) {
     const cl = forceClinic || guessClinic(f.name);
-    if (!cl) { fail.push(f.name + '（無法判斷院區）'); continue; }
+    if (!cl) { fail.push(f.name + '（院區清單找不到「' + f.name.replace(/\.[^.]+$/, '').split(/[_＿\-\s]/)[0] + '」，請確認檔名或後台院區清單）'); continue; }
     try {
       const rows = await readFile(f);
       let type = /慢箋|慢專/.test(f.name) ? 'slow' : /BACK/i.test(f.name) ? 'back' : /看診/.test(f.name) ? 'visit' : null;
