@@ -232,7 +232,7 @@ body.locked header.top,body.locked main{visibility:hidden}
     </div>
     <div class="card">
       <p class="step">STEP 3 ˙ <b>批次放入檔案</b></p>
-      <div class="drop" id="dropAll"><b>把所有院區的 Excel 一次拖曳到這裡</b>檔名如「觀音_看診名單.XLSX」「觀音_BACK.XLSX」<br>系統會依檔名自動分到各院區</div>
+      <div class="drop" id="dropAll"><b>把所有院區的 Excel 一次拖曳到這裡</b>檔名如「觀音_看診名單」「觀音_BACK」「觀音_慢箋」<br>系統會依檔名自動分到各院區</div>
       <input type="file" id="fileAll" multiple accept=".xlsx,.xls" class="hide">
     </div>
   </div>
@@ -506,9 +506,10 @@ async function handleFiles(files, forceClinic) {
     if (!cl) { fail.push(f.name + '（無法判斷院區）'); continue; }
     try {
       const rows = await readFile(f);
-      let type = /BACK/i.test(f.name) ? 'back' : /看診/.test(f.name) ? 'visit' : null;
+      let type = /慢箋|慢專/.test(f.name) ? 'slow' : /BACK/i.test(f.name) ? 'back' : /看診/.test(f.name) ? 'visit' : null;
       let parsed;
-      if (type !== 'back') { try { parsed = E.parseVisitRows(rows); type = 'visit'; } catch (e) { if (type === 'visit') throw e; } }
+      if (type === 'slow') parsed = E.parseSlowRows(rows);
+      else if (type !== 'back') { try { parsed = E.parseVisitRows(rows); type = 'visit'; } catch (e) { if (type === 'visit') throw e; } }
       if (!parsed) { parsed = E.parseBackRows(rows); type = 'back'; }
       // 檢查檔案日期是否落在分析區間（避免放錯月份）
       const st = E.isoDay($('#dStart').value), en = E.isoDay($('#dEnd').value);
@@ -521,6 +522,7 @@ async function handleFiles(files, forceClinic) {
       RAW[cl][type] = parsed;
       const c = cs(cl);
       if (type === 'visit') { c.visitFile = f.name; c.vStats = { total: parsed.totalRows, kept: parsed.rows.length, ...parsed.stats, from: parsed.minDay, to: parsed.maxDay }; }
+      else if (type === 'slow') { c.slowFile = f.name; c.sStats = { total: parsed.rows.length }; }
       else { c.backFile = f.name; c.bStats = { total: parsed.rows.length }; }
       res.push(cl);
     } catch (e) { fail.push(f.name + '：' + e.message); }
@@ -568,6 +570,15 @@ function recompute(cl, keep) {
     Object.keys(w).forEach(d => { if (!r.doctors[d]) r.doctors[d] = { patients: (inR.doctors[d] || {}).patients || 0, backN: 0, nRevN: 0, wRevN: w[d] }; });
   }
   c.counts = r.doctors; c.unmappedVisit = r.unmappedVisit; c.unmappedBack = r.unmappedBack; c.rawCodes = r.rawCodes; c.outside = r.outside;
+  c.slowCounts = null;
+  if (raw.slow) {
+    const sr = raw.slow.rows.filter(inRange);
+    const sc = E.countSlow(sr, { clinic: cl, visitMap: CFG.visitMap });
+    c.slowCounts = sc.counts;
+    c.sStats = Object.assign(c.sStats || {}, { total: raw.slow.rows.length, inRange: sr.length });
+    c.rawCodes = c.rawCodes || { visit: {}, back: {} };
+    Object.entries(sc.unmapped).forEach(([k, n]) => { c.unmappedVisit[k] = (c.unmappedVisit[k] || 0) + n; c.rawCodes.visit[k] = c.rawCodes.visit[k] || sc.raw[k]; });
+  }
   c.hasVisit = !!raw.visit; c.hasBack = !!raw.back;
   if (c.vStats) c.vStats.inRange = allV.filter(inRange).length;
   if (c.bStats && raw.back) c.bStats.inRange = raw.back.rows.filter(inRange).length;
@@ -592,13 +603,14 @@ function savedSum(cl) { return ((S.saved || {}).clinicSum || []).find(r => r.cli
 function doctorRow(cl, d) {
   const c = cs(cl); const inp = c.inputs[d.name] || (c.inputs[d.name] = {});
   const cnt = c.counts ? (c.counts[d.name] || { patients: 0, backN: 0, nRevN: 0, wRevN: 0 }) : null;
-  const sv = cnt ? null : savedRec(cl, d.name);   // 沒放檔案時，帶入後台已儲存的資料
+  const sv = savedRec(cl, d.name);   // 沒放的檔案項目，帶入後台已儲存的資料
   const svn = k => sv ? E.numOrNull(sv[k]) : null;
   const schedH = (S.schedHours[cl] || {})[d.name];
   const hours = inp.hoursManual ? inp.hours : (schedH !== undefined ? schedH : (inp.hours !== undefined ? inp.hours : svn('hours')));
   const patients = cnt && c.hasVisit ? cnt.patients : svn('patients');
   const visits = inp.visitsManual ? inp.visits : (cnt && c.hasVisit ? patients : svn('visits'));
-  const slowN = inp.slowN !== undefined && inp.slowN !== '' ? inp.slowN : svn('slowN');
+  const slowFromFile = c.slowCounts ? (c.slowCounts[d.name] || 0) : null;
+  const slowN = inp.slowN !== undefined && inp.slowN !== '' ? inp.slowN : (slowFromFile !== null ? slowFromFile : svn('slowN'));
   const base = {
     doctor: d.name, title: d.title, hours: E.numOrNull(hours), patients, visits: E.numOrNull(visits), slowN: E.numOrNull(slowN),
     backN: cnt && c.hasBack ? cnt.backN : svn('backN'), nRevN: cnt && c.hasBack && c.hasVisit ? cnt.nRevN : svn('nRevN'), wRevN: cnt && c.hasVisit ? cnt.wRevN : svn('wRevN')
@@ -610,7 +622,7 @@ function clinicSummary(cl, rows) {
   const c = cs(cl); const s = c.summary || (c.summary = {});
   const autoSlow = rows.reduce((a, r) => a + (r.slowN || 0), 0);
   const ss = savedSum(cl);
-  const localSlow = Object.values(c.inputs || {}).some(i => i.slowN !== undefined && i.slowN !== '');
+  const localSlow = !!c.slowCounts || Object.values(c.inputs || {}).some(i => i.slowN !== undefined && i.slowN !== '');
   const slow = s.slowManual ? E.numOrNull(s.slow) : (!localSlow && ss && E.numOrNull(ss.slow) !== null ? E.numOrNull(ss.slow) : (rows.some(r => r.slowN !== null) ? autoSlow : null));
   const total = s.total !== undefined && s.total !== '' ? E.numOrNull(s.total) : (ss ? E.numOrNull(ss.total) : null);
   return { total, slow, slowRate: total && slow !== null ? E.r4(slow / total) : null, autoSlow };
@@ -630,7 +642,7 @@ function selectClinic(cl) {
   const c = cs(cl), docs = clinicDoctors(cl);
   const rows = docs.map(d => doctorRow(cl, d));
   const sm = clinicSummary(cl, rows);
-  const vs = c.vStats, stale = (c.visitFile && !RAW[cl]?.visit) || (c.backFile && !RAW[cl]?.back);
+  const vs = c.vStats, stale = (c.visitFile && !RAW[cl]?.visit) || (c.backFile && !RAW[cl]?.back) || (c.slowFile && !RAW[cl]?.slow);
   const mappedV = new Set(CFG.visitMap.filter(x => x.clinic === cl && x.active !== false).map(x => E.normCode(x.code)));
   const mappedB = new Set(CFG.backMap.filter(x => x.clinic === cl && x.active !== false).map(x => E.normCode(x.code)));
   const unV = Object.entries(c.unmappedVisit || {}).filter(([k]) => !mappedV.has(E.normCode(k)));
@@ -645,9 +657,11 @@ function selectClinic(cl) {
         ${c.visitFile ? `<div class="fn">${esc(c.visitFile)}</div><div class="hint">資料 ${vs.total} 筆，排除還卡 ${vs['還卡']}、欠款 ${vs['欠款']}${vs['欠款對沖'] ? '（含對沖 ' + vs['欠款對沖'] + '）' : ''}，納入 <b>${vs.kept}</b> 筆<br>日期 ${vs.from ? E.dayRoc(vs.from) + '～' + E.dayRoc(vs.to) : '-'}${vs.inRange !== undefined && vs.inRange < vs.kept ? `<br>區間內 <b>${vs.inRange}</b> 筆列入統計，其餘 ${vs.kept - vs.inRange} 筆僅用來判斷回診` : ''}</div>` : '<div class="empty">點此或拖曳檔案（可同時放兩個檔）</div>'}
         <div class="t" style="margin-top:12px"><span>${esc(cl)}_BACK</span>${c.backFile ? '<span class="tag g">已讀取</span>' : '<span class="tag y">未放入</span>'}</div>
         ${c.backFile ? `<div class="fn">${esc(c.backFile)}</div><div class="hint">BACK 開立 ${c.bStats.total} 筆${c.bStats.inRange !== undefined && c.bStats.inRange < c.bStats.total ? `，區間內 <b>${c.bStats.inRange}</b> 筆列入統計` : ''}</div>` : '<div class="empty">點此或拖曳檔案</div>'}
+        <div class="t" style="margin-top:12px"><span>${esc(cl)}_慢箋 <small class="hint">（選填）</small></span>${c.slowFile ? '<span class="tag g">已讀取</span>' : '<span class="tag y">未放入</span>'}</div>
+        ${c.slowFile ? `<div class="fn">${esc(c.slowFile)}</div><div class="hint">慢箋 ${c.sStats.total} 筆${c.sStats.inRange !== undefined && c.sStats.inRange < c.sStats.total ? `，區間內 <b>${c.sStats.inRange}</b> 筆` : ''}，已自動帶入各醫師慢專人次</div>` : '<div class="empty">放入後自動計算慢專人次；沒放就維持手動輸入</div>'}
       </div>
       <input type="file" id="fileOne" multiple accept=".xlsx,.xls" class="hide">
-      ${stale ? '<div class="warnbox mb">⚠ 原始檔案不在這台電腦的暫存中（可能是換電腦或瀏覽器清除過資料），目前數字可能不是最新的對照結果，請重新放入這個院區的檔案。</div>' : ''}
+      ${stale ? '<div class="warnbox mb">⚠ 這個院區的原始檔案不在這台電腦的暫存中，目前數字是舊的計算結果（可能還沒套用醫師對照）。請重新放入這個院區的兩個檔案：<br><button class="btn sm pri" style="margin-top:8px" id="btnReDrop">重新放入 ' + esc(cl) + ' 的檔案</button></div>' : ''}
       ${(unV.length || unB.length) ? `<div class="warnbox map"><b>有代碼尚未對應醫師</b>（對應後自動重算並寫入後台清單）<div class="hint">BACK 醫師別會自動去掉第一碼比對（123 → 醫 23；101 → 醫 01），通常只要對應「醫」代碼即可；支援醫師選「不列入」。</div>
         ${unV.map(([k, n]) => { const raw = ((c.rawCodes || {}).visit || {})[k] || k; return `<div class="it"><span class="tag b">醫 ${esc(raw)}</span><span style="white-space:nowrap;flex:0 0 58px">${n} 筆</span><select data-map="visit" data-code="${esc(raw)}">${docOpts}</select></div>`; }).join('')}
         ${unB.map(([k, n]) => { const raw = ((c.rawCodes || {}).back || {})[k] || k; return `<div class="it"><span class="tag p">醫師別 ${esc(raw)}</span><span style="white-space:nowrap;flex:0 0 58px">${n} 筆</span><select data-map="back" data-code="${esc(raw)}">${docOpts}</select></div>`; }).join('')}
@@ -662,13 +676,13 @@ function selectClinic(cl) {
           return `<tr><td class="k">${esc(r.doctor)}<span class="hint">${esc(r.title)}</span></td>
           <td><input data-f="hours" data-d="${esc(r.doctor)}" value="${r.hours ?? ''}" class="${inp.hoursManual ? 'man' : (r.hours !== null ? 'auto' : '')}" title="預設帶入班表時數，可手動修改"></td>
           <td><input data-f="visits" data-d="${esc(r.doctor)}" value="${r.visits ?? ''}" class="${inp.visitsManual ? 'man' : (r.visits !== null ? 'auto' : '')}" title="預設帶入系統依看診名單計算的人次${r.patients !== null && r.patients !== undefined ? '（' + r.patients + '）' : ''}，可手動修改"></td>
-          <td><input data-f="slowN" data-d="${esc(r.doctor)}" value="${inp.slowN !== undefined && inp.slowN !== '' ? inp.slowN : (r.slowN ?? '')}" placeholder="輸入"></td>
+          <td><input data-f="slowN" data-d="${esc(r.doctor)}" value="${r.slowN ?? ''}" class="${inp.slowN !== undefined && inp.slowN !== '' ? (c.slowCounts ? 'man' : '') : (c.slowCounts ? 'auto' : '')}" placeholder="輸入" title="${c.slowCounts ? '由慢箋檔自動計算' + (c.slowCounts[r.doctor] !== undefined ? '（' + c.slowCounts[r.doctor] + '）' : '') + '，可手動修改；清空即恢復' : '手動輸入，或放入「' + esc(cl) + '_慢箋」檔自動計算'}"></td>
           <td>${f(r.slowRate, 'pct')}</td><td>${f(r.vph, 'n2')}</td>
           <td>${r.backN ?? ''}</td><td>${f(r.backRate, 'pct')}</td>
           <td>${r.nRevN ?? ''}</td><td>${f(r.nRevRate, 'pct')}${r.backRate !== null && r.backRate < THRESH() ? ' <span class="tag y" title="開立率未達門檻，不列排名">不排名</span>' : ''}</td>
           <td>${r.wRevN ?? ''}</td><td>${f(r.wRevRate, 'pct')}</td></tr>`; }).join('') || '<tr><td colspan="12" class="empty-state">此院區尚無醫師，請到後台「醫師清單」新增</td></tr>'}
         </tbody></table></div>
-      <div class="hint" style="margin-top:6px">綠底＝系統帶入；黃底＝已手動修改（清空即恢復系統值）。看診人次預設由看診名單自動計算，可手動修改；平均人次/hr、慢專比例、BACK開立率、院所回診率都以「看診人次」計算。</div>
+      <div class="hint" style="margin-top:6px">綠底＝系統帶入（班表、看診名單、慢箋檔）；黃底＝已手動修改（清空即恢復系統值）。看診人次預設由看診名單自動計算，可手動修改；平均人次/hr、慢專比例、BACK開立率、院所回診率都以「看診人次」計算。</div>
       <div class="sum">
         <div class="box"><div class="l">院區總人次（手動輸入，老闆看）</div><input id="sumTotal" value="${sm.total ?? ''}" placeholder="輸入"></div>
         <div class="box"><div class="l">院區慢箋人次 ${c.summary.slowManual ? '<span class="tag y">手動</span>' : '<span class="tag g">醫師加總</span>'}</div><input id="sumSlow" value="${sm.slow ?? ''}"></div>
@@ -683,9 +697,10 @@ function selectClinic(cl) {
     </div>
   </div>`;
   bindDrop($('#dropOne'), $('#fileOne'), cl);
+  const rd = $('#btnReDrop'); if (rd) rd.onclick = () => $('#fileOne').click();
   $$('#clinicPanel input[data-f]').forEach(el => el.addEventListener('change', () => {
     const inp = c.inputs[el.dataset.d] || (c.inputs[el.dataset.d] = {}); const v = el.value.trim(); const k = el.dataset.f;
-    if (k === 'slowN') inp.slowN = v;
+    if (k === 'slowN') { if (v === '') delete inp.slowN; else inp.slowN = v; }
     else if (v === '') { delete inp[k]; delete inp[k + 'Manual']; }
     else { inp[k] = v; inp[k + 'Manual'] = true; }
     c.savedAt = null; c.dirty = true; saveLocal(); selectClinic(cl);
