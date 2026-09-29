@@ -810,13 +810,13 @@ async function saveAll() {
 }
 
 /* ================= 結果報表 ================= */
+const PRESET_LABEL = { '完整版': '完整版／老闆版' };
 const PRESETS = {
   '完整版': { cols: { hours: 'vd', visits: 'vd', slowN: 'v', slowRate: 'vr', vph: 'vdr', backN: 'v', backRate: 'v', nRevN: 'vd', nRevRate: 'vdr', wRevN: 'vd', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 0 },
-  '老闆版': { cols: { hours: 'vd', visits: 'vd', slowN: 'v', slowRate: 'vr', vph: 'vdr', backN: 'v', backRate: 'v', nRevN: 'vd', nRevRate: 'vdr', wRevN: 'vd', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 0 },
-  '院長版': { cols: { slowRate: 'vr', vph: 'vdr', backRate: 'v', nRevRate: 'vdr', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 0, markNew: 0 },
-  '全部欄位': { cols: Object.fromEntries(E.METRICS.map(m => [m.k, 'vdr'])), cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 0 }
+  '院長版': { cols: { slowRate: 'vr', vph: 'vdr', backRate: 'v', nRevRate: 'vdr', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 0, markNew: 0 }
 };
 let RPT = { view: LS.get('rr_view2', 'image'), data: null, cfg: LS.get('rr_rptcfg', null), preset: LS.get('rr_preset', '完整版') };
+if (RPT.preset === '老闆版' || RPT.preset === '全部欄位') RPT.preset = '完整版';
 function presetToCfg(p) {
   const cols = {}; E.METRICS.forEach(m => { const s = p.cols[m.k] || ''; cols[m.k] = { v: s.includes('v'), d: s.includes('d'), r: s.includes('r') }; });
   const csSet = p.cs.split(',');
@@ -824,7 +824,7 @@ function presetToCfg(p) {
 }
 function buildCfgUI() {
   const customs = LS.get('rr_custom', {});
-  $('#presetBtns').innerHTML = Object.keys(PRESETS).map(k => `<button class="btn ${RPT.preset === k ? 'on' : ''}" data-p="${k}">${k}</button>`).join('');
+  $('#presetBtns').innerHTML = Object.keys(PRESETS).map(k => `<button class="btn ${RPT.preset === k ? 'on' : ''}" data-p="${k}">${PRESET_LABEL[k] || k}</button>`).join('');
   $$('#presetBtns .btn').forEach(b => b.onclick = () => { applyPreset(b.dataset.p); });
   $('#customSel').innerHTML = '<option value="">— 自訂版型 —</option>' + Object.keys(customs).map(k => `<option ${RPT.preset === 'c:' + k ? 'selected' : ''}>${esc(k)}</option>`).join('');
   // 欄位矩陣
