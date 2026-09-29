@@ -224,12 +224,25 @@ const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySel
 const HAS_GAS = /^https:\/\/script\.google\.com\//.test(GAS_URL);
 let CFG = JSON.parse(JSON.stringify(E.DEFAULT_CONFIG));
 function toast(m, err) { const t = $('#toast'); t.textContent = m; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = 'toast', err ? 6000 : 3000); }
-async function api(action, payload) {
-  if (!HAS_GAS) throw new Error('尚未設定 GAS_URL');
-  const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, payload: payload || {}, token: TOKEN }) });
-  const j = await res.json();
+async function api(action, payload, _try) {
+  if (!HAS_GAS) throw new Error('尚未設定後台網址 GAS_URL');
+  let txt = '';
+  try {
+    const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, payload: payload || {}, token: TOKEN }) });
+    txt = await res.text();
+  } catch (e) { if (!_try) { await new Promise(r => setTimeout(r, 2000)); return api(action, payload, 1); } throw new Error('網路連線失敗，請確認網路後再試一次'); }
+  let j;
+  try { j = JSON.parse(txt); }
+  catch (e) {
+    // Google 回傳錯誤網頁（伺服器忙碌或程式錯誤）：自動重試一次，仍失敗就把 Google 的錯誤訊息顯示出來
+    if (!_try) { await new Promise(r => setTimeout(r, 2500)); return api(action, payload, 1); }
+    const d = new DOMParser().parseFromString(txt, 'text/html');
+    const msg = ((d.querySelector('.errorMessage, #error, div[style*="margin"]') || d.body || {}).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 160);
+    throw new Error('Google 後台回傳錯誤頁' + (msg ? '：「' + msg + '」' : '') + '。請稍後再按一次儲存；若持續發生，請到 Apps Script「執行項目」查看錯誤');
+  }
   if (j.auth) { showLogin('登入已逾時，請重新登入'); throw new Error('請重新登入'); }
-  if (!j.ok) throw new Error(j.error || '後台錯誤'); return j.data;
+  if (!j.ok) throw new Error(j.error || '後台錯誤');
+  return j.data;
 }
 function busy(b, on) { if (on) { b._t = b.innerHTML; b.disabled = true; b.innerHTML = '<span class="spin"></span>'; } else { b.disabled = false; b.innerHTML = b._t; } }
 const setting = (k, d) => { const v = CFG.settings[k]; return v === undefined || v === '' ? d : v; };
