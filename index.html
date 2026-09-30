@@ -210,7 +210,7 @@ body.locked header.top,body.locked main{visibility:hidden}
   <div id="noGas" class="warnbox mb hide">尚未設定後台網址（GAS_URL）。部署 Apps Script 後，把網址貼到 index.html 最上方的 GAS_URL 即可使用。</div>
   <div class="grid3 mb">
     <div class="card">
-      <p class="step">STEP 1 ˙ <b>分析設定</b></p>
+      <p class="step">STEP 1 · <b>分析設定</b></p>
       <div class="row mb">
         <div><label class="f">分析月份</label><input type="month" id="month" class="inp">
           <div class="mbtns"><button type="button" class="btn sm" data-mm="-1">‹ 上月</button><button type="button" class="btn sm" data-mm="0">本月</button><button type="button" class="btn sm" data-mm="1">下月 ›</button></div></div>
@@ -223,7 +223,7 @@ body.locked header.top,body.locked main{visibility:hidden}
       <div class="info"><span>ⓘ</span><span id="ruleText"></span></div>
     </div>
     <div class="card">
-      <p class="step">STEP 2 ˙ <b>上診時數（班表連結）</b></p>
+      <p class="step">STEP 2 · <b>上診時數（班表連結）</b></p>
       <label class="f">班表 Google Sheet 連結（每月替換）</label>
       <div class="row mb" style="gap:8px">
         <input id="schedUrl" class="inp" style="flex:4" placeholder="https://docs.google.com/spreadsheets/d/…">
@@ -233,7 +233,7 @@ body.locked header.top,body.locked main{visibility:hidden}
       <details class="hint" style="margin-top:8px"><summary>查看各院區讀取結果</summary><div id="schedDetail" class="ex-list"></div></details>
     </div>
     <div class="card">
-      <p class="step">STEP 3 ˙ <b>批次放入檔案</b></p>
+      <p class="step">STEP 3 · <b>批次放入檔案</b></p>
       <div class="drop" id="dropAll"><b>把所有院區的 Excel 一次拖曳到這裡</b>檔名如「觀音_看診名單」「觀音_BACK」「觀音_慢箋」<br>系統會依檔名自動分到各院區</div>
       <input type="file" id="fileAll" multiple accept=".xlsx,.xls" class="hide">
     </div>
@@ -241,7 +241,7 @@ body.locked header.top,body.locked main{visibility:hidden}
 
   <div class="card">
     <div class="row" style="flex-wrap:wrap;margin-bottom:6px">
-      <p class="step" style="margin:0;flex:0 0 auto">STEP 4 ˙ <b>各院區資料</b></p>
+      <p class="step" style="margin:0;flex:0 0 auto">STEP 4 · <b>各院區資料</b></p>
       <div class="legend"><span><i style="background:#cfcabd"></i>未放檔案</span><span><i style="background:#e0a32e"></i>已分析未儲存</span><span><i style="background:#2fa074"></i>已儲存到後台</span></div>
     </div>
     <div class="chips" id="clinicChips"></div>
