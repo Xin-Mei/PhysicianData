@@ -1,4 +1,4 @@
-/* 金鶯診所˙醫師回診率分析系統 — 共用計算核心 engine.js
+/* 金鶯診所 · 醫師回診率分析系統 — 共用計算核心 engine.js
  * 前台 index.html 與後台 admin.html 共用；不需修改。
  */
 (function (root) {
@@ -649,7 +649,7 @@
     if (variant === 'cards') h += prettyCards(P, cfg, pd, topC, lim);
     else h += prettyTable(P, cfg, pd, topC, lim, data);
 
-    h += `<div class="p-foot"><span>排名：集團全院區醫師排名，前 ${topC} 名實心標示、${lim} 名以後不顯示；個人回診率僅排 BACK 開立率 ≥ ${Math.round((cfg.threshold == null ? .3 : cfg.threshold) * 100)}% 之醫師。▲▼ 為與上月相比。</span><span>金鶯診所˙醫師回診率分析系統</span></div></div>`;
+    h += `<div class="p-foot"><span>排名：集團全院區醫師排名，前 ${topC} 名實心標示、${lim} 名以後不顯示；個人回診率僅排 BACK 開立率 ≥ ${Math.round((cfg.threshold == null ? .3 : cfg.threshold) * 100)}% 之醫師。▲▼ 為與上月相比。</span><span>金鶯診所 · 醫師回診率分析系統</span></div></div>`;
     return h;
   }
 
