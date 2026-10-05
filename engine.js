@@ -651,7 +651,9 @@
     [['slowRate', '醫師慢專比例'], ['vph', '平均人次/hr'], ['nRevRate', '個人回診率'], ['wRevRate', '院所回診率']].forEach(([k, l]) => {
       if (P.avg[k] !== null) avgs.push([l, fmt(P.avg[k], METRIC[k].fmt, pd)]);
     });
-    let h = `<div class="pretty pv-${variant}">
+    const only = !!cfg.tableOnly;   // 主管版：只輸出醫師數據表（不含標題、全院區總人次、集團平均、註解）
+    const onlyCap = only ? `<div class="p-cap">${esc(P.clinics.length && P.clinics.length <= 4 ? P.clinics.join('、') : '全院區')} · ${esc(month)}</div>` : '';
+    let h = `<div class="pretty pv-${variant}${only ? ' p-only' : ''}">` + (only ? onlyCap : `
       <div class="p-head">
         <img src="${LOGO}" class="p-logo" alt="">
         <div class="p-t"><div class="p-org">金鶯診所 Elite Clinic</div><div class="p-title">${esc(month)} 醫師回診率分析結果${data.analysisDate ? '<small>（' + esc(data.analysisDate) + '分析）</small>' : ''}</div></div>
@@ -659,13 +661,13 @@
       <div class="p-kpis">
         ${P.grand ? `<div class="p-kpi tot"><div class="l">全院區總人次</div><div class="v">${P.grand.toLocaleString()}</div><div class="s">${P.pgrand ? '較上月 ' + prettyDiff(P.grand - P.pgrand, 'int') : '<em style="margin:0">上月無資料</em>'}</div></div>` : ''}
         ${avgs.length ? `<div class="p-kpi p-avg"><div class="l">集團平均</div><div class="avg-row">${avgs.map(a => `<div class="ai"><div class="al">${a[0]}</div><div class="av">${a[1]}</div></div>`).join('')}</div></div>` : ''}
-      </div>`;
+      </div>`);
 
     if (variant === 'cards') h += prettyCards(P, cfg, pd, topC, lim);
     else h += prettyTable(P, cfg, pd, topC, lim, data);
 
-    h += `<div class="p-foot"><span>排名：集團全院區醫師排名，前 ${topC} 名實心標示、${lim} 名以後不顯示；個人回診率僅排 BACK 開立率 ≥ ${Math.round((cfg.threshold == null ? .3 : cfg.threshold) * 100)}% 之醫師。▲▼ 為與上月相比。</span><span>金鶯診所 · 醫師回診率分析系統</span></div></div>`;
-    return h;
+    if (!only) h += `<div class="p-foot"><span>排名：集團全院區醫師排名，前 ${topC} 名實心標示、${lim} 名以後不顯示；個人回診率僅排 BACK 開立率 ≥ ${Math.round((cfg.threshold == null ? .3 : cfg.threshold) * 100)}% 之醫師。▲▼ 為與上月相比。</span><span>金鶯診所 · 醫師回診率分析系統</span></div>`;
+    return h + '</div>';
   }
 
   function prettyTable(P, cfg, pd, topC, lim, data) {
@@ -754,6 +756,9 @@
 
   const PRETTY_CSS = `
   .pretty{width:max-content;min-width:1680px;background:#f2f0eb;padding:36px 40px 28px;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;color:#1d2a28;box-sizing:border-box}
+  .pretty.p-only{padding:24px 28px}
+  .pretty.p-only .p-cap{font-size:22px;font-weight:700;color:#24534c;letter-spacing:.06em;margin:0 0 14px 4px}
+  .pretty.p-only .p-tw{margin-top:0}
   .pretty *{box-sizing:border-box}
   .pretty .p-head{display:flex;align-items:center;gap:22px;background:#1e3d3a;color:#fff;border-radius:22px;padding:22px 30px}
   .pretty .p-logo{width:78px;height:78px;border-radius:50%;background:#fff;padding:3px}

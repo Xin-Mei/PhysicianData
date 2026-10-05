@@ -282,6 +282,7 @@ body.locked header.top,body.locked main{visibility:hidden}
       <h4>其他</h4>
       <label class="ck"><input type="checkbox" id="optAvg">集團平均值列</label>
       <label class="ck"><input type="checkbox" id="optGrand">全院區總人次加總</label>
+      <label class="ck"><input type="checkbox" id="optOnly">美化圖片只顯示醫師數據表（不含標題、全院區總人次、集團平均）</label>
     </div>
 
     <div class="card preview">
@@ -813,14 +814,15 @@ async function saveAll() {
 const PRESET_LABEL = { '完整版': '完整版／老闆版' };
 const PRESETS = {
   '完整版': { cols: { hours: 'vd', visits: 'vd', slowN: 'v', slowRate: 'vr', vph: 'vdr', backN: 'v', backRate: 'v', nRevN: 'vd', nRevRate: 'vdr', wRevN: 'vd', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 0 },
-  '院長版': { cols: { slowRate: 'vr', vph: 'vdr', backRate: 'v', nRevRate: 'vdr', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 0, markNew: 0 }
+  '院長版': { cols: { slowRate: 'vr', vph: 'vdr', backRate: 'v', nRevRate: 'vdr', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 0, markNew: 0 },
+  '主管版': { cols: { hours: 'vd', visits: 'vd', slowN: 'v', slowRate: 'vr', vph: 'vdr', backN: 'v', backRate: 'v', nRevN: 'vd', nRevRate: 'vdr', wRevN: 'vd', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 0, grand: 0, markNew: 0, only: 1 }
 };
 let RPT = { view: LS.get('rr_view2', 'image'), data: null, cfg: LS.get('rr_rptcfg', null), preset: LS.get('rr_preset', '完整版') };
 if (RPT.preset === '老闆版' || RPT.preset === '全部欄位') RPT.preset = '完整版';
 function presetToCfg(p) {
   const cols = {}; E.METRICS.forEach(m => { const s = p.cols[m.k] || ''; cols[m.k] = { v: s.includes('v'), d: s.includes('d'), r: s.includes('r') }; });
   const csSet = p.cs.split(',');
-  return { cols, showClinic: { total: csSet.includes('total'), slow: csSet.includes('slow'), rate: csSet.includes('rate'), rank: csSet.includes('rank') }, showAvg: !!p.avg, showGrand: !!p.grand, markNew: !!p.markNew };
+  return { cols, showClinic: { total: csSet.includes('total'), slow: csSet.includes('slow'), rate: csSet.includes('rate'), rank: csSet.includes('rank') }, showAvg: !!p.avg, showGrand: !!p.grand, markNew: !!p.markNew, tableOnly: !!p.only };
 }
 function buildCfgUI() {
   const customs = LS.get('rr_custom', {});
@@ -841,6 +843,7 @@ function buildCfgUI() {
   $('#optAvg').checked = RPT.cfg.showAvg; $('#optGrand').checked = RPT.cfg.showGrand;
   $('#optAvg').onchange = e => { RPT.cfg.showAvg = e.target.checked; custom(); };
   $('#optGrand').onchange = e => { RPT.cfg.showGrand = e.target.checked; custom(); };
+  $('#optOnly').checked = !!RPT.cfg.tableOnly; $('#optOnly').onchange = e => { RPT.cfg.tableOnly = e.target.checked; custom(); };
   buildFilterUI();
 }
 function buildFilterUI() {
