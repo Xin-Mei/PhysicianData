@@ -676,7 +676,7 @@ function selectClinic(cl) {
   const mappedV = new Set(CFG.visitMap.filter(x => x.clinic === cl && x.active !== false).map(x => E.normCode(x.code)));
   const mappedB = new Set(CFG.backMap.filter(x => x.clinic === cl && x.active !== false).map(x => E.normCode(x.code)));
   const unV = Object.entries(c.unmappedVisit || {}).filter(([k]) => !mappedV.has(E.normCode(k)));
-  const unB = Object.entries(c.unmappedBack || {}).filter(([k]) => !mappedB.has(E.normCode(k)) && !mappedV.has(E.normCode(String(k).slice(1))));
+  const unB = Object.entries(c.unmappedBack || {}).filter(([k]) => !mappedB.has(E.normCode(k)) && !mappedV.has(String(k).length > 2 ? E.normCode(String(k).slice(1)) : E.normCode(k)));
   const docOpts = ['<option value="">— 指定醫師 —</option>'].concat(CFG.doctors.filter(d => d.active !== false).map(d => `<option ${d.clinic === cl ? '' : 'data-other'} value="${esc(d.name)}">${esc(d.name)}${d.clinic === cl ? '' : '（' + esc(d.clinic) + '）'}</option>`)).concat(['<option value="不列入">不列入（支援／其他）</option>']).join('');
   const f = (v, t) => E.fmt(v, t, 2);
   $('#clinicPanel').innerHTML = `
@@ -692,7 +692,7 @@ function selectClinic(cl) {
       </div>
       <input type="file" id="fileOne" multiple accept=".xlsx,.xls" class="hide">
       ${stale ? '<div class="warnbox mb">⚠ 這個院區的原始檔案不在這台電腦的暫存中，目前數字是舊的計算結果（可能還沒套用醫師對照）。請重新放入這個院區的兩個檔案：<br><button class="btn sm pri" style="margin-top:8px" id="btnReDrop">重新放入 ' + esc(cl) + ' 的檔案</button></div>' : ''}
-      ${(unV.length || unB.length) ? `<div class="warnbox map"><b>有代碼尚未對應醫師</b>（對應後自動重算並寫入後台清單）<div class="hint">BACK 醫師別會自動去掉第一碼比對（123 → 醫 23；101 → 醫 01），通常只要對應「醫」代碼即可；支援醫師選「不列入」。</div>
+      ${(unV.length || unB.length) ? `<div class="warnbox map"><b>有代碼尚未對應醫師</b>（對應後自動重算並寫入後台清單）<div class="hint">BACK 醫師別若是 3 碼會自動去掉第一碼比對（197 → 醫 97），2 碼則直接對應，通常只要對應「醫」代碼即可；支援醫師選「不列入」。</div>
         ${unV.map(([k, n]) => { const raw = ((c.rawCodes || {}).visit || {})[k] || k; return `<div class="it"><span class="tag b">醫 ${esc(raw)}</span><span style="white-space:nowrap;flex:0 0 58px">${n} 筆</span><select data-map="visit" data-code="${esc(raw)}">${docOpts}</select></div>`; }).join('')}
         ${unB.map(([k, n]) => { const raw = ((c.rawCodes || {}).back || {})[k] || k; return `<div class="it"><span class="tag p">醫師別 ${esc(raw)}</span><span style="white-space:nowrap;flex:0 0 58px">${n} 筆</span><select data-map="back" data-code="${esc(raw)}">${docOpts}</select></div>`; }).join('')}
         <button class="btn sm pri" id="btnMap" style="margin-top:6px">儲存對照並重算</button></div>` : ''}

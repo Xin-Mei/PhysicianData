@@ -41,14 +41,26 @@
     }
     return -1;
   }
+  /** 找欄位名稱列：groups 每組為可接受的欄名（新舊匯出格式都可） → { h, keys:[每組實際用到的欄名] } */
+  function findHeaderAlt(rows, groups) {
+    for (let i = 0; i < Math.min(rows.length, 60); i++) {
+      const cells = (rows[i] || []).map(c => String(c == null ? '' : c).trim());
+      const keys = groups.map(g => g.find(k => cells.indexOf(k) >= 0) || null);
+      if (keys.every(Boolean)) return { h: i, keys };
+    }
+    return { h: -1, keys: [] };
+  }
+  const NO_CODE = '沒有「醫師別」欄位，系統無法分醫師計算。請在匯出報表時加上「醫師別」欄（像慢箋檔一樣），再重新放入';
   function headerIndex(row) { const o = {}; (row || []).forEach((c, i) => { const k = String(c == null ? '' : c).trim(); if (k && o[k] === undefined) o[k] = i; }); return o; }
 
   /** 檔名 OO_看診名單：排除「說明含還卡日」「欠款有金額」（含其對沖列），其餘病患資料皆辨識 */
   function parseVisitRows(rows) {
-    const h = findHeader(rows, ['證號', '日期', '醫']);
-    if (h < 0) throw new Error('看診名單找不到欄位名稱列（需有「證號、日期、醫」）');
+    const F = findHeaderAlt(rows, [['證號', '病歷號'], ['日期', '看診日期']]), h = F.h;
+    if (h < 0) throw new Error('看診名單找不到欄位名稱列（需有「病歷號、看診日期、醫師別」）');
     const H = headerIndex(rows[h]);
-    const g = (r, k) => H[k] === undefined ? '' : r[H[k]];
+    const ALIAS = { '證號': F.keys[0], '日期': F.keys[1], '醫': H['醫'] !== undefined ? '醫' : '醫師別' };
+    if (H[ALIAS['醫']] === undefined) throw new Error('看診名單' + NO_CODE);
+    const g = (r, k) => { k = ALIAS[k] || k; return H[k] === undefined ? '' : r[H[k]]; };
     const all = [];
     for (let i = h + 1; i < rows.length; i++) {
       const r = rows[i] || [];
@@ -81,10 +93,12 @@
 
   /** 檔名 OO_BACK：欄位名稱列以下皆為資料（前 1-3 列抬頭忽略） */
   function parseBackRows(rows) {
-    const h = findHeader(rows, ['病歷號', '看診日期', '醫師別']);
+    const F = findHeaderAlt(rows, [['病歷號', '證號'], ['看診日期', '日期']]), h = F.h;
     if (h < 0) throw new Error('BACK 檔找不到欄位名稱列（需有「病歷號、看診日期、醫師別」）');
     const H = headerIndex(rows[h]);
-    const g = (r, k) => H[k] === undefined ? '' : r[H[k]];
+    const ALIAS = { '病歷號': F.keys[0], '看診日期': F.keys[1], '醫師別': H['醫師別'] !== undefined ? '醫師別' : '醫' };
+    if (H[ALIAS['醫師別']] === undefined) throw new Error('BACK 檔' + NO_CODE);
+    const g = (r, k) => { k = ALIAS[k] || k; return H[k] === undefined ? '' : r[H[k]]; };
     const out = [];
     for (let i = h + 1; i < rows.length; i++) {
       const r = rows[i] || [];
@@ -153,8 +167,9 @@
     const docOf = code => vmap[code] || null;
     const backDocOf = code => {
       if (bmap[code]) return bmap[code];
-      if (opt.stripFirst !== false && code.length > 1) { const c2 = normCode(code.slice(1)); if (vmap[c2]) return vmap[c2]; }
-      return null;
+      // 舊格式 BACK 醫師別為 3 碼（197 → 醫 97）；新格式已是 2 碼，直接對應醫代碼
+      if (opt.stripFirst !== false && code.length > 2) { const c2 = normCode(code.slice(1)); if (vmap[c2]) return vmap[c2]; }
+      return vmap[code] || null;
     };
     const res = {}; const unmappedV = {}, unmappedB = {}, rawV = {}, rawB = {};  // rawV/rawB：檔案上原本的寫法（如 01）
     const doctorSet = new Set(opt.doctors || []);
