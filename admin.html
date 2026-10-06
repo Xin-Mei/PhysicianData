@@ -249,7 +249,7 @@ const setting = (k, d) => { const v = CFG.settings[k]; return v === undefined ||
 const SLOW_EX = () => String(setting('慢專排名排除院區', '樹林')).split(/[,，、\s]+/).map(x => x.trim()).filter(Boolean);
 const THRESH = () => { let v = +setting('狹義回診排名門檻', 0.3); return v > 1 ? v / 100 : v; };
 const M = E.METRICS;
-const COLS = [['hours', '上診時數', 'h'], ['visits', '看診人次', 'int'], ['slowN', '慢專人次', 'int'], ['slowRate', '慢專比例', 'pct'], ['vph', '平均人次/hr', 'n2'], ['backN', 'BACK開立', 'int'], ['backRate', 'BACK開立率', 'pct'], ['nRevN', '個人回診數', 'int'], ['nRevRate', '個人回診率', 'pct'], ['wRevN', '院所回診數', 'int'], ['wRevRate', '院所回診率', 'pct']];
+const COLS = [['hours', '上診時數', 'h'], ['visits', '看診人次', 'int'], ['slowN', '慢專人次', 'int'], ['slowRate', '慢專比例', 'pct'], ['vph', '平均人次/hr', 'n2'], ['backN', 'BACK開立', 'int'], ['backRate', 'BACK開立率', 'pct'], ['nRevN', '個人回診數', 'int'], ['nRevRate', '個人回診率', 'pct'], ['wRevN', '整體回診數', 'int'], ['wRevRate', '整體回診率', 'pct']];
 const RANKED = ['slowRate', 'vph', 'nRevRate', 'wRevRate'];
 
 
@@ -349,7 +349,7 @@ $('#dGo').onclick = async () => {
       <div class="card"><div class="l">區間看診人次</div><div class="v">${E.fmt(agg.visits, 'int')}<small> / ${E.fmt(agg.hours, 'h')} 小時</small></div></div>
       <div class="card"><div class="l">區間平均人次/hr</div><div class="v">${E.fmt(agg.vph, 'n2') || '-'}</div></div>
       <div class="card"><div class="l">區間個人回診率</div><div class="v">${E.fmt(agg.nRevRate, 'pct') || '-'}<small> ${agg.nRevN ?? '-'}/${agg.backN ?? '-'}</small></div></div>
-      <div class="card"><div class="l">區間院所回診率</div><div class="v">${E.fmt(agg.wRevRate, 'pct') || '-'}</div></div></div>`;
+      <div class="card"><div class="l">區間整體回診率</div><div class="v">${E.fmt(agg.wRevRate, 'pct') || '-'}</div></div></div>`;
     h += `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><p class="step" style="margin:0">${mInfo[1]} 趨勢</p><div class="legend"><span><i style="background:#2b5a54"></i>${esc(doctor)}</span><span><i style="background:#d9a441"></i>集團平均</span></div></div>${chart(series, mInfo[2])}</div>`;
     h += `<div class="card"><p class="step">逐月明細（小字為當月集團排名）</p><div class="tbl-wrap"><table class="dt" id="dTable"><thead><tr><th class="l">月份</th><th class="l">院區</th>${COLS.map(c => `<th>${c[1]}</th>`).join('')}</tr></thead><tbody>` +
       mine.map(r => `<tr><td class="l">${E.monthLabel(r.month)}</td><td class="l">${esc(r.clinic)}</td>${COLS.map(c => `<td>${cell(r, c[0], c[2], (ranks[r.month] || {})[r.clinic + '|' + r.doctor])}</td>`).join('')}</tr>`).join('') +
@@ -389,7 +389,7 @@ $('#cGo').onclick = async () => {
       <div class="card"><div class="l">院區總人次（手動輸入加總）</div><div class="v">${totalVisits.toLocaleString()}</div></div>
       <div class="card"><div class="l">醫師看診人次合計</div><div class="v">${E.fmt(aggAll.visits, 'int')}</div></div>
       <div class="card"><div class="l">個人回診率</div><div class="v">${E.fmt(aggAll.nRevRate, 'pct') || '-'}</div></div>
-      <div class="card"><div class="l">院所回診率</div><div class="v">${E.fmt(aggAll.wRevRate, 'pct') || '-'}</div></div></div>`;
+      <div class="card"><div class="l">整體回診率</div><div class="v">${E.fmt(aggAll.wRevRate, 'pct') || '-'}</div></div></div>`;
     // 表一：依醫師（或院區）彙總
     const groupKey = clinic ? r => r.doctor : r => r.clinic;
     const keys = []; recs.forEach(r => { const k = groupKey(r); if (!keys.includes(k)) keys.push(k); });

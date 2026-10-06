@@ -332,8 +332,8 @@
     { k: 'backRate', group: 'BACK開立率', label: 'BACK開立率', fmt: 'pct', color: '#C8A56E', avg: true },
     { k: 'nRevN',    group: '個人回診率(醫師黏著度)', label: '個人回診數', fmt: 'int', color: '#D29B82' },
     { k: 'nRevRate', group: '個人回診率(醫師黏著度)', label: '個人回診率', fmt: 'pct', color: '#D29B82', avg: true, gated: true },
-    { k: 'wRevN',    group: '院所回診率(品牌忠誠度)', label: '院所回診數', fmt: 'int', color: '#86B29A' },
-    { k: 'wRevRate', group: '院所回診率(品牌忠誠度)', label: '院所回診率', fmt: 'pct', color: '#86B29A', avg: true }
+    { k: 'wRevN',    group: '整體回診率(品牌忠誠度)', label: '整體回診數', fmt: 'int', color: '#86B29A' },
+    { k: 'wRevRate', group: '整體回診率(品牌忠誠度)', label: '整體回診率', fmt: 'pct', color: '#86B29A', avg: true }
   ];
   const METRIC = {}; METRICS.forEach(m => METRIC[m.k] = m);
 
@@ -648,7 +648,7 @@
     const month = monthLabel(data.month);
     const avgs = [];
     if (P.csAvg !== null) avgs.push(['院區慢箋比例', fmt(P.csAvg, 'pct', pd)]);
-    [['slowRate', '醫師慢專比例'], ['vph', '平均人次/hr'], ['nRevRate', '個人回診率'], ['wRevRate', '院所回診率']].forEach(([k, l]) => {
+    [['slowRate', '醫師慢專比例'], ['vph', '平均人次/hr'], ['nRevRate', '個人回診率'], ['wRevRate', '整體回診率']].forEach(([k, l]) => {
       if (P.avg[k] !== null) avgs.push([l, fmt(P.avg[k], METRIC[k].fmt, pd)]);
     });
     const only = !!cfg.tableOnly;   // 主管版：只輸出醫師數據表（不含標題、全院區總人次、集團平均、註解）

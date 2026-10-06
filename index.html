@@ -587,7 +587,7 @@ function recompute(cl, keep) {
   if (raw.visit) {
     const inR = E.computeClinic(allV.filter(inRange), [], { clinic: cl, visitMap: CFG.visitMap, backMap: CFG.backMap, doctors: [], days: DAYS() });
     Object.keys(r.doctors).forEach(d => { r.doctors[d].patients = (inR.doctors[d] || {}).patients || 0; });
-    // 院所回診：起始看診需在區間內
+    // 整體回診：起始看診需在區間內
     const w = countWide(allV, cl, start, end);
     Object.keys(r.doctors).forEach(d => r.doctors[d].wRevN = w[d] || 0);
     Object.keys(w).forEach(d => { if (!r.doctors[d]) r.doctors[d] = { patients: (inR.doctors[d] || {}).patients || 0, backN: 0, nRevN: 0, wRevN: w[d] }; });
@@ -701,7 +701,7 @@ function selectClinic(cl) {
     </div>
     <div>
       <div class="tbl-wrap"><table class="dt">
-        <thead><tr><th>醫師</th><th>上診時數</th><th>看診人次</th><th>慢專人次</th><th>慢專比例</th><th>平均人次/hr</th><th>BACK開立</th><th>開立率</th><th>個人回診數</th><th>個人回診率</th><th>院所回診數</th><th>院所回診率</th></tr></thead>
+        <thead><tr><th>醫師</th><th>上診時數</th><th>看診人次</th><th>慢專人次</th><th>慢專比例</th><th>平均人次/hr</th><th>BACK開立</th><th>開立率</th><th>個人回診數</th><th>個人回診率</th><th>整體回診數</th><th>整體回診率</th></tr></thead>
         <tbody>${rows.map(r => {
           const inp = c.inputs[r.doctor] || {};
           return `<tr><td class="k">${esc(r.doctor)}<span class="hint">${esc(r.title)}</span></td>
@@ -713,7 +713,7 @@ function selectClinic(cl) {
           <td>${r.nRevN ?? ''}</td><td>${f(r.nRevRate, 'pct')}${r.backRate !== null && r.backRate < THRESH() ? ' <span class="tag y" title="開立率未達門檻，不列排名">不排名</span>' : ''}</td>
           <td>${r.wRevN ?? ''}</td><td>${f(r.wRevRate, 'pct')}</td></tr>`; }).join('') || '<tr><td colspan="12" class="empty-state">此院區尚無醫師，請到後台「醫師清單」新增</td></tr>'}
         </tbody></table></div>
-      <div class="hint" style="margin-top:6px">綠底＝系統帶入（班表、看診名單、慢箋檔）；黃底＝已手動修改（清空即恢復系統值）。院區總人次預設為看診名單總筆數（含支援醫師，已排除還卡、欠款）；院區慢箋人次預設為慢箋檔總筆數（含支援醫師）。看診人次預設由看診名單自動計算，可手動修改；平均人次/hr、慢專比例、BACK開立率、院所回診率都以「看診人次」計算。</div>
+      <div class="hint" style="margin-top:6px">綠底＝系統帶入（班表、看診名單、慢箋檔）；黃底＝已手動修改（清空即恢復系統值）。院區總人次預設為看診名單總筆數（含支援醫師，已排除還卡、欠款）；院區慢箋人次預設為慢箋檔總筆數（含支援醫師）。看診人次預設由看診名單自動計算，可手動修改；平均人次/hr、慢專比例、BACK開立率、整體回診率都以「看診人次」計算。</div>
       <div class="sum">
         <div class="box"><div class="l">院區總人次 ${sm.totalManual ? '<span class="tag y">手動</span>' : (sm.autoTotal !== null ? '<span class="tag g">看診名單</span>' : '')}</div><input id="sumTotal" class="${sm.totalManual ? 'man' : (sm.autoTotal !== null ? 'auto' : '')}" value="${sm.total ?? ''}" placeholder="輸入" title="${sm.autoTotal !== null ? '預設為看診名單總筆數（' + sm.autoTotal + '，已排除還卡、欠款），可手動修改；清空即恢復' : '放入看診名單後自動帶入，或手動輸入'}"></div>
         <div class="box"><div class="l">院區慢箋人次 ${sm.slowSrc === 'manual' ? '<span class="tag y">手動</span>' : sm.slowSrc === 'file' ? '<span class="tag g">慢箋檔</span>' : sm.slowSrc === 'saved' ? '<span class="tag g">後台</span>' : '<span class="tag g">醫師加總</span>'}</div><input id="sumSlow" class="${sm.slowSrc === 'manual' ? 'man' : (sm.slowSrc === 'file' ? 'auto' : '')}" value="${sm.slow ?? ''}" title="${sm.fileSlow !== null ? '預設為慢箋檔總筆數（' + sm.fileSlow + '，含支援醫師），可手動修改；清空即恢復' : '沒放慢箋檔時為各醫師慢專人次加總，可手動修改'}"></div>
@@ -930,7 +930,7 @@ function renderKpi() {
     <div class="card"><div class="l">全院區總人次</div><div class="v">${grand.toLocaleString()}${pg ? ` <small>上月 ${pg.toLocaleString()}（${grand - pg >= 0 ? '+' : ''}${(grand - pg).toLocaleString()}）</small>` : ''}</div></div>
     <div class="card"><div class="l">已完成院區 / 醫師</div><div class="v">${clinicsDone}<small> / ${activeClinics().length} 院區　${d.records.length} 位醫師</small></div></div>
     <div class="card"><div class="l">集團平均 個人回診率</div><div class="v">${E.fmt(avg.nRevRate, 'pct') || '-'}</div></div>
-    <div class="card"><div class="l">集團平均 院所回診率</div><div class="v">${E.fmt(avg.wRevRate, 'pct') || '-'}</div></div>`;
+    <div class="card"><div class="l">集團平均 整體回診率</div><div class="v">${E.fmt(avg.wRevRate, 'pct') || '-'}</div></div>`;
 }
 function draw() {
   if (!RPT.data) return;
