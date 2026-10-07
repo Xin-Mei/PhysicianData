@@ -269,6 +269,7 @@ body.locked header.top,body.locked main{visibility:hidden}
 
       <h4>顯示醫師 <span class="hint" style="letter-spacing:0">（不勾 = 所選院區全部醫師）</span></h4>
       <div class="doclist" id="docCks"></div>
+      <div class="hint hide" id="docHint" style="margin-top:6px">醫師版：勾選的醫師會自動記住，下次按「醫師版」直接帶入；按報表上方「批次下載醫師圖」一位醫師一張圖（ZIP）。</div>
 
       <h4>數據欄位</h4>
       <table class="mx" id="colMatrix"></table>
@@ -297,6 +298,7 @@ body.locked header.top,body.locked main{visibility:hidden}
         <button class="btn" id="btnReload">重新載入資料</button>
         <button class="btn" id="btnXlsx">下載 Excel</button>
         <span class="imgbox"><button class="btn" id="btnPng">下載 PNG</button><button class="btn" id="btnJpg">JPEG</button></span>
+        <button class="btn pri hide" id="btnBatch" title="勾選的醫師一位一張圖，打包成一個 ZIP 下載">批次下載醫師圖</button>
         <button class="btn pri" id="btnPrint">列印 / 存成 PDF</button>
       </div>
       <div id="repWarn" class="warnbox mb hide"></div>
@@ -815,14 +817,15 @@ const PRESET_LABEL = { '完整版': '完整版／老闆版' };
 const PRESETS = {
   '完整版': { cols: { hours: 'vd', visits: 'vd', slowN: 'v', slowRate: 'vr', vph: 'vdr', backN: 'v', backRate: 'v', nRevN: 'vd', nRevRate: 'vdr', wRevN: 'vd', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 1, markNew: 0 },
   '院長版': { cols: { slowRate: 'vr', vph: 'vdr', backRate: 'v', nRevRate: 'vdr', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 1, grand: 0, markNew: 0 },
-  '主管版': { cols: { hours: 'vd', visits: 'vd', slowN: 'v', slowRate: 'vr', vph: 'vdr', backN: 'v', backRate: 'v', nRevN: 'vd', nRevRate: 'vdr', wRevN: 'vd', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 0, grand: 0, markNew: 0, only: 1 }
+  '主管版': { cols: { hours: 'vd', visits: 'vd', slowN: 'v', slowRate: 'vr', vph: 'vdr', backN: 'v', backRate: 'v', nRevN: 'vd', nRevRate: 'vdr', wRevN: 'vd', wRevRate: 'vdr' }, cs: 'total,slow,rate,rank', avg: 0, grand: 0, markNew: 0, only: 1 },
+  '醫師版': { cols: { slowRate: 'vr', vph: 'vdr', backRate: 'v', nRevRate: 'vdr', wRevRate: 'vdr' }, cs: '', avg: 1, grand: 1, markNew: 0, perDoctor: 1 }
 };
 let RPT = { view: LS.get('rr_view2', 'image'), data: null, cfg: LS.get('rr_rptcfg', null), preset: LS.get('rr_preset', '完整版') };
 if (RPT.preset === '老闆版' || RPT.preset === '全部欄位') RPT.preset = '完整版';
 function presetToCfg(p) {
   const cols = {}; E.METRICS.forEach(m => { const s = p.cols[m.k] || ''; cols[m.k] = { v: s.includes('v'), d: s.includes('d'), r: s.includes('r') }; });
   const csSet = p.cs.split(',');
-  return { cols, showClinic: { total: csSet.includes('total'), slow: csSet.includes('slow'), rate: csSet.includes('rate'), rank: csSet.includes('rank') }, showAvg: !!p.avg, showGrand: !!p.grand, markNew: !!p.markNew, tableOnly: !!p.only };
+  return { cols, showClinic: { total: csSet.includes('total'), slow: csSet.includes('slow'), rate: csSet.includes('rate'), rank: csSet.includes('rank') }, showAvg: !!p.avg, showGrand: !!p.grand, markNew: !!p.markNew, tableOnly: !!p.only, perDoctor: !!p.perDoctor };
 }
 function buildCfgUI() {
   const customs = LS.get('rr_custom', {});
@@ -860,10 +863,16 @@ function buildFilterUI() {
   const dsel = RPT.cfg.doctors || [];
   const shownClinics = clinics.filter(c => !RPT.cfg.clinics || !RPT.cfg.clinics.length || RPT.cfg.clinics.includes(c));
   $('#docCks').innerHTML = shownClinics.map(cl => `<div class="cl">${esc(cl)}</div>` + recs.filter(r => r.clinic === cl).map(r => { const k = r.clinic + '|' + r.doctor; return `<label class="ck"><input type="checkbox" data-fd="${esc(k)}" ${dsel.includes(k) ? 'checked' : ''}>${esc(r.doctor)}</label>`; }).join('')).join('') || '<span class="hint">尚無資料</span>';
-  $$('[data-fd]').forEach(el => el.onchange = () => { RPT.cfg.doctors = $$('[data-fd]').filter(x => x.checked).map(x => x.dataset.fd); custom(true); });
+  $$('[data-fd]').forEach(el => el.onchange = () => {
+    const vis = $$('[data-fd]').map(x => x.dataset.fd), on = $$('[data-fd]').filter(x => x.checked).map(x => x.dataset.fd);
+    RPT.cfg.doctors = on;
+    if (RPT.cfg.perDoctor) LS.set('rr_docsel', (LS.get('rr_docsel', []) || []).filter(k => !vis.includes(k)).concat(on));   // 醫師版：記住勾選（不在目前清單的舊勾選保留）
+    custom(true); syncBatch();
+  });
 }
 function applyPreset(name) {
-  const keepF = RPT.cfg ? { clinics: RPT.cfg.clinics, doctors: RPT.cfg.doctors } : {};
+  const keepF = RPT.cfg ? { clinics: RPT.cfg.clinics, doctors: RPT.cfg.perDoctor ? [] : RPT.cfg.doctors } : {};
+  if (PRESETS[name] && PRESETS[name].perDoctor) { keepF.clinics = []; keepF.doctors = LS.get('rr_docsel', []); }   // 醫師版：帶入上次勾選的醫師
   if (name.startsWith('c:')) RPT.cfg = JSON.parse(JSON.stringify(LS.get('rr_custom', {})[name.slice(2)]));
   else RPT.cfg = Object.assign(presetToCfg(PRESETS[name]), keepF);
   RPT.preset = name; LS.set('rr_preset', name); LS.set('rr_rptcfg', RPT.cfg);
@@ -877,6 +886,7 @@ function setView(v, silent) {
   $('#visitNote').classList.toggle('hide', v !== 'visits');
   $('#btnXlsx').classList.toggle('hide', v !== 'table');
   $('#paper').classList.toggle('hide', v !== 'table');
+  syncBatch();
   if (!silent) draw();
 }
 $$('#viewTabs button').forEach(b => b.onclick = () => setView(b.dataset.v));
@@ -933,6 +943,7 @@ function renderKpi() {
     <div class="card"><div class="l">集團平均 整體回診率</div><div class="v">${E.fmt(avg.wRevRate, 'pct') || '-'}</div></div>`;
 }
 function draw() {
+  syncBatch();
   if (!RPT.data) return;
   if (!RPT.data.records.length) { $('#reportArea').innerHTML = '<div class="empty-state">這個月份還沒有資料。請先在「資料分析」放入檔案並儲存各院區。</div>'; return; }
   setView(RPT.view, true);
@@ -964,7 +975,8 @@ function imageName() {   // 觀音_115.08；多院區用「、」連接；全部
   let cls = RPT.cfg.clinics && RPT.cfg.clinics.length ? RPT.cfg.clinics.filter(c => c !== '__none__') : [];
   if (RPT.cfg.doctors && RPT.cfg.doctors.length) cls = Array.from(new Set(RPT.cfg.doctors.map(k => k.split('|')[0])));
   const name = !cls.length ? '全院區' : cls.length > 3 ? cls.slice(0, 3).join('、') + '等' + cls.length + '院區' : cls.join('、');
-  return name + '_' + (+y - 1911) + '.' + m;
+  const one = RPT.cfg.doctors && RPT.cfg.doctors.length === 1 ? '_' + RPT.cfg.doctors[0].split('|')[1] : '';
+  return name + one + '_' + (+y - 1911) + '.' + m;
 }
 async function downloadImage(type) {
   if (!RPT.data || !RPT.data.records.length) return toast('目前沒有報表資料', true);
@@ -995,6 +1007,53 @@ async function downloadImage(type) {
 }
 $('#btnPng').onclick = () => downloadImage('png');
 $('#btnJpg').onclick = () => downloadImage('jpeg');
+
+/* ---------- 醫師版：批次下載（一位醫師一張圖，打包成 ZIP） ---------- */
+function batchKeys() {
+  const recs = RPT.data ? RPT.data.records : [];
+  return (RPT.cfg && RPT.cfg.doctors || []).filter(k => recs.some(r => r.clinic + '|' + r.doctor === k));
+}
+function syncBatch() {
+  const b = $('#btnBatch'); if (!b) return;
+  const show = !!(RPT.cfg && RPT.cfg.perDoctor) && RPT.view === 'image';
+  b.classList.toggle('hide', !show);
+  if (show) b.textContent = '批次下載醫師圖（' + batchKeys().length + ' 位）';
+  const h = $('#docHint'); if (h) h.classList.toggle('hide', !(RPT.cfg && RPT.cfg.perDoctor));
+}
+function loadJSZip() {
+  if (window.JSZip) return Promise.resolve();
+  return new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'; s.onload = ok; s.onerror = () => no(new Error('壓縮元件載入失敗，請確認網路')); document.head.appendChild(s); });
+}
+async function batchDownload() {
+  const keys = batchKeys();
+  if (!keys.length) return toast('請先在左側「顯示醫師」勾選要下載的醫師', true);
+  if (typeof html2canvas === 'undefined') return toast('圖片元件載入失敗，請確認網路後重新整理', true);
+  const btn = $('#btnBatch'); busy(btn, true, '產生中');
+  const [y, m] = S.month.split('-'); const tag = (+y - 1911) + '.' + m;
+  const host = document.createElement('div'); host.style.cssText = 'position:fixed;left:-20000px;top:0;z-index:-1'; document.body.appendChild(host);
+  try {
+    await loadJSZip();
+    const zip = new JSZip(); const used = {};
+    for (let i = 0; i < keys.length; i++) {
+      const [cl, doc] = keys[i].split('|');
+      btn.innerHTML = '<span class="spin"></span> 產生中 ' + (i + 1) + '/' + keys.length;
+      const cfg = Object.assign(fullCfg(), { clinics: [cl], doctors: [keys[i]] });
+      host.innerHTML = '<style>' + E.PRETTY_CSS + '</style>' + E.renderPretty(RPT.data, cfg, $('#imgStyle').value);
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      await Promise.all(Array.from(host.querySelectorAll('img')).map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; })));
+      const canvas = await html2canvas(host.querySelector('.pretty'), { scale: 2, backgroundColor: '#f2f0eb', useCORS: true, logging: false });
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      let fn = cl + '_' + doc + '_' + tag; if (used[fn]) fn += '_' + (++used[fn]); else used[fn] = 1;
+      zip.file(fn + '.png', blob);
+    }
+    const out = await zip.generateAsync({ type: 'blob' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(out); a.download = '醫師版_' + tag + '（' + keys.length + '位）.zip';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    toast('已下載 ' + keys.length + ' 位醫師的圖片（ZIP）');
+  } catch (e) { toast('批次下載失敗：' + e.message, true); }
+  host.remove(); busy(btn, false); syncBatch();
+}
+$('#btnBatch').onclick = batchDownload;
 $('#btnXlsx').onclick = () => {
   const t = RPT.view === 'table' && $('#reportArea table.rpt'); if (!t) return toast('請切換到「表格」檢視再下載 Excel', true);
   const wb = XLSX.utils.table_to_book(t, { raw: true });
