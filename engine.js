@@ -653,13 +653,13 @@
     });
     const only = !!cfg.tableOnly;   // 主管版：只輸出醫師數據表（不含標題、全院區總人次、集團平均、註解）
     const onlyCap = only ? `<div class="p-cap">${esc(P.clinics.length && P.clinics.length <= 4 ? P.clinics.join('、') : '全院區')} · ${esc(month)}</div>` : '';
-    let h = `<div class="pretty pv-${variant}${only ? ' p-only' : ''}">` + (only ? onlyCap : `
+    let h = `<div class="pretty pv-${variant}${only ? ' p-only' : ''}${cfg.perDoctor ? ' p-doc' : ''}">` + (only ? onlyCap : `
       <div class="p-head">
         <img src="${LOGO}" class="p-logo" alt="">
         <div class="p-t"><div class="p-org">金鶯診所 Elite Clinic</div><div class="p-title">${esc(month)} 醫師回診率分析結果${data.analysisDate ? '<small>（' + esc(data.analysisDate) + '分析）</small>' : ''}</div></div>
       </div>
-      <div class="p-kpis">
-        ${P.grand ? `<div class="p-kpi tot"><div class="l">全院區總人次</div><div class="v">${P.grand.toLocaleString()}</div><div class="s">${P.pgrand ? '較上月 ' + prettyDiff(P.grand - P.pgrand, 'int') : '<em style="margin:0">上月無資料</em>'}</div></div>` : ''}
+      <div class="p-kpis${cfg.perDoctor ? ' no-tot' : ''}">
+        ${P.grand && !cfg.perDoctor ? `<div class="p-kpi tot"><div class="l">全院區總人次</div><div class="v">${P.grand.toLocaleString()}</div><div class="s">${P.pgrand ? '較上月 ' + prettyDiff(P.grand - P.pgrand, 'int') : '<em style="margin:0">上月無資料</em>'}</div></div>` : ''}
         ${avgs.length ? `<div class="p-kpi p-avg"><div class="l">集團平均</div><div class="avg-row">${avgs.map(a => `<div class="ai"><div class="al">${a[0]}</div><div class="av">${a[1]}</div></div>`).join('')}</div></div>` : ''}
       </div>`);
 
@@ -768,6 +768,10 @@
   .pretty .p-meta{margin-left:auto;text-align:right;font-size:18px;font-weight:500;line-height:1.6}
   .pretty .p-meta span{font-size:14px;color:#9fd4c7;font-weight:400}
   .pretty .p-kpis{display:grid;grid-template-columns:1fr 4.6fr;gap:14px;margin:18px 0}
+  .p-kpis.no-tot{grid-template-columns:1fr}
+  .pretty.p-doc{min-width:0;width:1200px}
+  .pretty.p-doc .p-foot{flex-wrap:wrap;gap:4px 16px}
+  .pretty.p-doc .p-foot span:last-child{white-space:nowrap;margin-left:auto}
   .pretty .p-avg .avg-row{display:flex;margin-top:10px}
   .pretty .p-avg .ai{flex:1;padding:0 18px;border-left:1px solid #ece9e1}
   .pretty .p-avg .ai:first-child{border-left:0;padding-left:0}
