@@ -160,7 +160,7 @@
    * @param opt { clinic, visitMap:[{clinic,code,doctor,active}], backMap:[...], doctors:[name], days:5, stripFirst:true }
    */
   function computeClinic(visits, backs, opt) {
-    const days = +opt.days || 5;
+    const days = +opt.days || 4;
     const vmap = {}, bmap = {};
     (opt.visitMap || []).filter(x => x.clinic === opt.clinic && x.active !== false).forEach(x => vmap[normCode(x.code)] = x.doctor);
     (opt.backMap || []).filter(x => x.clinic === opt.clinic && x.active !== false).forEach(x => bmap[normCode(x.code)] = x.doctor);

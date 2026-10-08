@@ -346,7 +346,7 @@ const S = { month: '', clinics: {}, sched: null, schedHours: {}, current: null }
 const RAW = {};   // 院區 → {visit:{rows,...}, back:{rows}}（只存在記憶體）
 
 const setting = (k, d) => { const v = CFG.settings[k]; return v === undefined || v === '' ? d : v; };
-const DAYS = () => +setting('回診判定天數', 5);
+const DAYS = () => +setting('回診判定天數', 4);
 const SLOW_EX = () => String(setting('慢專排名排除院區', '樹林')).split(/[,，、\s]+/).map(x => x.trim()).filter(Boolean);
 const THRESH = () => { let v = +setting('狹義回診排名門檻', 0.3); return v > 1 ? v / 100 : v; };
 const activeClinics = () => CFG.clinics.filter(c => c.active !== false);
