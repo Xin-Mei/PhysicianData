@@ -63,6 +63,17 @@ h2{font-size:20px;margin:0;letter-spacing:.03em}
 .reps{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
 .reps ol{margin:6px 0 0;padding-left:22px}.reps li{padding:3px 0;cursor:pointer}.reps li:hover{color:var(--brand);text-decoration:underline}
 .reps li small{color:var(--muted);margin-left:6px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+.ahd{font-weight:900;font-size:16px;padding:8px 12px;border-radius:12px;margin-bottom:8px}
+.ahd small{font-weight:400;font-size:12px;color:var(--muted);margin-left:6px}
+.ahd.b{background:#fbe8e5;color:#9b2f22}.ahd.g{background:#e3f1ea;color:#1f6a46}
+.act{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;cursor:pointer;background:var(--card)}
+.act:hover{background:var(--hover);border-color:var(--dot)}
+.act .ah{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.act .ah small{color:var(--muted)}
+.act .ah .sc{font-size:18px}.act .ab{font-size:13px;color:var(--muted);margin-top:4px}.act .ab b{color:var(--ink)}
+.act .aa{font-size:13.5px;margin-top:4px;font-weight:500}
+.atag{font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px}.atag.b{background:#fbe8e5;color:#9b2f22}.atag.g{background:#e3f1ea;color:#1f6a46}
+.refh{margin-top:18px;font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.06em;border-top:1px dashed var(--line);padding-top:12px}
 .grid2{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:14px}
 .grid2>*,.kpis>*{min-width:0}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
@@ -145,7 +156,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin-top:36px}
 .hide{display:none!important}
 body.locked header.top,body.locked .wrap{visibility:hidden}
 @media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.grid2{grid-template-columns:minmax(0,1fr)}.expl{grid-template-columns:1fr 1fr}}
-@media (max-width:640px){header.top{position:static}.wrap{padding:0 14px 40px}header.top .in{padding:10px 14px}.kpis{grid-template-columns:1fr 1fr}.kpi .v{font-size:26px}.kpi.hero{grid-column:1/-1}.expl{grid-template-columns:1fr}.brand .t2{font-size:17px}.hide-m{display:none}td,th{padding:9px 6px}.detail .stats{grid-template-columns:1fr 1fr}.reps{grid-template-columns:1fr}}
+@media (max-width:640px){header.top{position:static}.wrap{padding:0 14px 40px}header.top .in{padding:10px 14px}.kpis{grid-template-columns:1fr 1fr}.kpi .v{font-size:26px}.kpi.hero{grid-column:1/-1}.expl{grid-template-columns:1fr}.brand .t2{font-size:17px}.hide-m{display:none}td,th{padding:9px 6px}.detail .stats{grid-template-columns:1fr 1fr}.reps,.acts{grid-template-columns:1fr}}
 </style>
 </head>
 <body class="locked">
@@ -356,6 +367,44 @@ function kpis() {
     card('score', '平均 ' + SC['分數平均'], `前段 ${V.docs.filter(o => o.s.tier === '前段').length}・中段 ${V.docs.filter(o => o.s.tier === '中段').length}・待加強 ${V.docs.filter(o => o.s.tier === '待加強').length} 位`);
   $$('#kpis .kpi').forEach(c => c.onclick = () => { detailK = detailK === c.dataset.k ? null : c.dataset.k; kpis(); detail(); });
 }
+/* 綜合分數點開：行動清單（要關心／值得表揚），每位附最弱項目與建議 */
+const AXN = { any: ['整體回診', 'ar', '了解病人沒回來的原因、加強衛教回診'], same: ['個人回診', 'pr', '加強醫病關係，主動約回診追蹤'], back: ['開立適切', 'br', ''] };
+function weakest(o) {
+  const s = o.s, arr = [['any', s.anyScore], ['same', s.sameScore], ['back', s.backScore]].filter(a => a[1] != null).sort((a, b) => a[1] - b[1]);
+  if (!arr.length) return null;
+  const [k, sc] = arr[0], ax = AXN[k], raw = o[ax[1]];
+  let tip = ax[2];
+  if (k === 'back') tip = raw < SC['開立率合理下限'] ? '開立偏少，提醒適時開立 BACK' : raw > SC['開立率合理上限'] ? '開立偏多，檢視開立是否必要' : '開立率在合理區間';
+  return { name: ax[0], raw, sc, tip };
+}
+function actionList() {
+  const pv = {}; (V.prev ? V.prev.docs : []).forEach(o => pv[o.c + '|' + o.d] = o);
+  const docs = V.docs.filter(o => o.score != null).map(o => { const p = pv[o.c + '|' + o.d]; return Object.assign(o, { dScore: p && p.score != null ? o.score - p.score : null }); });
+  const pick = (base, extra, n) => { const keys = new Set(base.map(o => o.c + '|' + o.d)); return base.concat(extra.filter(o => !keys.has(o.c + '|' + o.d)).slice(0, n)); };
+  const lowTier = docs.filter(o => o.s.tier === '待加強').sort((a, b) => a.score - b.score);
+  const drops = docs.filter(o => o.dScore != null && o.dScore <= -2).sort((a, b) => a.dScore - b.dScore);
+  const topTier = docs.filter(o => o.s.tier === '前段').sort((a, b) => b.score - a.score);
+  const ups = docs.filter(o => o.dScore != null && o.dScore >= 2).sort((a, b) => b.dScore - a.dScore);
+  const dTxt = o => o.dScore == null ? '' : `<span class="${o.dScore >= 0 ? 'up' : 'dn'}">${o.dScore >= 0 ? '▲' : '▼'}${Math.abs(o.dScore).toFixed(1)}</span>`;
+  const why = (o, bad) => {
+    const tags = [];
+    if (o.s.tier === (bad ? '待加強' : '前段')) tags.push(o.s.tier);
+    if (o.dScore != null && (bad ? o.dScore <= -2 : o.dScore >= 2)) tags.push(bad ? '比上期退步' : '比上期進步');
+    return tags.map(t => `<span class="atag ${bad ? 'b' : 'g'}">${t}</span>`).join('');
+  };
+  const item = (o, bad) => {
+    const w = weakest(o), adv = o.lab && o.lab !== '一般' ? o.s.advice : (w ? w.tip : '持續觀察');
+    const best = !bad ? [['any', o.s.anyScore], ['same', o.s.sameScore], ['back', o.s.backScore]].sort((a, b) => b[1] - a[1])[0] : null;
+    return `<div class="act" data-k="${esc(o.c + '|' + o.d)}"><div class="ah"><b>${esc(o.d)}</b><small>${esc(o.c)}</small>${why(o, bad)}<span class="grow"></span><span class="sc">${o.score.toFixed(0)}</span>${dTxt(o)}</div>
+      <div class="ab">${bad ? (w ? `最弱：<b>${w.name}</b> ${pct(w.raw)}（${Math.round(w.sc)} 分）` : '') : `最強：<b>${AXN[best[0]][0]}</b> ${pct(o[AXN[best[0]][1]])}（${Math.round(best[1])} 分）`}　${labHtml(o.lab)}</div>
+      ${bad ? `<div class="aa">👉 ${esc(adv)}</div>` : `<div class="aa">👍 ${o.s.tier !== '前段' ? '進步了，給予鼓勵' : o.lab === '標竿' ? '可請他分享經驗' : '公開肯定、維持表現'}</div>`}</div>`;
+  };
+  const bad = pick(lowTier, drops, 3), good = pick(topTier, ups, 3);
+  const hasPrev = !!V.prev;
+  return `<div class="acts">
+    <div><div class="ahd b">⚠️ 要關心的醫師 <small>${bad.length} 位：待加強${hasPrev ? '，加上比上期退步最多的' : ''}</small></div>${bad.map(o => item(o, true)).join('') || '<div class="note">這期沒有需要特別關心的醫師 🎉</div>'}</div>
+    <div><div class="ahd g">⭐ 值得表揚的醫師 <small>${good.length} 位：前段${hasPrev ? '，加上比上期進步最多的' : ''}</small></div>${good.map(o => item(o, false)).join('') || '<div class="note">這期沒有前段醫師</div>'}</div></div>`;
+}
 function detail() {
   const el = $('#detail');
   if (!detailK || !V) { el.classList.add('hide'); return; }
@@ -371,10 +420,11 @@ function detail() {
   docs.forEach(o => strip += `<circle class="dot ${selClinic && o.c !== selClinic ? 'dim' : selClinic ? 'sel' : ''}" cx="${X(o[k])}" cy="28" r="6" data-k="${esc(o.c + '|' + o.d)}"/>`);
   strip += '</svg>';
   el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>${KDEF[k].t}・${esc(V.label)}</h2><button class="lnk" id="dClose">收起 ✕</button></div>
+    ${isS ? actionList() + '<div class="refh">分布參考</div>' : ''}
     <div class="stats"><div><div class="k">均值（醫師平均）</div><div class="n">${f(mean(vals))}</div></div><div><div class="k">高標（前 1/3 界線）</div><div class="n">${f(t2)}</div></div><div><div class="k">低標（後 1/3 界線）</div><div class="n">${f(t1)}</div></div><div><div class="k">最高 ～ 最低</div><div class="n" style="font-size:17px">${f(hi)} ～ ${f(lo)}</div></div></div>
     <div style="margin-top:14px">${strip}</div>
     <div class="note">每個點是一位醫師，滑過看名字、點一下看報告。${k === 'br' ? '橘線＝合理區間 ' + pct(SC['開立率合理下限'], 0) + '～' + pct(SC['開立率合理上限'], 0) + '。' : ''}${k === 'sp' ? '外溢率不計分，高低沒有好壞，看病人流向用。' : ''}</div>
-    <div class="reps"><div><b>最高 3 位</b><ol>${sorted.slice(0, 3).map(li).join('')}</ol></div><div><b>最低 3 位</b><ol>${sorted.slice(-3).reverse().map(li).join('')}</ol></div></div>`;
+    <div class="reps ${isS ? 'hide' : ''}"><div><b>最高 3 位</b><ol>${sorted.slice(0, 3).map(li).join('')}</ol></div><div><b>最低 3 位</b><ol>${sorted.slice(-3).reverse().map(li).join('')}</ol></div></div>`;
   el.classList.remove('hide');
   $('#dClose').onclick = () => { detailK = null; kpis(); detail(); };
   $$('#detail [data-k]').forEach(n => { const o = V.docs.find(x => x.c + '|' + x.d === n.dataset.k); if (!o) return; n.onclick = () => openDoc(o); if (n.tagName === 'circle') { n.onmousemove = e => tip(e, `<b>${esc(o.c)}・${esc(o.d)}</b><br>${KDEF[k].t} ${f(o[k])}`); n.onmouseleave = untip; } });
