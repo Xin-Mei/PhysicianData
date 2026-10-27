@@ -296,10 +296,12 @@ function prevPeriodMonths() {
   return [];
 }
 
-/* 指定月份 → 每位醫師加總（院區|醫師） */
+/* 儀表板不顯示的院區（執行長 10/27：樹林不看）。後台系統設定若有「儀表板排除院區」就以設定為準（逗號分隔，空白＝全部顯示） */
+const EXCL = () => { const v = CFG.settings['儀表板排除院區']; return (v === undefined ? '樹林' : String(v)).split(/[,，、\s]+/).map(s => s.trim()).filter(Boolean); };
+/* 指定月份 → 每位醫師加總（院區|醫師）；排除的院區不算進任何數字（含集團平均與分數） */
 function aggregate(ms) {
-  const set = new Set(ms), by = {};
-  ALL.records.filter(r => set.has(r.month)).forEach(r => {
+  const set = new Set(ms), by = {}, ex = EXCL();
+  ALL.records.filter(r => set.has(r.month) && ex.indexOf(r.clinic) < 0).forEach(r => {
     const k = r.clinic + '|' + r.doctor;
     const o = by[k] || (by[k] = { c: r.clinic, d: r.doctor, t: r.title || '', v: 0, b: 0, same: 0, any: 0, hours: null, slow: null, n: 0 });
     const nn = x => x === '' || x == null ? null : +x;
@@ -313,7 +315,7 @@ function aggregate(ms) {
   const S = E.scoreAll(docs.map(o => ({ clinic: o.c, doctor: o.d, visits: o.v, backN: o.b, sameN: o.same, anyN: o.any })), CFG.settings);
   docs.forEach(o => { const s = S.scores[o.c + '|' + o.d] || {}; o.s = s; o.score = s.ranked ? s.total : null; o.lab = s.cls || ''; });
   const clinics = {};
-  ALL.clinics.filter(r => set.has(r.month)).forEach(r => { const o = clinics[r.clinic] || (clinics[r.clinic] = { v: 0, b: 0, same: 0, any: 0 }); o.v += +r.visits || 0; o.b += +r.backN || 0; o.same += +r.sameN || 0; o.any += +r.anyN || 0; });
+  ALL.clinics.filter(r => set.has(r.month) && ex.indexOf(r.clinic) < 0).forEach(r => { const o = clinics[r.clinic] || (clinics[r.clinic] = { v: 0, b: 0, same: 0, any: 0 }); o.v += +r.visits || 0; o.b += +r.backN || 0; o.same += +r.sameN || 0; o.any += +r.anyN || 0; });
   return { docs, S, clinics };
 }
 function compute() {
