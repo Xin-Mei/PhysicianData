@@ -447,11 +447,21 @@ async function loadSaved() {
   const m = S.month;
   try { const d = await api('getMonth', { month: m }); if (m !== S.month) return; S.saved = { records: d.records || [], clinicSum: d.clinicSum || [] }; }
   catch (e) { S.saved = null; }
+  // 醫師月指標（新分頁）的回同醫師、回院所數，併入已儲存資料
+  try {
+    const mt = await api('getMetrics', { from: m, to: m }); if (m !== S.month) return;
+    if (!S.saved) S.saved = { records: [], clinicSum: [] };
+    (mt.records || []).forEach(x => {
+      let r = S.saved.records.find(y => y.clinic === x.clinic && y.doctor === x.doctor);
+      if (!r) S.saved.records.push(r = { clinic: x.clinic, doctor: x.doctor, title: x.title, hours: x.hours, visits: x.visits, patients: x.visits, slowN: x.slowN, backN: x.backN });
+      r.sameN = x.sameN; r.anyN = x.anyN;
+    });
+  } catch (e) {}
   renderChips(); if (S.current) selectClinic(S.current);
 }
 function setConn(ok, t) { $('#connPill').className = 'pill ' + (ok ? 'ok' : 'bad'); $('#connText').textContent = t; }
 function refreshRule() {
-  $('#ruleText').innerHTML = `回診判定：看診日後 <b>1～${DAYS()}</b> 天內回同一位醫師；個人回診率排名門檻：BACK 開立率 ≥ <b>${Math.round(THRESH() * 100)}%</b>。<br>規則可在後台「系統設定」調整。`;
+  $('#ruleText').innerHTML = `回診判定：看診日後 <b>1～${DAYS()}</b> 天內再回診。個人回診＝回同一位醫師；院所回診＝回院區任一位醫師。<br>規則可在後台「系統設定」調整。`;
 }
 
 $$('[data-mm]').forEach(b => b.onclick = () => {
@@ -593,7 +603,12 @@ function recompute(cl, keep) {
     const w = countWide(allV, cl, start, end);
     Object.keys(r.doctors).forEach(d => r.doctors[d].wRevN = w[d] || 0);
     Object.keys(w).forEach(d => { if (!r.doctors[d]) r.doctors[d] = { patients: (inR.doctors[d] || {}).patients || 0, backN: 0, nRevN: 0, wRevN: w[d] }; });
-  }
+    // 醫師貢獻值：回同醫師、回院區任一醫師（起始看診需在區間內）
+    const rv = E.countRevisits(allV, { clinic: cl, visitMap: CFG.visitMap, days: DAYS(), start, end });
+    Object.keys(r.doctors).forEach(d => { r.doctors[d].sameN = (rv[d] || {}).sameN || 0; r.doctors[d].anyN = (rv[d] || {}).anyN || 0; });
+    c.clinicRev = E.clinicRevisits(allV, { days: DAYS(), start, end });
+  } else c.clinicRev = null;
+  c.clinicBackN = raw.back ? raw.back.rows.filter(inRange).length : null;
   c.counts = r.doctors; c.unmappedVisit = r.unmappedVisit; c.unmappedBack = r.unmappedBack; c.rawCodes = r.rawCodes; c.outside = r.outside;
   c.slowCounts = null;
   if (raw.slow) {
@@ -627,7 +642,7 @@ function savedRec(cl, name) { return ((S.saved || {}).records || []).find(r => r
 function savedSum(cl) { return ((S.saved || {}).clinicSum || []).find(r => r.clinic === cl) || null; }
 function doctorRow(cl, d) {
   const c = cs(cl); const inp = c.inputs[d.name] || (c.inputs[d.name] = {});
-  const cnt = c.counts ? (c.counts[d.name] || { patients: 0, backN: 0, nRevN: 0, wRevN: 0 }) : null;
+  const cnt = c.counts ? (c.counts[d.name] || { patients: 0, backN: 0, nRevN: 0, wRevN: 0, sameN: 0, anyN: 0 }) : null;
   const sv = savedRec(cl, d.name);   // 沒放的檔案項目，帶入後台已儲存的資料
   const svn = k => sv ? E.numOrNull(sv[k]) : null;
   const schedH = (S.schedHours[cl] || {})[d.name];
@@ -638,7 +653,9 @@ function doctorRow(cl, d) {
   const slowN = inp.slowN !== undefined && inp.slowN !== '' ? inp.slowN : (slowFromFile !== null ? slowFromFile : svn('slowN'));
   const base = {
     doctor: d.name, title: d.title, hours: E.numOrNull(hours), patients, visits: E.numOrNull(visits), slowN: E.numOrNull(slowN),
-    backN: cnt && c.hasBack ? cnt.backN : svn('backN'), nRevN: cnt && c.hasBack && c.hasVisit ? cnt.nRevN : svn('nRevN'), wRevN: cnt && c.hasVisit ? cnt.wRevN : svn('wRevN')
+    backN: cnt && c.hasBack ? cnt.backN : svn('backN'), nRevN: cnt && c.hasBack && c.hasVisit ? cnt.nRevN : svn('nRevN'), wRevN: cnt && c.hasVisit ? cnt.wRevN : svn('wRevN'),
+    // 回同醫師＝舊「整體回診數」，舊資料沒有 sameN 時沿用
+    sameN: cnt && c.hasVisit ? cnt.sameN : (svn('sameN') !== null ? svn('sameN') : svn('wRevN')), anyN: cnt && c.hasVisit ? cnt.anyN : svn('anyN')
   };
   if (base.patients === null) base.patients = base.visits;
   return E.metrics(base);
@@ -703,7 +720,7 @@ function selectClinic(cl) {
     </div>
     <div>
       <div class="tbl-wrap"><table class="dt">
-        <thead><tr><th>醫師</th><th>上診時數</th><th>看診人次</th><th>慢專人次</th><th>慢專比例</th><th>平均人次/hr</th><th>BACK開立</th><th>開立率</th><th>個人回診數</th><th>個人回診率</th><th>整體回診數</th><th>整體回診率</th></tr></thead>
+        <thead><tr><th>醫師</th><th>上診時數</th><th>看診人次</th><th>慢專人次</th><th>慢專比例</th><th>平均人次/hr</th><th>BACK開立</th><th>開立率</th><th>回同醫師</th><th>個人回診率</th><th>回院所</th><th>院所回診率</th><th>外溢率</th></tr></thead>
         <tbody>${rows.map(r => {
           const inp = c.inputs[r.doctor] || {};
           return `<tr><td class="k">${esc(r.doctor)}<span class="hint">${esc(r.title)}</span></td>
@@ -712,10 +729,10 @@ function selectClinic(cl) {
           <td><input data-f="slowN" data-d="${esc(r.doctor)}" value="${r.slowN ?? ''}" class="${inp.slowN !== undefined && inp.slowN !== '' ? (c.slowCounts ? 'man' : '') : (c.slowCounts ? 'auto' : '')}" placeholder="輸入" title="${c.slowCounts ? '由慢箋檔自動計算' + (c.slowCounts[r.doctor] !== undefined ? '（' + c.slowCounts[r.doctor] + '）' : '') + '，可手動修改；清空即恢復' : '手動輸入，或放入「' + esc(cl) + '_慢箋」檔自動計算'}"></td>
           <td>${f(r.slowRate, 'pct')}</td><td>${f(r.vph, 'n2')}</td>
           <td>${r.backN ?? ''}</td><td>${f(r.backRate, 'pct')}</td>
-          <td>${r.nRevN ?? ''}</td><td>${f(r.nRevRate, 'pct')}${r.backRate !== null && r.backRate < THRESH() ? ' <span class="tag y" title="開立率未達門檻，不列排名">不排名</span>' : ''}</td>
-          <td>${r.wRevN ?? ''}</td><td>${f(r.wRevRate, 'pct')}</td></tr>`; }).join('') || '<tr><td colspan="12" class="empty-state">此院區尚無醫師，請到後台「醫師清單」新增</td></tr>'}
+          <td>${r.sameN ?? ''}</td><td>${f(r.sameRate, 'pct')}</td>
+          <td>${r.anyN ?? ''}</td><td>${f(r.anyRate, 'pct')}</td><td>${f(r.spillRate, 'pct')}</td></tr>`; }).join('') || '<tr><td colspan="13" class="empty-state">此院區尚無醫師，請到後台「醫師清單」新增</td></tr>'}
         </tbody></table></div>
-      <div class="hint" style="margin-top:6px">綠底＝系統帶入（班表、看診名單、慢箋檔）；黃底＝已手動修改（清空即恢復系統值）。院區總人次預設為看診名單總筆數（含支援醫師，已排除還卡、欠款）；院區慢箋人次預設為慢箋檔總筆數（含支援醫師）。看診人次預設由看診名單自動計算，可手動修改；平均人次/hr、慢專比例、BACK開立率、整體回診率都以「看診人次」計算。</div>
+      <div class="hint" style="margin-top:6px">綠底＝系統帶入（班表、看診名單、慢箋檔）；黃底＝已手動修改（清空即恢復系統值）。院區總人次預設為看診名單總筆數（含支援醫師，已排除還卡、欠款）；院區慢箋人次預設為慢箋檔總筆數（含支援醫師）。看診人次預設由看診名單自動計算，可手動修改；平均人次/hr、慢專比例、開立率、個人回診率、院所回診率都以「看診人次」計算；外溢率＝院所回診率 − 個人回診率。</div>
       <div class="sum">
         <div class="box"><div class="l">院區總人次 ${sm.totalManual ? '<span class="tag y">手動</span>' : (sm.autoTotal !== null ? '<span class="tag g">看診名單</span>' : '')}</div><input id="sumTotal" class="${sm.totalManual ? 'man' : (sm.autoTotal !== null ? 'auto' : '')}" value="${sm.total ?? ''}" placeholder="輸入" title="${sm.autoTotal !== null ? '預設為看診名單總筆數（' + sm.autoTotal + '，已排除還卡、欠款），可手動修改；清空即恢復' : '放入看診名單後自動帶入，或手動輸入'}"></div>
         <div class="box"><div class="l">院區慢箋人次 ${sm.slowSrc === 'manual' ? '<span class="tag y">手動</span>' : sm.slowSrc === 'file' ? '<span class="tag g">慢箋檔</span>' : sm.slowSrc === 'saved' ? '<span class="tag g">後台</span>' : '<span class="tag g">醫師加總</span>'}</div><input id="sumSlow" class="${sm.slowSrc === 'manual' ? 'man' : (sm.slowSrc === 'file' ? 'auto' : '')}" value="${sm.slow ?? ''}" title="${sm.fileSlow !== null ? '預設為慢箋檔總筆數（' + sm.fileSlow + '，含支援醫師），可手動修改；清空即恢復' : '沒放慢箋檔時為各醫師慢專人次加總，可手動修改'}"></div>
@@ -772,8 +789,21 @@ function buildPayload(cl) {
     rows: rows.map(r => ({ doctor: r.doctor, title: r.title, hours: r.hours, patients: r.patients, visits: r.visits, slowN: r.slowN, slowRate: r.slowRate, vph: r.vph,
       backN: r.backN, backRate: r.backRate, nRevN: r.nRevN, nRevRate: r.nRevRate, wRevN: r.wRevN, wRevRate: r.wRevRate, analysisDate: ad,
       source: '前台分析 ' + [c.visitFile, c.backFile].filter(Boolean).join(' / ') })),
-    summary: { total: sm.total, slow: sm.slow, slowRate: sm.slowRate } } };
+    summary: { total: sm.total, slow: sm.slow, slowRate: sm.slowRate } },
+    metrics: metricsPayload(cl, rows, sm, ad) };
 }
+/** 醫師月指標／院區月指標（新分頁）：只存次數，比率、分數在畫面上即時算 */
+function metricsPayload(cl, rows, sm, ad) {
+  const c = cs(cl);
+  const codes = name => CFG.visitMap.filter(x => x.clinic === cl && x.doctor === name && x.active !== false).map(x => x.code).join('/');
+  const cr = c.clinicRev, sum = k => rows.some(r => r[k] !== null) ? rows.reduce((a, r) => a + (r[k] || 0), 0) : null;
+  return { month: S.month, clinic: cl, analysisDate: ad, source: '前台分析 ' + [c.visitFile, c.backFile].filter(Boolean).join(' / '),
+    rows: rows.map(r => ({ doctor: r.doctor, title: r.title, code: codes(r.doctor), hours: r.hours, visits: r.visits, slowN: r.slowN, backN: r.backN, sameN: r.sameN, anyN: r.anyN })),
+    summary: { visits: sm.total, slowN: sm.slow, backN: c.clinicBackN !== null && c.clinicBackN !== undefined ? c.clinicBackN : sum('backN'),
+               sameN: cr ? cr.sameN : null, anyN: cr ? cr.anyN : null } };
+}
+/** 舊流程（月統計資料）與新分頁（醫師月指標）一起存 */
+async function saveBoth(b) { await api('saveClinicMonth', b.payload); await api('saveMetrics', b.metrics); }
 async function saveClinic(cl) {
   const c = cs(cl);
   const b = buildPayload(cl);
@@ -782,7 +812,7 @@ async function saveClinic(cl) {
   if (miss.length && !confirm('以下醫師尚未輸入慢專人次：' + miss.join('、') + '\n仍要儲存嗎？')) return;
   const btn = $('#btnSave'); busy(btn, true, '儲存中');
   try {
-    await api('saveClinicMonth', b.payload);
+    await saveBoth(b);
     c.savedAt = new Date().toLocaleString('zh-TW'); c.dirty = false; saveLocal(); loadSaved();
     toast(cl + ' 已儲存（' + b.rows.length + ' 位醫師）');
   } catch (e) { toast('儲存失敗：' + e.message, true); busy(btn, false); }
@@ -804,7 +834,7 @@ async function saveAll() {
   for (let i = 0; i < plans.length; i++) {
     const { cl, b } = plans[i];
     btn.innerHTML = '<span class="spin"></span> 儲存中 ' + (i + 1) + '/' + plans.length;
-    try { await api('saveClinicMonth', b.payload); const c = cs(cl); c.savedAt = new Date().toLocaleString('zh-TW'); c.dirty = false; ok.push(cl); }
+    try { await saveBoth(b); const c = cs(cl); c.savedAt = new Date().toLocaleString('zh-TW'); c.dirty = false; ok.push(cl); }
     catch (e) { fail.push(cl + '（' + e.message + '）'); if (/重新登入/.test(e.message)) break; }
   }
   saveLocal(); busy(btn, false); loadSaved();
@@ -897,6 +927,18 @@ $('#customSel').onchange = e => { if (e.target.value) applyPreset('c:' + e.targe
 $('#btnSavePreset').onclick = () => { const n = prompt('版型名稱（例如：給院長、給老闆）', ''); if (!n) return; const c = LS.get('rr_custom', {}); c[n] = RPT.cfg; LS.set('rr_custom', c); RPT.preset = 'c:' + n; LS.set('rr_preset', RPT.preset); buildCfgUI(); toast('已儲存版型「' + n + '」（存在這台電腦的瀏覽器）'); };
 $('#btnDelPreset').onclick = () => { const n = $('#customSel').value; if (!n) return; const c = LS.get('rr_custom', {}); delete c[n]; LS.set('rr_custom', c); buildCfgUI(); };
 
+/** 報表：把「醫師月指標」的回同醫師、回院所數（新算法）併進本月與上月資料 */
+async function mergeMetrics(data) {
+  try {
+    const pm = E.prevMonth(S.month);
+    const mt = await api('getMetrics', { from: pm, to: S.month });
+    const put = (list, m) => (mt.records || []).filter(x => x.month === m).forEach(x => {
+      const r = (list || []).find(y => y.clinic === x.clinic && y.doctor === x.doctor);
+      if (r) { r.sameN = x.sameN; r.anyN = x.anyN; }
+    });
+    put(data.records, S.month); put(data.prev, pm);
+  } catch (e) {}
+}
 async function loadReport() {
   $('#repTitle').textContent = E.monthLabel(S.month) + ' 醫師回診率分析結果';
   $('#reportArea').innerHTML = '<div class="empty-state"><span class="spin" style="border-color:#2b5a5433;border-top-color:#2b5a54"></span> 載入中…</div>';
@@ -905,6 +947,7 @@ async function loadReport() {
   if (HAS_GAS) {
     try { data = await api('getMonth', { month: S.month }); }
     catch (e) { toast('載入失敗：' + e.message, true); data = null; }
+    if (data) await mergeMetrics(data);
   }
   if (!data) { data = localMonthData(); warn.push('目前顯示的是本機尚未儲存的試算資料。'); }
   const unsaved = activeClinics().filter(c => { const x = S.clinics[c.name]; return x && !x.savedAt && (x.visitFile || x.backFile); }).map(c => c.name);
@@ -935,7 +978,7 @@ function renderKpi() {
   const grand = d.clinicSum.reduce((a, c) => a + (E.numOrNull(c.total) || 0), 0);
   const pg = (d.prevClinicSum || []).reduce((a, c) => a + (E.numOrNull(c.total) || 0), 0);
   const clinicsDone = new Set(d.records.map(r => r.clinic)).size;
-  const avg = E.averages(d.records);
+  const avg = E.averages(E.reportData(d).records);   // 115/09 起個人／整體回診率用新算法
   $('#kpi').innerHTML = `
     <div class="card"><div class="l">全院區總人次</div><div class="v">${grand.toLocaleString()}${pg ? ` <small>上月 ${pg.toLocaleString()}（${grand - pg >= 0 ? '+' : ''}${(grand - pg).toLocaleString()}）</small>` : ''}</div></div>
     <div class="card"><div class="l">已完成院區 / 醫師</div><div class="v">${clinicsDone}<small> / ${activeClinics().length} 院區　${d.records.length} 位醫師</small></div></div>
