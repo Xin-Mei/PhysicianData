@@ -146,6 +146,9 @@ table.dt td.m{color:var(--muted)}
 .ex-list{font-size:12.5px;color:var(--muted);max-height:180px;overflow:auto;margin-top:6px}
 details summary{cursor:pointer;color:var(--brand2);font-size:13px}
 @media (max-width:1200px){.grid3{grid-template-columns:1fr}.panel{grid-template-columns:1fr}.rep{grid-template-columns:1fr}.cfg{position:static;max-height:none}.kpi{grid-template-columns:1fr 1fr}}
+/* 視窗變窄（如雙視窗）：標題只留 LOGO，選單縮小排成一行 */
+@media (max-width:1250px){.logo .lt{display:none}header.top{gap:16px;padding:0 18px}nav.tabs button,nav.tabs a{white-space:nowrap}}
+@media (max-width:950px){nav.tabs{gap:2px}nav.tabs button,nav.tabs a{padding:7px 10px;font-size:14px}.top .right{gap:8px}#connText,#whoName{display:none}}
 @media (max-width:700px){header.top{flex-wrap:wrap;height:auto;padding:10px 16px;gap:8px}main{padding:16px}.top .right{margin-left:0}}
 @media print{
   @page{size:A4 portrait;margin:8mm}
@@ -191,7 +194,7 @@ body.locked header.top,body.locked main{visibility:hidden}
   <div class="lg-note">閒置 30 分鐘或關閉頁面即自動登出。</div>
 </form></div>
 <header class="top">
-  <div class="logo"><img id="hdLogo" alt="">金鶯診所 · 醫師回診率分析系統</div>
+  <div class="logo"><img id="hdLogo" alt=""><span class="lt">金鶯診所 · 醫師回診率分析系統</span></div>
   <nav class="tabs">
     <button data-page="Analyze" class="on">資料分析</button>
     <button data-page="Report">結果報表</button>

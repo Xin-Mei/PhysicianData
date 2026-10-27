@@ -78,7 +78,10 @@ table.ed tr.off td{opacity:.5}
 .monthlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .monthlist span{background:#f6f4ef;border-radius:8px;padding:4px 10px;font-size:12.5px}
 @media (max-width:1100px){.kpi{grid-template-columns:1fr 1fr}}
-@media (max-width:700px){header.top{flex-wrap:wrap;height:auto;padding:10px 16px;gap:8px}main{padding:16px}}
+/* 視窗變窄（如雙視窗）：標題只留 LOGO，選單縮小排成一行 */
+@media (max-width:1500px){.logo .lt{display:none}header.top{gap:16px;padding:0 18px}}
+@media (max-width:1150px){nav.tabs{flex-wrap:nowrap;gap:2px}nav.tabs button,nav.tabs a{padding:7px 9px;font-size:14px;white-space:nowrap}.top .right{gap:8px}#connText,#whoName{display:none}}
+@media (max-width:700px){header.top{flex-wrap:wrap;height:auto;padding:10px 16px;gap:8px}main{padding:16px}nav.tabs{flex-wrap:wrap}}
 @media print{@page{size:A4 portrait;margin:8mm}header.top,.noprint,.toast{display:none!important}main{padding:0}.card{border:0;padding:0}
   .rpt td.r.top,.rpt td.d,.rpt td.doc.new,.rpt td.cs-avg{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 
@@ -115,7 +118,7 @@ body.locked header.top,body.locked main{visibility:hidden}
   <div class="lg-note">閒置 30 分鐘或關閉頁面即自動登出。</div>
 </form></div>
 <header class="top">
-  <div class="logo"><img id="hdLogo" alt="">金鶯診所 · 醫師回診率分析系統 <small>後台</small></div>
+  <div class="logo"><img id="hdLogo" alt=""><span class="lt">金鶯診所 · 醫師回診率分析系統</span> <small>後台</small></div>
   <nav class="tabs">
     <button data-p="Doc" class="on">醫師區間分析</button>
     <button data-p="Clinic">院區區間分析</button>
