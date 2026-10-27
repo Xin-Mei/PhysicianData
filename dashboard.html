@@ -405,6 +405,48 @@ function actionList() {
     <div><div class="ahd b">⚠️ 要關心的醫師 <small>${bad.length} 位：待加強${hasPrev ? '，加上比上期退步最多的' : ''}</small></div>${bad.map(o => item(o, true)).join('') || '<div class="note">這期沒有需要特別關心的醫師 🎉</div>'}</div>
     <div><div class="ahd g">⭐ 值得表揚的醫師 <small>${good.length} 位：前段${hasPrev ? '，加上比上期進步最多的' : ''}</small></div>${good.map(o => item(o, false)).join('') || '<div class="note">這期沒有前段醫師</div>'}</div></div>`;
 }
+/* 四項比率點開：行動清單。要關心＝最低 3 位＋比上期退步最多 3 位；值得表揚＝最高 3 位＋進步最多 3 位（變動 ≥ 1 個百分點才算）
+   開立率：要關心＝離合理區間最遠（太少、太多各 3 位）；值得表揚＝在合理區間且整體回診最好的 3 位＋這期回到合理區間的
+   外溢率：不計分；要關心＝外溢最高（病人回來卻改看別人）；值得表揚＝外溢最低且整體回診不低於平均 */
+const RTXT = {
+  ar: { lo: '了解病人沒回來的原因、加強衛教與回診提醒', hi: '病人回流好，可請他分享做法' },
+  pr: { lo: '加強醫病關係，主動約回診追蹤', hi: '病人願意回來找他，可請他分享經驗' },
+  sp: { lo: '病人有回來卻改看別人，了解是否有掛號、時段或醫病溝通的原因', hi: '病人回來都找他，醫病關係穩定' }
+};
+function actionListRate(k) {
+  const pv = {}; (V.prev ? V.prev.docs : []).forEach(o => pv[o.c + '|' + o.d] = o);
+  const docs = V.docs.filter(o => o[k] != null).map(o => { const p = pv[o.c + '|' + o.d]; o._d = p && p[k] != null ? o[k] - p[k] : null; return o; });
+  const avg = mean(docs.map(o => o[k])), lo = SC['開立率合理下限'], hi = SC['開立率合理上限'];
+  const uniq = arr => { const s = new Set(); return arr.filter(x => { const kk = x.o.c + '|' + x.o.d; if (s.has(kk)) { const f = arr.find(y => y.o === x.o); f.tags = Array.from(new Set(f.tags.concat(x.tags))); return false; } s.add(kk); return true; }); };
+  const by = (f, dir) => [...docs].sort((a, b) => (f(a) - f(b)) * dir);
+  let bad, good, badHd, goodHd, adv;
+  if (k === 'br') {
+    bad = uniq(by(o => o.br, 1).filter(o => o.br < lo).slice(0, 3).map(o => ({ o, tags: ['開太少'] })).concat(by(o => o.br, -1).filter(o => o.br > hi).slice(0, 3).map(o => ({ o, tags: ['開太多'] }))));
+    const inR = o => o.br >= lo && o.br <= hi, pIn = o => { const p = pv[o.c + '|' + o.d]; return p && p.br >= lo && p.br <= hi; };
+    good = uniq(by(o => o.ar, -1).filter(inR).slice(0, 3).map(o => ({ o, tags: ['合理區間'] })).concat(docs.filter(o => inR(o) && pv[o.c + '|' + o.d] && !pIn(o)).slice(0, 3).map(o => ({ o, tags: ['回到合理區間'] }))));
+    badHd = `離合理區間 ${pct(lo, 0)}～${pct(hi, 0)} 最遠的`; goodHd = '在合理區間、整體回診也好的' + (V.prev ? '，加上這期回到區間的' : '');
+    adv = (x, isBad) => isBad ? (x.o.br < lo ? '開立偏少，提醒適時開立 BACK' : '開立偏多，檢視開立是否必要') : '開立適中，請維持';
+  } else if (k === 'sp') {
+    bad = by(o => o.sp, -1).slice(0, 3).map(o => ({ o, tags: ['外溢最高'] }));
+    const arAvg = mean(docs.map(x => x.ar));
+    good = by(o => o.sp, 1).filter(o => o.ar >= arAvg).slice(0, 3).map(o => ({ o, tags: ['外溢最低'] }));
+    badHd = '病人回來後改看其他醫師最多的'; goodHd = '病人回來都找他、整體回診也不低於平均的';
+    adv = (x, isBad) => isBad ? RTXT.sp.lo : RTXT.sp.hi;
+  } else {
+    bad = uniq(by(o => o[k], 1).slice(0, 3).map(o => ({ o, tags: ['最低'] })).concat(by(o => o._d ?? 0, 1).filter(o => o._d != null && o._d <= -.01).slice(0, 3).map(o => ({ o, tags: ['比上期退步'] }))));
+    good = uniq(by(o => o[k], -1).slice(0, 3).map(o => ({ o, tags: ['最高'] })).concat(by(o => o._d ?? 0, -1).filter(o => o._d != null && o._d >= .01).slice(0, 3).map(o => ({ o, tags: ['比上期進步'] }))));
+    badHd = '最低 3 位' + (V.prev ? '，加上比上期退步最多的' : ''); goodHd = '最高 3 位' + (V.prev ? '，加上比上期進步最多的' : '');
+    adv = (x, isBad) => isBad ? RTXT[k].lo : (x.tags.includes('最高') ? RTXT[k].hi : '進步了，給予鼓勵');
+  }
+  const dTxt = o => o._d == null ? '' : `<span class="${k === 'br' || k === 'sp' ? 'neu' : o._d >= 0 ? 'up' : 'dn'}">${o._d >= 0 ? '▲' : '▼'}${(Math.abs(o._d) * 100).toFixed(1)}%</span>`;
+  const item = (x, isBad) => { const o = x.o, dv = o[k] - avg;
+    return `<div class="act" data-k="${esc(o.c + '|' + o.d)}"><div class="ah"><b>${esc(o.d)}</b><small>${esc(o.c)}</small>${x.tags.map(t => `<span class="atag ${isBad ? 'b' : 'g'}">${t}</span>`).join('')}<span class="grow"></span><span class="sc">${pct(o[k])}</span>${dTxt(o)}</div>
+      <div class="ab">${k === 'br' ? (o.br < lo ? `比合理下限低 <b>${((lo - o.br) * 100).toFixed(1)}%</b>` : o.br > hi ? `超過合理上限 <b>${((o.br - hi) * 100).toFixed(1)}%</b>` : '<b>在合理區間內</b>') : `比醫師平均 ${dv >= 0 ? '高' : '低'} <b>${(Math.abs(dv) * 100).toFixed(1)}%</b>`}　整體 ${pct(o.ar)}・個人 ${pct(o.pr)}・開立 ${pct(o.br)}　${labHtml(o.lab)}</div>
+      <div class="aa">${isBad ? '👉' : '👍'} ${esc(adv(x, isBad))}</div></div>`; };
+  return `<div class="acts">
+    <div><div class="ahd b">⚠️ 要關心的醫師 <small>${bad.length} 位：${badHd}</small></div>${bad.map(x => item(x, true)).join('') || '<div class="note">這期沒有需要特別關心的醫師 🎉</div>'}</div>
+    <div><div class="ahd g">⭐ 值得表揚的醫師 <small>${good.length} 位：${goodHd}</small></div>${good.map(x => item(x, false)).join('') || '<div class="note">這期沒有符合的醫師</div>'}</div></div>`;
+}
 function detail() {
   const el = $('#detail');
   if (!detailK || !V) { el.classList.add('hide'); return; }
@@ -420,11 +462,11 @@ function detail() {
   docs.forEach(o => strip += `<circle class="dot ${selClinic && o.c !== selClinic ? 'dim' : selClinic ? 'sel' : ''}" cx="${X(o[k])}" cy="28" r="6" data-k="${esc(o.c + '|' + o.d)}"/>`);
   strip += '</svg>';
   el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>${KDEF[k].t}・${esc(V.label)}</h2><button class="lnk" id="dClose">收起 ✕</button></div>
-    ${isS ? actionList() + '<div class="refh">分布參考</div>' : ''}
+    ${(isS ? actionList() : actionListRate(k)) + '<div class="refh">分布參考</div>'}
     <div class="stats"><div><div class="k">均值（醫師平均）</div><div class="n">${f(mean(vals))}</div></div><div><div class="k">高標（前 1/3 界線）</div><div class="n">${f(t2)}</div></div><div><div class="k">低標（後 1/3 界線）</div><div class="n">${f(t1)}</div></div><div><div class="k">最高 ～ 最低</div><div class="n" style="font-size:17px">${f(hi)} ～ ${f(lo)}</div></div></div>
     <div style="margin-top:14px">${strip}</div>
     <div class="note">每個點是一位醫師，滑過看名字、點一下看報告。${k === 'br' ? '橘線＝合理區間 ' + pct(SC['開立率合理下限'], 0) + '～' + pct(SC['開立率合理上限'], 0) + '。' : ''}${k === 'sp' ? '外溢率不計分，高低沒有好壞，看病人流向用。' : ''}</div>
-    <div class="reps ${isS ? 'hide' : ''}"><div><b>最高 3 位</b><ol>${sorted.slice(0, 3).map(li).join('')}</ol></div><div><b>最低 3 位</b><ol>${sorted.slice(-3).reverse().map(li).join('')}</ol></div></div>`;
+    <div class="reps hide"><div><b>最高 3 位</b><ol>${sorted.slice(0, 3).map(li).join('')}</ol></div><div><b>最低 3 位</b><ol>${sorted.slice(-3).reverse().map(li).join('')}</ol></div></div>`;
   el.classList.remove('hide');
   $('#dClose').onclick = () => { detailK = null; kpis(); detail(); };
   $$('#detail [data-k]').forEach(n => { const o = V.docs.find(x => x.c + '|' + x.d === n.dataset.k); if (!o) return; n.onclick = () => openDoc(o); if (n.tagName === 'circle') { n.onmousemove = e => tip(e, `<b>${esc(o.c)}・${esc(o.d)}</b><br>${KDEF[k].t} ${f(o[k])}`); n.onmouseleave = untip; } });
