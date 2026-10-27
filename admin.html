@@ -65,6 +65,9 @@ table.ed tr.off td{opacity:.5}
 .legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted)}
 .legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
 .empty{padding:40px;text-align:center;color:var(--muted)}
+.idrop{border:2px dashed #cfc9bb;border-radius:14px;padding:22px 16px;text-align:center;color:var(--muted);cursor:pointer;line-height:1.7}
+.idrop.hover{border-color:var(--brand);background:var(--brand-soft)}
+.ok{color:#1f7a4d}.ng{color:var(--bad)}
 .warnbox{background:var(--warn-soft);color:#7a5412;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.6;margin-bottom:14px}
 .info{background:var(--brand-soft);color:#24524b;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.6;margin-bottom:14px}
 .toast{position:fixed;right:24px;bottom:24px;background:#1e3d3a;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px #0003;opacity:0;transform:translateY(10px);transition:.25s;z-index:99}
@@ -120,6 +123,7 @@ body.locked header.top,body.locked main{visibility:hidden}
     <button data-p="Lists">清單維護</button>
     <button data-p="Settings">系統設定</button>
     <button data-p="Acc">帳號密碼</button>
+    <button data-p="Import">歷史匯入</button>
   </nav>
   <div class="right">
     <a href="index.html" style="color:#cfe0dc">← 回前台</a>
@@ -213,6 +217,34 @@ body.locked header.top,body.locked main{visibility:hidden}
         <label class="f">新密碼（至少 6 碼）</label><input class="inp" id="aAP" type="password" autocomplete="new-password" style="margin-bottom:10px">
         <label class="f">再輸入一次新密碼</label><input class="inp" id="aAP2" type="password" autocomplete="new-password" style="margin-bottom:14px">
         <button class="btn pri" data-acc="admin">更新後台帳號密碼</button></div>
+    </div>
+  </section>
+
+  <!-- 歷史匯入 -->
+  <section id="pImport" class="hide">
+    <div class="info">一次放入整年的檔案（每個院區：看診名單、BACK、慢箋各一份，整年在同一個檔），系統自動拆成每個月，算好後寫入「醫師月指標／院區月指標」。<br>同月份、同院區已有資料會被整批取代。原本的「月統計資料」不受影響。</div>
+    <div class="card">
+      <p class="step">1 · 匯入月份</p>
+      <div class="filters">
+        <div><label class="f">起始月份</label><input type="month" id="iFrom" class="inp" value="2025-09"></div>
+        <div><label class="f">結束月份</label><input type="month" id="iTo" class="inp" value="2026-08"></div>
+      </div>
+    </div>
+    <div class="card">
+      <p class="step">2 · 放入整年檔案</p>
+      <div class="idrop" id="iDrop">點此或把檔案拖進來（可一次全選 42 個檔）<br><small>檔名要有院區名稱與「看診名單／BACK／慢箋」，例如：三樹院區_看診名單.xlsx</small></div>
+      <input type="file" id="iFile" multiple accept=".xlsx,.xls" class="hide">
+      <div id="iFiles" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <p class="step">3 · 讀取門診表（上診時數）</p>
+      <div class="filters"><button class="btn" id="iSched">自動讀取各月門診表</button><span class="hint">從雲端「門診表」資料夾找每個月的門診表；Excel 檔會自動轉換。沒讀也可以匯入，只是沒有上診時數。</span></div>
+      <div id="iSchedOut" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <p class="step">4 · 計算與儲存</p>
+      <div class="filters"><button class="btn" id="iCalc">計算預覽</button><button class="btn pri" id="iSave" disabled>寫入後台</button></div>
+      <div id="iOut" style="margin-top:12px"></div>
     </div>
   </section>
 </main>
@@ -526,8 +558,107 @@ $$('[data-acc]').forEach(b => b.onclick = async () => {
 /* ---------- 頁籤 ---------- */
 $$('nav.tabs button').forEach(b => b.onclick = () => {
   $$('nav.tabs button').forEach(x => x.classList.toggle('on', x === b));
-  ['Doc', 'Clinic', 'Month', 'Lists', 'Settings', 'Acc'].forEach(p => $('#p' + p).classList.toggle('hide', p !== b.dataset.p));
+  ['Doc', 'Clinic', 'Month', 'Lists', 'Settings', 'Acc', 'Import'].forEach(p => $('#p' + p).classList.toggle('hide', p !== b.dataset.p));
 });
+
+/* ---------- 歷史匯入（整年檔 → 每月醫師月指標） ---------- */
+const IMP = { raw: {}, files: {}, hours: {}, sched: [], groups: null };
+const impMonths = () => { const out = []; let [y, m] = $('#iFrom').value.split('-').map(Number); const [ty, tm] = $('#iTo').value.split('-').map(Number);
+  while (y * 12 + m <= ty * 12 + tm && out.length < 60) { out.push(y + '-' + String(m).padStart(2, '0')); if (++m > 12) { m = 1; y++; } } return out; };
+const impClinics = () => CFG.clinics.filter(c => c.active !== false);
+function readXlsx(f) { return new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => { try { const wb = XLSX.read(new Uint8Array(fr.result), { type: 'array' }); ok(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: '' })); } catch (e) { no(e); } }; fr.onerror = () => no(fr.error); fr.readAsArrayBuffer(f); }); }
+async function impFiles(list) {
+  const fail = [];
+  for (const f of list) {
+    const base = f.name.replace(/\.[^.]+$/, '');
+    const c = impClinics().find(c => base.indexOf(c.fileKey || c.name) >= 0);
+    const type = /慢箋|慢專/.test(f.name) ? 'slows' : /BACK/i.test(f.name) ? 'backs' : /看診/.test(f.name) ? 'visits' : null;
+    if (!c || !type) { fail.push(f.name + '（認不出院區或檔案種類）'); continue; }
+    $('#iFiles').innerHTML = '<span class="hint"><span class="spin"></span> 讀取 ' + esc(f.name) + '…</span>';
+    try {
+      const rows = await readXlsx(f);
+      const p = type === 'visits' ? E.parseVisitRows(rows) : type === 'backs' ? E.parseBackRows(rows) : E.parseSlowRows(rows);
+      let lo = null, hi = null; p.rows.forEach(r => { if (lo === null || r.day < lo) lo = r.day; if (hi === null || r.day > hi) hi = r.day; });   // 整年資料筆數多，不用 Math.min(...)
+      (IMP.raw[c.name] = IMP.raw[c.name] || {})[type] = p.rows;
+      (IMP.files[c.name] = IMP.files[c.name] || {})[type] = { name: f.name, n: p.rows.length, from: lo, to: hi };
+    } catch (e) { fail.push(f.name + '：' + e.message); }
+  }
+  IMP.groups = null; $('#iSave').disabled = true; impRenderFiles();
+  if (fail.length) toast('部分檔案無法讀取：' + fail.join('；'), true);
+}
+function impRenderFiles() {
+  const cell = (cl, t) => { const x = (IMP.files[cl] || {})[t]; return x ? `<span class="ok">✓</span> ${x.n.toLocaleString()} 筆<br><small class="hint">${x.from !== null ? E.dayRoc(x.from) + '～' + E.dayRoc(x.to) : ''}</small>` : '<span class="hint">—</span>'; };
+  const cls = impClinics().filter(c => IMP.files[c.name]);
+  $('#iFiles').innerHTML = cls.length ? `<div class="tbl-wrap"><table class="dt"><thead><tr><th>院區</th><th>看診名單</th><th>BACK</th><th>慢箋</th></tr></thead><tbody>${cls.map(c => `<tr><td class="l">${esc(c.name)}</td><td>${cell(c.name, 'visits')}</td><td>${cell(c.name, 'backs')}</td><td>${cell(c.name, 'slows')}</td></tr>`).join('')}</tbody></table></div>
+    <div class="hint" style="margin-top:6px">已放 ${cls.length} / ${impClinics().length} 院區。沒有看診名單的院區不會匯入。</div>` : '';
+}
+(() => {
+  const d = $('#iDrop'), inp = $('#iFile');
+  d.onclick = () => inp.click();
+  inp.onchange = () => { impFiles(Array.from(inp.files)); inp.value = ''; };
+  d.ondragover = e => { e.preventDefault(); d.classList.add('hover'); };
+  d.ondragleave = () => d.classList.remove('hover');
+  d.ondrop = e => { e.preventDefault(); d.classList.remove('hover'); impFiles(Array.from(e.dataTransfer.files)); };
+})();
+$('#iSched').onclick = async () => {
+  const b = $('#iSched'); busy(b, true);
+  const out = [], exclude = String(setting('班表排除診別關鍵字', '減重')).split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+  try {
+    const list = await api('listSchedules');
+    const tabs = impClinics().map(c => c.scheduleTab || c.name);
+    for (const m of impMonths()) {
+      const f = list.find(x => x.month === m);
+      if (!f) { out.push({ m, msg: '<span class="ng">資料夾裡找不到這個月的門診表</span>' }); continue; }
+      $('#iSchedOut').innerHTML = '<span class="hint"><span class="spin"></span> 讀取 ' + esc(f.name) + (f.sheet ? '' : '（Excel 轉換中）') + '…</span>';
+      try {
+        const data = await api('readSchedule', { fileId: f.id, tabs });
+        const [s, e] = E.monthRange(m); IMP.hours[m] = {};
+        const miss = [];
+        impClinics().forEach(c => { const sh = data.sheets.find(x => x.name === (c.scheduleTab || c.name)); if (!sh) { miss.push(c.name); return; } IMP.hours[m][c.name] = E.parseSchedule(sh, { start: s, end: e, exclude }).hours; });
+        out.push({ m, msg: `<span class="ok">✓</span> ${esc(f.name)}${f.sheet ? '' : '（Excel）'}` + (miss.length ? `<span class="hint">　沒有分頁：${miss.map(esc).join('、')}</span>` : '') });
+      } catch (e) { out.push({ m, msg: '<span class="ng">' + esc(f.name) + ' 讀取失敗：' + esc(e.message) + '</span>' }); }
+    }
+  } catch (e) { toast('讀取門診表失敗：' + e.message, true); }
+  $('#iSchedOut').innerHTML = out.map(x => `<div>${E.monthLabel(x.m)}：${x.msg}</div>`).join('');
+  IMP.groups = null; $('#iSave').disabled = true; busy(b, false);
+};
+$('#iCalc').onclick = () => {
+  const months = impMonths(), groups = [], unm = {};
+  const stripFirst = String(setting('BACK醫師別去首碼對應', 'Y')).toUpperCase() !== 'N', days = +setting('回診判定天數', 4);
+  impClinics().forEach(c => {
+    const raw = IMP.raw[c.name]; if (!raw || !raw.visits) return;
+    months.forEach(m => {
+      const g = E.monthMetrics({ visits: raw.visits, backs: raw.backs || [], slows: raw.slows || null }, { clinic: c.name, month: m, visitMap: CFG.visitMap, backMap: CFG.backMap,
+        doctors: CFG.doctors.filter(d => d.clinic === c.name), days, stripFirst, hours: (IMP.hours[m] || {})[c.name] });
+      if (!g) return;
+      Object.entries(g.unmapped).forEach(([k, n]) => { const kk = c.name + '｜醫 ' + (g.rawCodes[k] || k); unm[kk] = (unm[kk] || 0) + n; });
+      delete g.unmapped; delete g.rawCodes; groups.push(g);
+    });
+  });
+  if (!groups.length) { $('#iOut').innerHTML = '<div class="warnbox">沒有可匯入的資料：請先放入看診名單，並確認月份範圍。</div>'; return; }
+  IMP.groups = groups; $('#iSave').disabled = false;
+  const by = m => groups.filter(g => g.month === m), sum = (gs, f) => gs.reduce((a, g) => a + f(g), 0);
+  const unmL = Object.entries(unm).sort((a, b) => b[1] - a[1]);
+  $('#iOut').innerHTML = `<div class="tbl-wrap"><table class="dt"><thead><tr><th>月份</th><th>院區數</th><th>醫師數</th><th>看診人次</th><th>BACK開立</th><th>有上診時數的醫師</th></tr></thead><tbody>` +
+    months.filter(m => by(m).length).map(m => { const gs = by(m), rows = gs.flatMap(g => g.rows);
+      return `<tr><td class="l">${E.monthLabel(m)}</td><td>${gs.length}</td><td>${rows.length}</td><td>${sum(gs, g => g.summary.visits).toLocaleString()}</td><td>${sum(gs, g => g.summary.backN).toLocaleString()}</td><td>${rows.filter(r => r.hours !== null).length} / ${rows.length}</td></tr>`; }).join('') +
+    `</tbody></table></div>` + (unmL.length ? `<div class="info" style="margin-top:12px">以下代碼不在醫清單裡（多為支援醫師），不算進任何醫師，但會算進院區總數：<br>${unmL.map(([k, n]) => esc(k) + '（' + n + ' 筆）').join('、')}</div>` : '') +
+    `<div class="hint">共 ${groups.length} 組（月份×院區）、${groups.reduce((a, g) => a + g.rows.length, 0)} 位醫師×月。確認後按「寫入後台」。</div>`;
+};
+$('#iSave').onclick = async () => {
+  const gs = IMP.groups; if (!gs) return;
+  const months = Array.from(new Set(gs.map(g => g.month)));
+  if (!confirm(`將寫入 ${E.monthLabel(months[0])}～${E.monthLabel(months[months.length - 1])}，共 ${gs.length} 組（月份×院區）。\n同月份同院區已有的醫師月指標會被取代，確定嗎？`)) return;
+  const b = $('#iSave'); b.disabled = true; const ad = (new Date().getMonth() + 1) + '/' + new Date().getDate();
+  const fail = [];
+  for (let i = 0; i < months.length; i++) {
+    b.innerHTML = `<span class="spin"></span> 寫入中 ${i + 1}/${months.length}`;
+    const batch = gs.filter(g => g.month === months[i]).map(g => Object.assign({ source: '歷史匯入', analysisDate: ad }, g));
+    try { await api('saveMetrics', { batch }); } catch (e) { fail.push(E.monthLabel(months[i]) + '（' + e.message + '）'); if (/重新登入/.test(e.message)) break; }
+  }
+  b.innerHTML = '寫入後台'; b.disabled = false;
+  if (fail.length) toast('部分月份寫入失敗：' + fail.join('、'), true); else toast('已寫入 ' + months.length + ' 個月、' + gs.length + ' 組');
+};
 init();
 </script>
 </body>
