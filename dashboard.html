@@ -19,10 +19,11 @@
   --q0:#eef6f2;--q1:#e3f1ea;--q2:#f1f3f2;--q3:#fbe8e5;--q-ink:#3d5752;
   --tip-bg:#1d2a28;--tip-ink:#fff;--shadow:0 1px 2px rgba(29,42,40,.04),0 6px 20px rgba(29,42,40,.04);
   --w1:#24534c;--w2:#5f9c8c;--w3:#a8c7bd;--prev:#7fb8a8;--grp:#9aa5a1;--up:#1f7a4d;--dn:#b4432f;
-  --pos-hi:#2f7d5b;--pos-mid:#6b7a74;--pos-lo:#c0573f;--r:18px;
+  --pos-hi:#2f7d5b;--rd-line:#2f7d6b;--rd-fill:#7cc4ad;--rd-txt:#7fb8a8;--pos-mid:#6b7a74;--pos-lo:#c0573f;--r:18px;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}/* 不跟著手機「文字大小」設定變大，要看清楚可用手指放大 */
 body{background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;font-size:15px;line-height:1.5}
 .wrap{max-width:1360px;margin:0 auto;padding:0 24px 48px}
 header.top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
@@ -57,6 +58,7 @@ h2{font-size:20px;margin:0;letter-spacing:.03em}
 .kpi.hero .tag-w{background:rgba(255,255,255,.16);color:var(--hero-ink)}
 .up{color:var(--up)}.dn{color:var(--dn)}.neu{color:var(--muted)}
 .detail{margin-top:14px}
+.kpis>.detail{grid-column:1/-1;margin-top:0;border:2px solid var(--accent)}
 .detail .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
 .detail .stats div{background:var(--chip-bg);border-radius:12px;padding:10px 12px}
 .detail .stats .k{font-size:12px;color:var(--muted)}.detail .stats .n{font-size:22px;font-weight:900}
@@ -75,8 +77,9 @@ h2{font-size:20px;margin:0;letter-spacing:.03em}
 .aadv{font-size:13.5px;font-weight:700;margin:12px 2px 8px;color:var(--ink)}
 .atag{font-size:11px;font-weight:700;padding:calc(1px - .06em) 8px calc(1px + .06em);border-radius:99px}.atag.b{background:#fbe8e5;color:#9b2f22}.atag.g{background:#e3f1ea;color:#1f6a46}
 .refh{margin-top:18px;font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.06em;border-top:1px dashed var(--line);padding-top:12px}
-.summary .sumh{font-weight:900;font-size:17px;margin-bottom:6px}
-.summary ul{margin:0;padding-left:20px;line-height:1.9;font-size:14.5px}
+.summary{background:var(--q0);border-color:#d5e8de;box-shadow:none;padding:14px 18px}
+.summary .sumh{font-weight:900;font-size:15px;margin-bottom:4px;color:var(--brand)}
+.summary ul{margin:0;padding-left:18px;line-height:1.85;font-size:14px}
 .summary a{color:var(--brand);font-weight:700;cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .wg{margin-bottom:18px}
 .wgh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 10px}
@@ -90,6 +93,15 @@ h2{font-size:20px;margin:0;letter-spacing:.03em}
 .frow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
 .flab{font-size:12.5px;color:var(--muted);font-weight:700;width:34px}
 .chip small{opacity:.7;margin-left:2px}
+.mt{width:100%;margin-top:10px;font-size:13.5px}
+.mt th{cursor:default;padding:6px 4px;font-size:12px}.mt td{padding:9px 4px;font-size:13.5px}
+.mt td.l b{display:block;font-size:13.5px}.mt td.l small{color:var(--muted);font-size:11.5px}
+.mt td.me{font-weight:900;font-size:15px;color:var(--ink)}.mt td.ref{color:var(--muted)}
+.mt .scb{display:inline-block;min-width:36px;text-align:center;font-weight:900;border-radius:8px;padding:2px 6px;background:var(--chip-bg)}
+.mt tr.opt td{background:#fafbfa}.mt tbody tr{cursor:default}.mt tbody tr:hover{background:none}
+.cnts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.cnts>div{border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.cnts .k{font-size:12px;color:var(--muted)}.cnts .n{font-size:19px;font-weight:900;font-variant-numeric:tabular-nums}.cnts .n small{font-size:12px;font-weight:500;color:var(--muted);margin-left:3px}
 .wgh .lnk{margin-left:auto}
 .wc .wt{text-align:center;margin-top:4px}
 .wrows{padding:8px 16px}
@@ -120,7 +132,7 @@ svg text{font-family:inherit}
 .docchips{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
 .docchips .hint{font-size:12px;color:var(--muted);margin-right:4px;align-self:center}
 .bars .row{display:grid;grid-template-columns:44px 1fr 56px;gap:10px;align-items:center;padding:5px 0;cursor:pointer;border-radius:8px}
-.bars .row:hover{background:var(--hover)}
+.bars .row:hover{background:var(--hover)}.bars .row.ex{cursor:default;color:var(--muted)}.bars .row.ex:hover{background:none}.bars .row.ex .bk i{background:var(--grp)}
 .bars .nm{font-weight:700;font-size:14px}
 .bars .bk{height:12px;background:var(--track);border-radius:4px;position:relative}
 .bars .bk i{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0;background:var(--bar)}
@@ -182,7 +194,9 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin-top:36px}
 .hide{display:none!important}
 body.locked header.top,body.locked .wrap{visibility:hidden}
 @media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.grid2{grid-template-columns:minmax(0,1fr)}.expl{grid-template-columns:1fr 1fr}}
-@media (max-width:640px){header.top{position:static}.wrap{padding:0 14px 40px}header.top .in{padding:10px 14px}.kpis{grid-template-columns:1fr 1fr}.kpi .v{font-size:26px}.kpi.hero{grid-column:1/-1}.expl{grid-template-columns:1fr}.brand .t2{font-size:17px}.hide-m{display:none}td,th{padding:9px 6px}.detail .stats{grid-template-columns:1fr 1fr}.reps,.acts{grid-template-columns:1fr}.wgrid{grid-template-columns:repeat(2,1fr);gap:8px}.wrow{grid-template-columns:1fr}}
+@media (min-width:1100px){body{font-size:16px}.wgrid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}.wc .wn b{font-size:16.5px}.wc .ws .sc{font-size:23px}.nchip{font-size:14.5px}.chip{font-size:14px}.summary ul{font-size:15px}.kpi .l{font-size:14px}.kpi .s{font-size:13.5px}.sec-h .sub{font-size:14px}}
+/* 手機：標題列固定在上方、縮成一行（只留 LOGO＋區間切換＋登出） */
+@media (max-width:640px){header.top .in{padding:7px 10px;gap:8px;flex-wrap:nowrap}.brand img{width:30px;height:30px}.brand>div,.grow{display:none}.ctl{flex-wrap:nowrap;gap:6px;flex:1;justify-content:flex-end;min-width:0;overflow-x:auto}.seg button{padding:calc(5px - .06em) 9px calc(5px + .06em);font-size:12.5px}#pick select,#pick input{font-size:13px;padding:5px 6px}.lnk{padding:calc(4px - .06em) 9px calc(4px + .06em);font-size:12px;white-space:nowrap}.wrap{padding:0 14px 40px}.summary ul{font-size:13.5px}.cnts{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:1fr 1fr}.kpi .v{font-size:26px}.kpi.hero{grid-column:1/-1}.expl{grid-template-columns:1fr}.brand .t2{font-size:17px}.hide-m{display:none}td,th{padding:9px 6px}.detail .stats{grid-template-columns:1fr 1fr}.reps,.acts{grid-template-columns:1fr}.wgrid{grid-template-columns:repeat(2,1fr);gap:8px}.wrow{grid-template-columns:1fr}}
 </style>
 </head>
 <body class="locked">
@@ -208,10 +222,10 @@ body.locked header.top,body.locked .wrap{visibility:hidden}
 
 <div class="wrap">
   <div class="period" id="period"></div>
+  <!-- 本期重點放最上面：一打開先看結論，再看數字卡（小玫 10/30 選 A） -->
+  <div class="card summary" id="summary" style="margin-top:12px"></div>
   <div class="kpis" id="kpis"><div class="card empty" style="grid-column:1/-1">載入中…</div></div>
   <div class="card detail hide" id="detail"></div>
-
-  <div class="card summary" id="summary" style="margin-top:14px"></div>
 
   <div class="sec-h"><h2>醫師球探牆</h2><span class="sub">依分類排列，標竿在最上面；點醫師卡看完整報告</span></div>
   <div class="chips" id="clChips"></div>
@@ -228,7 +242,7 @@ body.locked header.top,body.locked .wrap{visibility:hidden}
       <div class="sec-h" style="margin:0 0 10px"><h2>院區比較</h2><span class="sub" id="barSub"></span></div>
       <div class="seg" id="barMetric" style="margin-bottom:12px"><button data-k="ar" class="on">整體回診率</button><button data-k="pr">個人回診率</button><button data-k="br">開立率</button></div>
       <div class="bars" id="bars"></div>
-      <div class="note">院區數字含支援醫師的看診。直線＝醫師平均（開立率為目標 30%）。點院區可在分布圖中標示該院區醫師。</div>
+      <div class="note">院區數字含支援醫師的看診。灰色＝樹林院區，不列入醫師評比，只顯示院區數字。直線＝醫師平均（開立率為目標 30%）。點院區可在分布圖中標示該院區醫師。</div>
     </div>
   </div>
 
@@ -340,9 +354,10 @@ function aggregate(ms) {
   docs.forEach(o => { o.br = o.b / o.v; o.pr = o.same / o.v; o.ar = o.any / o.v; o.sp = o.ar - o.pr; o.vph = o.hours ? o.v / o.hours : null; o.slr = o.slow !== null ? o.slow / o.v : null; });
   const S = E.scoreAll(docs.map(o => ({ clinic: o.c, doctor: o.d, visits: o.v, backN: o.b, sameN: o.same, anyN: o.any })), CFG.settings);
   docs.forEach(o => { const s = S.scores[o.c + '|' + o.d] || {}; o.s = s; o.score = s.ranked ? s.total : null; o.lab = s.cls || ''; });
-  const clinics = {};
-  ALL.clinics.filter(r => set.has(r.month) && ex.indexOf(r.clinic) < 0).forEach(r => { const o = clinics[r.clinic] || (clinics[r.clinic] = { v: 0, b: 0, same: 0, any: 0 }); o.v += +r.visits || 0; o.b += +r.backN || 0; o.same += +r.sameN || 0; o.any += +r.anyN || 0; });
-  return { docs, S, clinics };
+  // 院區比較要連排除的院區（樹林）一起顯示，所以另存 allClinics（小玫 10/30）
+  const clinics = {}, allClinics = {};
+  ALL.clinics.filter(r => set.has(r.month)).forEach(r => { const o = allClinics[r.clinic] || (allClinics[r.clinic] = { v: 0, b: 0, same: 0, any: 0 }); o.v += +r.visits || 0; o.b += +r.backN || 0; o.same += +r.sameN || 0; o.any += +r.anyN || 0; if (ex.indexOf(r.clinic) < 0) clinics[r.clinic] = o; });
+  return { docs, S, clinics, allClinics };
 }
 function compute() {
   const ms = periodMonths();
@@ -387,9 +402,10 @@ function kpis() {
     const f = x => isS ? x.toFixed(1) : pct(x, 2);
     const df = v != null && pv != null && !isS ? v - pv : null, neutral = k === 'br' || k === 'sp';   // 綜合分數平均永遠約等於 80，不比上期
     const dtxt = df == null ? '' : `<span class="${neutral ? 'neu' : df >= 0 ? 'up' : 'dn'}">${df >= 0 ? '▲' : '▼'} ${isS ? Math.abs(df).toFixed(1) : (Math.abs(df) * 100).toFixed(2) + '%'}</span> 比上期`;
-    return `<div class="card kpi ${hero ? 'hero' : ''} ${detailK === k ? 'sel' : ''}" data-k="${k}"><div class="l">${KDEF[k].t} <span class="tag-w">${tag}</span></div><div class="v">${v == null ? '—' : f(v)}</div><div class="s">${extra || KDEF[k].sub}${dtxt ? '　' + dtxt : ''}</div><div class="more">要關心・值得表揚 ›</div></div>`;
+    return `<div class="card kpi ${hero ? 'hero' : ''} ${detailK === k ? 'sel' : ''}" data-k="${k}"><div class="l">${KDEF[k].t} <span class="tag-w">${tag}</span></div><div class="v">${v == null ? '—' : f(v)}</div><div class="s">${extra || KDEF[k].sub}${dtxt ? '　' + dtxt : ''}</div><div class="more">${detailK === k ? '收起 ▴' : '看詳細 ▾'}</div></div>`;
   };
   const br = gAvg(V, 'br');
+  $('#kpis').after($('#detail'));   // 先把詳細區移出來，重畫卡片時才不會被清掉
   $('#kpis').innerHTML = card('ar', '品牌忠誠度・' + w('權重_院所回診'), '', true) + card('pr', w('權重_個人回診')) + card('sp', '參考') +
     card('br', w('權重_開立適切'), `目標 ${w('開立率合理下限')}～${w('開立率合理上限')}・${br >= SC['開立率合理下限'] ? '已達標' : '差 ' + ((SC['開立率合理下限'] - br) * 100).toFixed(1) + ' 個百分點'}`) +
     card('score', '平均 ' + SC['分數平均'], `前段 ${V.docs.filter(o => o.s.tier === '前段').length}・中段 ${V.docs.filter(o => o.s.tier === '中段').length}・待加強 ${V.docs.filter(o => o.s.tier === '待加強').length} 位`);
@@ -485,19 +501,25 @@ function detail() {
   el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>${KDEF[k].t}・${esc(V.label)}</h2><button class="lnk" id="dClose">收起 ✕</button></div>
     ${isS ? actionList() : actionListRate(k)}${k === 'sp' ? '<div class="note">外溢率不計分，看病人流向用。</div>' : ''}`;
   el.classList.remove('hide');
+  // 詳細內容直接接在「點的那張卡」那一排下面（手機上才看得出有點到）
+  const cards = $$('#kpis .kpi'), sel = cards.find(c => c.dataset.k === k);
+  if (sel) { const rowEnd = cards.filter(c => c.offsetTop === sel.offsetTop).pop(); rowEnd.after(el); if (innerWidth <= 640) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
   $('#dClose').onclick = () => { detailK = null; kpis(); detail(); };
   $$('#detail [data-k]').forEach(n => { const o = V.docs.find(x => x.c + '|' + x.d === n.dataset.k); if (o) n.onclick = () => openDoc(o); });
 }
 
 /* ---------- 篩選：分類膠囊、院區膠囊 ---------- */
-let selCls = null;
+let selCls = null, clOpen = false;
 const order = () => CFG.clinics.map(c => c.name).filter(c => V.docs.some(o => o.c === c));
 function chips() {
   const cnt = c => V.docs.filter(o => o.lab === c && (!selClinic || o.c === selClinic)).length;
   $('#clChips').innerHTML = `<div class="frow"><span class="flab">分類</span><button class="chip ${!selCls ? 'on' : ''}" data-f="cls" data-v="">全部</button>` +
     CLS_ORDER.filter(c => V.docs.some(o => o.lab === c)).map(c => `<button class="chip ${selCls === c ? 'on' : ''}" data-f="cls" data-v="${esc(c)}">${esc(labName(c))} <small>${cnt(c)}</small></button>`).join('') + '</div>' +
-    `<div class="frow"><span class="flab">院區</span><button class="chip ${!selClinic ? 'on' : ''}" data-f="cl" data-v="">全部</button>` + order().map(c => `<button class="chip ${selClinic === c ? 'on' : ''}" data-f="cl" data-v="${esc(c)}">${esc(c)}</button>`).join('') + '</div>';
-  $$('#clChips .chip').forEach(b => b.onclick = () => { const v = b.dataset.v || null; if (b.dataset.f === 'cls') selCls = v; else selClinic = v; renderAll(); });
+    // 院區預設「全部院區」收合，要換院區再點開選（小玫 10/30）
+    `<div class="frow"><span class="flab">院區</span><button class="chip ${selClinic ? 'on' : ''}" id="clTog">${selClinic ? esc(selClinic) : '全部院區'} ${clOpen ? '▴' : '▾'}</button>` +
+    (clOpen ? (selClinic ? `<button class="chip" data-f="cl" data-v="">全部院區</button>` : '') + order().filter(c => c !== selClinic).map(c => `<button class="chip" data-f="cl" data-v="${esc(c)}">${esc(c)}</button>`).join('') : '') + '</div>';
+  $('#clTog').onclick = () => { clOpen = !clOpen; chips(); };
+  $$('#clChips .chip[data-f]').forEach(b => b.onclick = () => { const v = b.dataset.v || null; if (b.dataset.f === 'cls') selCls = v; else { selClinic = v; clOpen = false; } renderAll(); });
 }
 
 /* ---------- 本期重點（3～4 句話） ---------- */
@@ -512,21 +534,25 @@ function summary() {
     `本期 <b>${D.length}</b> 位醫師：${CLS_ORDER.filter(n).map(c => `${labName(c)} <b>${n(c)}</b>`).join('・')}。`,
     `整體回診率 <b>${pct(ar)}</b>${par != null ? (Math.abs(ar - par) < .0005 ? '（與上期持平）' : `（比上期 <span class="${ar >= par ? 'up' : 'dn'}">${ar >= par ? '▲' : '▼'}${(Math.abs(ar - par) * 100).toFixed(1)}%</span>）`) : ''}；開立率 <b>${pct(br)}</b>，${br >= SC['開立率合理下限'] ? '已達目標' : '未達目標 ' + pct(SC['開立率合理下限'], 0)}。`,
     tier('待加強').length ? `綜合分數待加強 <b>${tier('待加強').length}</b> 位：${nm(tier('待加強'))}。` : '這期沒有綜合分數待加強的醫師 🎉',
-    ch.length ? `進步最多：${nm([ch[0].o])}（<span class="up">▲${ch[0].d.toFixed(1)}</span> 分）；退步最多：${nm([ch[ch.length - 1].o])}（<span class="dn">▼${Math.abs(ch[ch.length - 1].d).toFixed(1)}</span> 分）。` : ''
+    ch.length ? `比上期進步最多：${nm([ch[0].o])}（<span class="up">▲${ch[0].d.toFixed(1)}</span> 分）` + (ch[ch.length - 1].d < 0 ? `；分數下滑、可多關心：${nm([ch[ch.length - 1].o])}（<span class="dn">▼${Math.abs(ch[ch.length - 1].d).toFixed(1)}</span> 分）` : '') + '。' : ''
   ].filter(Boolean);
   $('#summary').innerHTML = `<div class="sumh">📌 本期重點・${esc(V.label)}</div><ul>${lines.map(l => `<li>${l}</li>`).join('')}</ul>`;
   $$('#summary a[data-k]').forEach(a => a.onclick = () => openDoc(V.docs.find(o => o.c + '|' + o.d === a.dataset.k)));
 }
 
 /* ---------- 醫師球探牆：依分類分區，每位一張迷你五角形卡 ---------- */
+// 五角形圓心代表的分數：比分數下限再低 20 分，最低分（60）落在約 1/3 處，差異不誇大
+const RBASE = 40;
 function radarMini(r) {
   const A = axes(r), S = 120, c = S / 2, R = 48, n = A.length, lo = SC['分數下限'], hi = SC['分數上限'];
-  const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / n, k = ((v ?? lo) - lo) / (hi - lo) * R; return [c + k * Math.cos(a), c + k * Math.sin(a)]; };
-  let s = `<svg viewBox="0 -8 ${S} ${S + 10}" width="100%" style="max-width:130px;display:block;margin:4px auto 0">`;
-  s += `<polygon points="${A.map((_, i) => pt(i, hi).join(',')).join(' ')}" fill="var(--chip-bg)" stroke="var(--line)"/>`;
-  s += `<polygon points="${A.map((_, i) => pt(i, SC['分數平均']).join(',')).join(' ')}" fill="none" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 2"/>`;
-  s += `<polygon points="${A.map((a, i) => pt(i, a[2]).join(',')).join(' ')}" fill="var(--brand)" fill-opacity=".22" stroke="var(--brand)" stroke-width="1.8" stroke-linejoin="round"/>`;
-  ['整', '個', '開', '效', '慢'].forEach((t, i) => { const [x, y] = pt(i, hi + 9); s += `<text x="${x}" y="${y + 3}" font-size="10" text-anchor="middle" fill="var(--muted)">${t}</text>`; });
+  const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / n, k = ((v ?? lo) - RBASE) / (hi - RBASE) * R; return [c + k * Math.cos(a), c + k * Math.sin(a)]; };
+  let s = `<svg viewBox="-14 -8 ${S + 28} ${S + 12}" width="100%" style="max-width:160px;display:block;margin:4px auto 0">`;
+  s += `<polygon points="${A.map((_, i) => pt(i, hi).join(',')).join(' ')}" fill="#fff" stroke="var(--line)"/>`;
+  s += `<polygon points="${A.map((_, i) => pt(i, lo).join(',')).join(' ')}" fill="none" stroke="var(--line)"/>`;
+  A.forEach((_, i) => { const [x, y] = pt(i, hi); s += `<line x1="${c}" y1="${c}" x2="${x}" y2="${y}" stroke="var(--line)" stroke-width=".8"/>`; });
+  s += `<polygon points="${A.map((a, i) => pt(i, a[2]).join(',')).join(' ')}" fill="var(--rd-fill)" fill-opacity=".35" stroke="var(--rd-line)" stroke-width="2" stroke-linejoin="round"/>`;
+  s += `<polygon points="${A.map((_, i) => pt(i, SC['分數平均']).join(',')).join(' ')}" fill="none" stroke="#b9c3bf" stroke-width="1.3" stroke-dasharray="3 2.5"/>`;
+  ['整體', '個人', '開立', '效率', '慢專'].forEach((t, i) => { const [x, y] = pt(i, hi + 11); s += `<text x="${x}" y="${y + 3}" font-size="9.5" text-anchor="middle" fill="var(--muted)">${t}</text>`; });
   return s + '</svg>';
 }
 /* 小玫 10/30 選 A：沒篩選時只展開「標竿」的五角形卡，其他分類一行名字膠囊；
@@ -535,7 +561,7 @@ function wall() {
   const cOrd = {}, dOrd = {}; CFG.clinics.forEach((c, i) => cOrd[c.name] = i); (CFG.doctors || []).forEach((d, i) => dOrd[d.clinic + '|' + d.name] = +d.order || i);
   const byOrder = (a, b) => (cOrd[a.c] ?? 99) - (cOrd[b.c] ?? 99) || (dOrd[a.c + '|' + a.d] ?? 999) - (dOrd[b.c + '|' + b.d] ?? 999);
   const card = (o, tag) => `<div class="wc" data-k="${esc(o.c + '|' + o.d)}"><div class="wn"><b>${esc(o.d)}</b><small>${esc(o.c)}</small></div>${radarMini(o)}<div class="ws"><span class="sc">${o.score == null ? '—' : o.score.toFixed(0)}</span>${posHtml(o.score)}</div>${tag ? `<div class="wt">${labHtml(o.lab)}</div>` : ''}</div>`;
-  const note = '<div class="note">小五角形：整＝整體回診、個＝個人回診、開＝開立適切、效＝看診效率、慢＝慢專比例；虛線＝集團平均（' + SC['分數平均'] + '）。點醫師看完整報告。</div>';
+  const note = '<div class="note">小五角形：整體＝整體回診率、個人＝個人回診率、開立＝開立適切、效率＝每小時看診人次、慢專＝慢專比例；虛線＝集團平均（' + SC['分數平均'] + '），越往外越好。點醫師看完整報告。</div>';
   if (selCls || selClinic) {
     const list = V.docs.filter(o => (!selCls || o.lab === selCls) && (!selClinic || o.c === selClinic)).sort(byOrder);
     const title = [selClinic, selCls ? labName(selCls) : ''].filter(Boolean).join('・');
@@ -557,9 +583,9 @@ function wall() {
 /* ---------- 分布圖 ---------- */
 const POS = s => s == null ? ['—', 'var(--pos-mid)'] : (s = Math.round(s)) >= SC['位置_前段門檻'] ? ['前段', 'var(--pos-hi)'] : s < SC['位置_待加強門檻'] ? ['待加強', 'var(--pos-lo)'] : ['中段', 'var(--pos-mid)'];
 const posHtml = s => { const [t, c] = POS(s); return `<span class="pos" style="--c:${c}">${t}</span>`; };
-const LAB = { '標竿': ['★', '#dff0e6', '#1f6a46'], '經驗型': ['◆', '#e3edf6', '#2f5a85'], '一般': ['·', '#efefec', '#5c5b56'], '認真但方向不對': ['↗', '#fdf0d8', '#8a5a00'], '瞎忙': ['!', '#ece6f6', '#5b3f8f'], '醫病經營不用心': ['▼', '#fbe3e0', '#9b2f22'] };
-// 儀表板上顯示的名稱（小玫 10/30 選 A：委婉、中性；分類算法不變）
-const LABN = { '標竿': '標竿', '經驗型': '經驗型', '一般': '穩定', '認真但方向不對': '開立積極、待優化', '瞎忙': '開立效益待提升', '醫病經營不用心': '醫病經營待加強' };
+const LAB = { '標竿': ['★', '#dff0e6', '#1f6a46'], '經驗型': ['◆', '#e3edf6', '#2f5a85'], '一般': ['·', '#efefec', '#5c5b56'], '認真但方向不對': ['↗', '#fde3cc', '#a84a0c'], '瞎忙': ['!', '#ece6f6', '#5b3f8f'], '醫病經營不用心': ['▼', '#fbe3e0', '#9b2f22'] };
+// 儀表板上顯示的名稱（小玫 10/30 選 A：委婉、中性，再縮短；分類算法不變）
+const LABN = { '標竿': '標竿', '經驗型': '經驗型', '一般': '穩定', '認真但方向不對': '開立待優化', '瞎忙': '效益待提升', '醫病經營不用心': '醫病待加強' };
 const CLS_ORDER = ['標竿', '經驗型', '一般', '認真但方向不對', '瞎忙', '醫病經營不用心'];
 const labName = l => LABN[l] || l || '';
 const labHtml = l => l && LAB[l] ? `<span class="lab" style="background:${LAB[l][1]};color:${LAB[l][2]}">${labName(l)}</span>` : '<span class="note">—</span>';
@@ -573,7 +599,7 @@ function scatter() {
   const rr = v => 6 + (v - rMin) / ((rMax - rMin) || 1) * (W < 600 ? 10 : 14);
   const xt = x(SC['開立率合理下限']), yt = y(mean(D.map(o => o.pr)));
   let s = `<svg width="${W}" height="${H}" role="img" aria-label="醫師分布圖">`;
-  const q = [[m.l, m.t, xt - m.l, yt - m.t, '經驗型', '少開 BACK，病人也會回來'], [xt, m.t, W - m.r - xt, yt - m.t, '標竿', '有開、病人也回來'], [xt, yt, W - m.r - xt, H - m.b - yt, '開很多、回來少', '開立效益待提升'], [m.l, yt, xt - m.l, H - m.b - yt, '經營待加強', '開得少、回來也少']];
+  const q = [[m.l, m.t, xt - m.l, yt - m.t, '經驗型', '少開 BACK，病人也會回來'], [xt, m.t, W - m.r - xt, yt - m.t, '標竿', '有開、病人也回來'], [xt, yt, W - m.r - xt, H - m.b - yt, '開很多、回來少', '效益待提升'], [m.l, yt, xt - m.l, H - m.b - yt, '經營待加強', '開得少、回來也少']];
   q.forEach(([a, b, w, h, t1, t2], i) => { s += `<rect x="${a}" y="${b}" width="${w}" height="${h}" fill="var(--q${i})"/>`; const tx = i % 3 === 0 ? a + 10 : a + w - 10, an = i % 3 === 0 ? 'start' : 'end', ty = i < 2 ? b + 20 : b + h - 24; s += `<text class="qlab" x="${tx}" y="${ty}" text-anchor="${an}">${t1}</text>` + (W >= 600 ? `<text class="qsub" x="${tx}" y="${ty + 15}" text-anchor="${an}">${t2}</text>` : ''); });
   for (let v = 0; v <= xMax + .001; v += .2) s += `<text class="axis" x="${x(v)}" y="${H - m.b + 18}" text-anchor="middle">${Math.round(v * 100)}%</text>`;
   for (let v = 0; v <= yMax + .001; v += .05) s += `<text class="axis" x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end">${Math.round(v * 100)}%</text>`;
@@ -596,13 +622,13 @@ function scatter() {
 
 /* ---------- 院區比較 ---------- */
 function bars() {
-  const val = c => { const o = V.clinics[c]; if (!o || !o.v) return null; return barK === 'ar' ? o.any / o.v : barK === 'pr' ? o.same / o.v : o.b / o.v; };
+  const ex = EXCL(), val = c => { const o = V.allClinics[c]; if (!o || !o.v) return null; return barK === 'ar' ? o.any / o.v : barK === 'pr' ? o.same / o.v : o.b / o.v; };
   const g = barK === 'br' ? SC['開立率合理下限'] : mean(V.docs.map(o => o[barK]));
-  const list = order().map(c => [c, val(c)]).filter(a => a[1] != null).sort((a, b) => b[1] - a[1]);
+  const list = CFG.clinics.map(c => c.name).filter(c => V.allClinics[c]).map(c => [c, val(c)]).filter(a => a[1] != null).sort((a, b) => b[1] - a[1]);
   const mx = Math.max(...list.map(a => a[1]), g) * 1.08;
   $('#barSub').textContent = barK === 'br' ? '直線為目標 ' + pct(g, 0) : '直線為醫師平均 ' + pct(g);
-  $('#bars').innerHTML = list.map(([c, v]) => `<div class="row" data-c="${esc(c)}" style="${selClinic && selClinic !== c ? 'opacity:.45' : ''}"><span class="nm">${esc(c)}</span><span class="bk"><i style="width:${v / mx * 100}%"></i><b style="left:${g / mx * 100}%"></b></span><span class="vv">${pct(v)}</span></div>`).join('');
-  $$('#bars .row').forEach(rw => rw.onclick = () => { selClinic = selClinic === rw.dataset.c ? null : rw.dataset.c; renderAll(); if (detailK) detail(); });
+  $('#bars').innerHTML = list.map(([c, v]) => `<div class="row ${ex.includes(c) ? 'ex' : ''}" ${ex.includes(c) ? 'title="不列入醫師評比，只顯示院區數字"' : `data-c="${esc(c)}"`} style="${selClinic && selClinic !== c ? 'opacity:.45' : ''}"><span class="nm">${esc(c)}</span><span class="bk"><i style="width:${v / mx * 100}%"></i><b style="left:${g / mx * 100}%"></b></span><span class="vv">${pct(v)}</span></div>`).join('');
+  $$('#bars .row[data-c]').forEach(rw => rw.onclick = () => { selClinic = selClinic === rw.dataset.c ? null : rw.dataset.c; renderAll(); if (detailK) detail(); });
 }
 $$('#barMetric button').forEach(b => b.onclick = () => { barK = b.dataset.k; $$('#barMetric button').forEach(x => x.classList.toggle('on', x === b)); bars(); });
 
@@ -624,18 +650,19 @@ const zs = z => Math.max(SC['分數下限'], Math.min(SC['分數上限'], SC['�
 function axes(r) {
   const z = (v, st) => v == null || !st[1] ? null : zs((v - st[0]) / st[1]);
   return [['整體回診', '品牌忠誠度', r.s.anyScore, pct(r.ar)], ['個人回診', '醫師黏著度', r.s.sameScore, pct(r.pr)], ['開立適切', '合理 ' + pct(SC['開立率合理下限'], 0) + '～' + pct(SC['開立率合理上限'], 0), r.s.backScore, pct(r.br)],
-    ['看診效率', '平均人次/hr', z(r.vph, V.vph), r.vph == null ? '—' : r.vph.toFixed(1)], ['慢專比例', '慢性病經營', z(r.slr, V.slr), pct(r.slr)]];
+    ['看診效率', '每小時看診人次', z(r.vph, V.vph), r.vph == null ? '—' : r.vph.toFixed(1) + ' 人/小時'], ['慢專比例', '慢性病經營', z(r.slr, V.slr), pct(r.slr)]];
 }
 function radar(r) {
   const A = axes(r), S = 300, c = S / 2, R = 92, n = A.length, lo = SC['分數下限'], hi = SC['分數上限'];
-  const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / n, k = ((v ?? lo) - lo) / (hi - lo) * R; return [c + k * Math.cos(a), c + k * Math.sin(a)]; };
+  const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / n, k = ((v ?? lo) - RBASE) / (hi - RBASE) * R; return [c + k * Math.cos(a), c + k * Math.sin(a)]; };
   let s = `<svg viewBox="-75 -6 ${S + 150} ${S + 6}" width="100%" style="max-width:420px;display:block;margin:4px auto 0" role="img" aria-label="${esc(r.d)} 五角形">`;
-  [70, 80, 90, 100].forEach(v => s += `<polygon points="${A.map((_, i) => pt(i, v).join(',')).join(' ')}" fill="none" stroke="var(--line)" stroke-width="${v === 100 ? 1.5 : 1}"/>`);
+  [60, 70, 80, 90, 100].forEach(v => s += `<polygon points="${A.map((_, i) => pt(i, v).join(',')).join(' ')}" fill="none" stroke="var(--line)" stroke-width="${v === 100 ? 1.5 : 1}"/>`);
   A.forEach((_, i) => { const [x, y] = pt(i, hi); s += `<line x1="${c}" y1="${c}" x2="${x}" y2="${y}" stroke="var(--line)"/>`; });
-  s += `<polygon points="${A.map((_, i) => pt(i, SC['分數平均']).join(',')).join(' ')}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
-  s += `<polygon points="${A.map((a, i) => pt(i, a[2]).join(',')).join(' ')}" fill="var(--brand)" fill-opacity=".18" stroke="var(--brand)" stroke-width="2" stroke-linejoin="round"/>`;
-  A.forEach((a, i) => { if (a[2] == null) return; const [x, y] = pt(i, a[2]); s += `<circle cx="${x}" cy="${y}" r="4" fill="var(--brand)" stroke="var(--card)" stroke-width="2"/>`; });
-  A.forEach((a, i) => { const [x, y] = pt(i, hi + 11); const an = Math.abs(x - c) < 8 ? 'middle' : x > c ? 'start' : 'end'; s += `<text x="${x}" y="${y - 4}" text-anchor="${an}" font-size="12.5" font-weight="700" fill="var(--ink)">${a[0]}</text><text x="${x}" y="${y + 11}" text-anchor="${an}" font-size="11" fill="var(--muted)">${a[3]}・${a[2] == null ? '—' : Math.round(a[2])}</text>`; });
+  s += `<polygon points="${A.map((a, i) => pt(i, a[2]).join(',')).join(' ')}" fill="var(--rd-fill)" fill-opacity=".35" stroke="var(--rd-line)" stroke-width="2" stroke-linejoin="round"/>`;
+  s += `<polygon points="${A.map((_, i) => pt(i, SC['分數平均']).join(',')).join(' ')}" fill="none" stroke="#b9c3bf" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  A.forEach((a, i) => { if (a[2] == null) return; const [x, y] = pt(i, a[2]); s += `<circle cx="${x}" cy="${y}" r="4" fill="var(--rd-line)" stroke="var(--card)" stroke-width="2"/>`; });
+  // 角上只放「名稱＋分數」，實際數值放到下面的明細表，不混在一起
+  A.forEach((a, i) => { const [x, y] = pt(i, hi + 11); const an = Math.abs(x - c) < 8 ? 'middle' : x > c ? 'start' : 'end'; s += `<text x="${x}" y="${y - 5}" text-anchor="${an}" font-size="13" font-weight="700" fill="var(--ink)">${a[0]}</text><text x="${x}" y="${y + 13}" text-anchor="${an}" font-size="15" font-weight="900" fill="var(--rd-txt)">${a[2] == null ? '—' : Math.round(a[2])}<tspan font-size="11" font-weight="400" fill="var(--muted)"> 分</tspan></text>`; });
   return s + '</svg>';
 }
 /* 每月分數（趨勢用，算一次存起來） */
@@ -685,27 +712,32 @@ let curDoc = null;
 function openDoc(r) {
   if (!r) return; curDoc = r;
   const o = V.clinics[r.c] || {}, ca = { ar: o.v ? o.any / o.v : null, pr: o.v ? o.same / o.v : null, br: o.v ? o.b / o.v : null };
-  const G = { ar: mean(V.docs.map(x => x.ar)), pr: mean(V.docs.map(x => x.pr)), br: SC['開立率合理下限'] };
-  const row = (k, t, sub, mx) => `<div class="mrow"><div class="k">${t}<small>${sub}</small></div><div class="bk"><i style="width:${Math.min(100, r[k] / mx * 100)}%"></i><b style="left:${Math.min(100, G[k] / mx * 100)}%" title="集團"></b>${ca[k] == null ? '' : `<em style="left:${Math.min(100, ca[k] / mx * 100)}%" title="院區"></em>`}</div><div class="vv">${pct(r[k])}</div></div>`;
+  // 院區的看診效率、慢專比例用該院區醫師加總算
+  const cd = V.docs.filter(x => x.c === r.c), sum = (a, k) => a.reduce((t, x) => t + (x[k] || 0), 0);
+  ca.vph = sum(cd, 'hours') ? sum(cd, 'v') / sum(cd, 'hours') : null; ca.slr = cd.some(x => x.slow != null) ? sum(cd, 'slow') / sum(cd, 'v') : null;
+  const G = { ar: mean(V.docs.map(x => x.ar)), pr: mean(V.docs.map(x => x.pr)), br: mean(V.docs.map(x => x.br)), vph: V.vph[0], slr: V.slr[0] };
   const lv = r.s.levels || {}, w = k => Math.round(SC[k] * 100) + '%';
+  const fv = (k, v) => v == null || isNaN(v) ? '—' : k === 'vph' ? v.toFixed(1) : pct(v);
+  const MT = [['ar', '整體回診率', '計分 ' + w('權重_院所回診'), r.s.anyScore], ['pr', '個人回診率', '計分 ' + w('權重_個人回診'), r.s.sameScore],
+    ['br', '開立率', '計分 ' + w('權重_開立適切') + '・合理 ' + pct(SC['開立率合理下限'], 0) + '～' + pct(SC['開立率合理上限'], 0), r.s.backScore],
+    ['vph', '看診效率', '參考・每小時看幾人次', axes(r)[3][2]], ['slr', '慢專比例', '參考・慢箋人次 ÷ 看診人次', axes(r)[4][2]]];
+  const mtable = `<table class="mt"><thead><tr><th class="l">項目</th><th>${esc(r.d)}</th><th>${esc(r.c)}</th><th>集團</th><th>分數</th></tr></thead><tbody>` +
+    MT.map(([k, t, sub, sc], i) => `<tr class="${i > 2 ? 'opt' : ''}"><td class="l"><b>${t}</b><small>${sub}</small></td><td class="me">${fv(k, r[k])}</td><td class="ref">${fv(k, ca[k])}</td><td class="ref">${fv(k, G[k])}</td><td><span class="scb">${sc == null ? '—' : Math.round(sc)}</span></td></tr>`).join('') +
+    `</tbody></table><div class="note">％＝比率（分母都是看診人次）；看診效率單位是「人次／小時」。分數 ${SC['分數平均']}＝集團平均。外溢率 ${pct(r.sp)}：病人回來後改看其他醫師的比例（醫師平均 ${pct(mean(V.docs.map(x => x.sp)))}）。</div>`;
+  const cnt = (k, n, u) => `<div><div class="k">${k}</div><div class="n">${n == null ? '—' : n.toLocaleString()}<small>${u}</small></div></div>`;
   $('#drawer').innerHTML = `
     <div class="dh"><button class="x" aria-label="關閉" onclick="closeDoc()">×</button>
       <div class="cl">${esc(r.c)}院區 · ${esc(r.t)} · ${esc(V.label)}</div><div class="nm">${esc(r.d)}</div>
-      <div class="big"><span class="n">${r.score == null ? '—' : r.score.toFixed(0)}</span>${posHtml(r.score)}<span class="u">綜合分數（集團平均 ${SC['分數平均']}）<br>集團第 ${r.rank ?? '—'} ／ ${V.docs.length} 名</span></div></div>
+      <div class="big"><span class="n">${r.score == null ? '—' : r.score.toFixed(0)}</span>${posHtml(r.score)}<span class="u">綜合分數（集團平均 ${SC['分數平均']}）<br>集團第 ${r.rank ?? '—'}/${V.docs.length} 名</span></div></div>
     <div class="db">
       <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">${labHtml(r.lab)}<span class="note" style="margin:0">建議：${esc(r.s.advice || '—')}</span></div>
         <div class="note">開立率${lv.back || '—'}（${w('開立率合理下限')} 為界）・個人回診${lv.same || '—'}・整體回診${lv.any || '—'}</div></div>
       <div class="card"><b>球探五角形</b><span class="note" style="margin-left:8px">實線＝${esc(r.d)}、虛線＝集團平均（${SC['分數平均']}）</span>${radar(r)}
         <div class="note">每一角換算成「集團平均＝${SC['分數平均']}」的分數，越往外越好。綜合分數只計前三項；看診效率、慢專比例為參考。</div></div>
-      <div class="card"><b>三項指標</b><span class="note" style="margin-left:8px">黑線＝集團、<span style="color:var(--accent)">橘線</span>＝${esc(r.c)}院區</span>
-        ${row('ar', '整體回診率', '權重 ' + w('權重_院所回診'), .5)}${row('pr', '個人回診率', '權重 ' + w('權重_個人回診'), .4)}${row('br', '開立率', '權重 ' + w('權重_開立適切') + '・目標 ' + w('開立率合理下限'), 1)}
-        <div class="note">外溢率 ${pct(r.sp)}：病人回來後改看其他醫師的比例（醫師平均 ${pct(mean(V.docs.map(x => x.sp)))}）</div></div>
-      <div class="card"><b>分數組成</b><div class="scs" style="margin-top:10px">
-        <div><div class="k">整體</div><div class="n">${r.s.anyScore?.toFixed(0) ?? '—'}</div><div class="w">× ${w('權重_院所回診')}</div></div>
-        <div><div class="k">個人</div><div class="n">${r.s.sameScore?.toFixed(0) ?? '—'}</div><div class="w">× ${w('權重_個人回診')}</div></div>
-        <div><div class="k">開立適切</div><div class="n">${r.s.backScore?.toFixed(0) ?? '—'}</div><div class="w">× ${w('權重_開立適切')}</div></div></div></div>
+      <div class="card"><b>各項明細</b><span class="note" style="margin-left:8px">跟${esc(r.c)}院區、集團平均比</span>${mtable}</div>
+      <div class="card"><b>本期次數</b><span class="note" style="margin-left:8px">上面的比率就是用這些次數算的</span><div class="cnts">
+        ${cnt('看診人次', r.v, '人次')}${cnt('BACK 開立', r.b, '張')}${cnt('4 天內回同醫師', r.same, '人次')}${cnt('4 天內回院區', r.any, '人次')}${cnt('上診時數', r.hours ? Math.round(r.hours * 10) / 10 : null, '小時')}${cnt('慢箋', r.slow, '人次')}</div></div>
       <div id="trendBox" style="display:grid;gap:14px">${trend(r)}</div>
-      <div class="card"><b>本期數據</b><div class="note" style="margin-top:6px">看診 ${r.v.toLocaleString()} 人次・BACK 開立 ${r.b.toLocaleString()}・4 天內回同醫師 ${r.same.toLocaleString()}・回院區 ${r.any.toLocaleString()}${r.hours ? '・上診 ' + Math.round(r.hours * 10) / 10 + ' 小時' : ''}${r.slow != null ? '・慢箋 ' + r.slow.toLocaleString() : ''}</div></div>
     </div>`;
   bindTrend();
   $('#drawer').classList.add('on'); $('#mask').classList.add('on');
