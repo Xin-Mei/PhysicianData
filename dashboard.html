@@ -72,8 +72,35 @@ h2{font-size:20px;margin:0;letter-spacing:.03em}
 .act .ah{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.act .ah small{color:var(--muted)}
 .act .ah .sc{font-size:18px}.act .ab{font-size:13px;color:var(--muted);margin-top:4px}.act .ab b{color:var(--ink)}
 .act .aa{font-size:13.5px;margin-top:4px;font-weight:500}
+.aadv{font-size:13.5px;font-weight:700;margin:12px 2px 8px;color:var(--ink)}
 .atag{font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px}.atag.b{background:#fbe8e5;color:#9b2f22}.atag.g{background:#e3f1ea;color:#1f6a46}
 .refh{margin-top:18px;font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.06em;border-top:1px dashed var(--line);padding-top:12px}
+.summary .sumh{font-weight:900;font-size:17px;margin-bottom:6px}
+.summary ul{margin:0;padding-left:20px;line-height:1.9;font-size:14.5px}
+.summary a{color:var(--brand);font-weight:700;cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.wg{margin-bottom:18px}
+.wgh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 10px}
+.wgh .lab{font-size:14px;padding:5px 14px}.wcount{font-weight:700}.wadv{color:var(--muted);font-size:13px}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
+.wc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 12px 10px;cursor:pointer;box-shadow:var(--shadow);transition:transform .12s,border-color .12s}
+.wc:hover{transform:translateY(-2px);border-color:var(--dot)}
+.wc .wn{display:flex;align-items:baseline;gap:6px;margin-bottom:2px}.wc .wn small{color:var(--muted);font-size:12px}
+.wc .ws{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:2px}.wc .ws .sc{font-size:20px}
+#clChips{margin-bottom:4px}
+.frow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.flab{font-size:12.5px;color:var(--muted);font-weight:700;width:34px}
+.chip small{opacity:.7;margin-left:2px}
+.wgh .lnk{margin-left:auto}
+.wc .wt{text-align:center;margin-top:4px}
+.wrows{padding:8px 16px}
+.wrow{display:grid;grid-template-columns:230px 1fr;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line)}
+.wrow:last-of-type{border-bottom:0}
+.wrl{display:flex;align-items:center;gap:8px;background:none;border:0;cursor:pointer;font-family:inherit;padding:0;text-align:left}
+.wrl:hover .wcount{color:var(--brand);text-decoration:underline}
+.wnames{display:flex;flex-wrap:wrap;gap:6px}
+.nchip{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:4px 11px;font-family:inherit;font-size:13.5px;cursor:pointer;color:var(--ink)}
+.nchip small{color:var(--muted);margin-left:4px;font-size:11.5px}
+.nchip:hover{border-color:var(--dot);background:var(--hover)}
 .grid2{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:14px}
 .grid2>*,.kpis>*{min-width:0}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
@@ -109,7 +136,6 @@ tbody tr{cursor:pointer}tbody tr:hover{background:var(--hover)}
 .pos{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:999px;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent);vertical-align:2px;margin-left:4px}
 .dh .pos{color:#fff;background:rgba(255,255,255,.2);font-size:13px;padding:2px 10px;align-self:center}
 .lab{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;padding:3px 10px;border-radius:99px;white-space:nowrap;font-weight:500}
-.lab::before{content:attr(data-ic);font-size:12px}
 .tw{overflow:auto}.tw table{min-width:560px}
 .note{font-size:12.5px;color:var(--muted);margin-top:10px}
 .empty{padding:50px 20px;text-align:center;color:var(--muted)}
@@ -156,7 +182,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin-top:36px}
 .hide{display:none!important}
 body.locked header.top,body.locked .wrap{visibility:hidden}
 @media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.grid2{grid-template-columns:minmax(0,1fr)}.expl{grid-template-columns:1fr 1fr}}
-@media (max-width:640px){header.top{position:static}.wrap{padding:0 14px 40px}header.top .in{padding:10px 14px}.kpis{grid-template-columns:1fr 1fr}.kpi .v{font-size:26px}.kpi.hero{grid-column:1/-1}.expl{grid-template-columns:1fr}.brand .t2{font-size:17px}.hide-m{display:none}td,th{padding:9px 6px}.detail .stats{grid-template-columns:1fr 1fr}.reps,.acts{grid-template-columns:1fr}}
+@media (max-width:640px){header.top{position:static}.wrap{padding:0 14px 40px}header.top .in{padding:10px 14px}.kpis{grid-template-columns:1fr 1fr}.kpi .v{font-size:26px}.kpi.hero{grid-column:1/-1}.expl{grid-template-columns:1fr}.brand .t2{font-size:17px}.hide-m{display:none}td,th{padding:9px 6px}.detail .stats{grid-template-columns:1fr 1fr}.reps,.acts{grid-template-columns:1fr}.wgrid{grid-template-columns:repeat(2,1fr);gap:8px}.wrow{grid-template-columns:1fr}}
 </style>
 </head>
 <body class="locked">
@@ -185,18 +211,18 @@ body.locked header.top,body.locked .wrap{visibility:hidden}
   <div class="kpis" id="kpis"><div class="card empty" style="grid-column:1/-1">載入中…</div></div>
   <div class="card detail hide" id="detail"></div>
 
-  <div class="sec-h"><h2>醫師分布圖</h2><span class="sub">橫軸開立率（目標 30%）、縱軸個人回診率；泡泡越大＝整體回診率越高。選院區、再點醫師看報告</span></div>
-  <div class="card">
-    <div class="chips" id="clChips"></div>
-    <div class="chips docchips hide" id="docChips"></div>
-    <div id="scatter" style="margin-top:12px"></div>
-    <div class="legend"><span><i></i>醫師（泡泡大小＝整體回診率）</span><span><i class="sel"></i>目前院區</span><span>— 虛線：開立率目標 30%、個人回診率集團平均</span></div>
-  </div>
+  <div class="card summary" id="summary" style="margin-top:14px"></div>
 
-  <div class="grid2" style="margin-top:14px">
+  <div class="sec-h"><h2>醫師球探牆</h2><span class="sub">依分類排列，標竿在最上面；點醫師卡看完整報告</span></div>
+  <div class="chips" id="clChips"></div>
+  <div id="wall"></div>
+
+  <div class="sec-h"><h2>參考圖表</h2><span class="sub">整體分布與院區比較</span></div>
+  <div class="grid2">
     <div class="card">
-      <div class="sec-h" style="margin:0 0 6px"><h2>醫師排行</h2><span class="sub">點欄位排序、點列看報告</span></div>
-      <div class="tw"><table id="tbl"></table></div>
+      <div class="sec-h" style="margin:0 0 6px"><h2>醫師分布圖</h2><span class="sub">橫軸開立率、縱軸個人回診率；泡泡越大＝整體回診率越高</span></div>
+      <div id="scatter" style="margin-top:8px"></div>
+      <div class="legend"><span><i></i>醫師</span><span><i class="sel"></i>目前院區</span><span>— 虛線：開立率目標 30%、個人回診率平均</span></div>
     </div>
     <div class="card">
       <div class="sec-h" style="margin:0 0 10px"><h2>院區比較</h2><span class="sub" id="barSub"></span></div>
@@ -252,7 +278,7 @@ async function logout() { try { await api('logout'); } catch (e) {} try { sessio
 let CFG = null, ALL = null, SC = null, MONTHS = [];
 const ST = { gran: 'm', month: null, q: null, y: null, from: null, to: null };
 let V = null;   // 目前區間的計算結果
-let selClinic = null, sortK = 'score', sortDir = -1, barK = 'ar', detailK = null;
+let selClinic = null, barK = 'ar', detailK = null;
 const MLAB = m => E.monthLabel(m);
 const prevOf = m => E.prevMonth(m);
 const qOf = m => { const [y, mo] = m.split('-').map(Number); return y + '-Q' + Math.ceil(mo / 3); };
@@ -361,7 +387,7 @@ function kpis() {
     const f = x => isS ? x.toFixed(1) : pct(x, 2);
     const df = v != null && pv != null && !isS ? v - pv : null, neutral = k === 'br' || k === 'sp';   // 綜合分數平均永遠約等於 80，不比上期
     const dtxt = df == null ? '' : `<span class="${neutral ? 'neu' : df >= 0 ? 'up' : 'dn'}">${df >= 0 ? '▲' : '▼'} ${isS ? Math.abs(df).toFixed(1) : (Math.abs(df) * 100).toFixed(2) + '%'}</span> 比上期`;
-    return `<div class="card kpi ${hero ? 'hero' : ''} ${detailK === k ? 'sel' : ''}" data-k="${k}"><div class="l">${KDEF[k].t} <span class="tag-w">${tag}</span></div><div class="v">${v == null ? '—' : f(v)}</div><div class="s">${extra || KDEF[k].sub}${dtxt ? '　' + dtxt : ''}</div><div class="more">高低標・代表醫師 ›</div></div>`;
+    return `<div class="card kpi ${hero ? 'hero' : ''} ${detailK === k ? 'sel' : ''}" data-k="${k}"><div class="l">${KDEF[k].t} <span class="tag-w">${tag}</span></div><div class="v">${v == null ? '—' : f(v)}</div><div class="s">${extra || KDEF[k].sub}${dtxt ? '　' + dtxt : ''}</div><div class="more">要關心・值得表揚 ›</div></div>`;
   };
   const br = gAvg(V, 'br');
   $('#kpis').innerHTML = card('ar', '品牌忠誠度・' + w('權重_院所回診'), '', true) + card('pr', w('權重_個人回診')) + card('sp', '參考') +
@@ -378,6 +404,13 @@ function weakest(o) {
   let tip = ax[2];
   if (k === 'back') tip = raw < SC['開立率合理下限'] ? '開立偏少，提醒適時開立 BACK' : raw > SC['開立率合理上限'] ? '開立偏多，檢視開立是否必要' : '開立率在合理區間';
   return { name: ax[0], raw, sc, tip };
+}
+/* 一欄行動清單：建議相同的醫師排在一起，同一句建議只寫一次（避免重複閱讀） */
+function actCol(bad, head, items, empty) {
+  const ic = bad ? '👉' : '👍', groups = [];
+  items.forEach(x => { const g = groups.find(g => g.adv === x.adv); if (g) g.list.push(x); else groups.push({ adv: x.adv, list: [x] }); });
+  return `<div><div class="ahd ${bad ? 'b' : 'g'}">${bad ? '⚠️ 要關心的醫師' : '⭐ 值得表揚的醫師'} <small>${items.length} 位：${head}</small></div>` +
+    (groups.map(g => `<div class="aadv">${ic} ${esc(g.adv)}</div>` + g.list.map(x => x.html + '</div>').join('')).join('') || `<div class="note">${empty}</div>`) + '</div>';
 }
 function actionList() {
   const pv = {}; (V.prev ? V.prev.docs : []).forEach(o => pv[o.c + '|' + o.d] = o);
@@ -397,15 +430,14 @@ function actionList() {
   const item = (o, bad) => {
     const w = weakest(o), adv = o.lab && o.lab !== '一般' ? o.s.advice : (w ? w.tip : '持續觀察');
     const best = !bad ? [['any', o.s.anyScore], ['same', o.s.sameScore], ['back', o.s.backScore]].sort((a, b) => b[1] - a[1])[0] : null;
-    return `<div class="act" data-k="${esc(o.c + '|' + o.d)}"><div class="ah"><b>${esc(o.d)}</b><small>${esc(o.c)}</small>${why(o, bad)}<span class="grow"></span><span class="sc">${o.score.toFixed(0)}</span>${dTxt(o)}</div>
-      <div class="ab">${bad ? (w ? `最弱：<b>${w.name}</b> ${pct(w.raw)}（${Math.round(w.sc)} 分）` : '') : `最強：<b>${AXN[best[0]][0]}</b> ${pct(o[AXN[best[0]][1]])}（${Math.round(best[1])} 分）`}　${labHtml(o.lab)}</div>
-      ${bad ? `<div class="aa">👉 ${esc(adv)}</div>` : `<div class="aa">👍 ${o.s.tier !== '前段' ? '進步了，給予鼓勵' : o.lab === '標竿' ? '可請他分享經驗' : '公開肯定、維持表現'}</div>`}</div>`;
+    return { adv: bad ? adv : (o.s.tier !== '前段' ? '進步了，給予鼓勵' : o.lab === '標竿' ? '可請他分享經驗' : '公開肯定、維持表現'),
+      html: `<div class="act" data-k="${esc(o.c + '|' + o.d)}"><div class="ah"><b>${esc(o.d)}</b><small>${esc(o.c)}</small>${why(o, bad)}<span class="grow"></span><span class="sc">${o.score.toFixed(0)}</span>${dTxt(o)}</div>
+      <div class="ab">${bad ? (w ? `最弱：<b>${w.name}</b> ${pct(w.raw)}（${Math.round(w.sc)} 分）` : '') : `最強：<b>${AXN[best[0]][0]}</b> ${pct(o[AXN[best[0]][1]])}（${Math.round(best[1])} 分）`}　${labHtml(o.lab)}</div>` };
   };
   const bad = pick(lowTier, drops, 3), good = pick(topTier, ups, 3);
   const hasPrev = !!V.prev;
-  return `<div class="acts">
-    <div><div class="ahd b">⚠️ 要關心的醫師 <small>${bad.length} 位：待加強${hasPrev ? '，加上比上期退步最多的' : ''}</small></div>${bad.map(o => item(o, true)).join('') || '<div class="note">這期沒有需要特別關心的醫師 🎉</div>'}</div>
-    <div><div class="ahd g">⭐ 值得表揚的醫師 <small>${good.length} 位：前段${hasPrev ? '，加上比上期進步最多的' : ''}</small></div>${good.map(o => item(o, false)).join('') || '<div class="note">這期沒有前段醫師</div>'}</div></div>`;
+  return `<div class="acts">` + actCol(true, '待加強' + (hasPrev ? '，加上比上期退步最多的' : ''), bad.map(o => item(o, true)), '這期沒有需要特別關心的醫師 🎉') +
+    actCol(false, '前段' + (hasPrev ? '，加上比上期進步最多的' : ''), good.map(o => item(o, false)), '這期沒有前段醫師') + '</div>';
 }
 /* 四項比率點開：行動清單。要關心＝最低 3 位＋比上期退步最多 3 位；值得表揚＝最高 3 位＋進步最多 3 位（變動 ≥ 1 個百分點才算）
    開立率：要關心＝離合理區間最遠（太少、太多各 3 位）；值得表揚＝在合理區間且整體回診最好的 3 位＋這期回到合理區間的
@@ -442,56 +474,95 @@ function actionListRate(k) {
   }
   const dTxt = o => o._d == null ? '' : `<span class="${k === 'br' || k === 'sp' ? 'neu' : o._d >= 0 ? 'up' : 'dn'}">${o._d >= 0 ? '▲' : '▼'}${(Math.abs(o._d) * 100).toFixed(1)}%</span>`;
   const item = (x, isBad) => { const o = x.o, dv = o[k] - avg;
-    return `<div class="act" data-k="${esc(o.c + '|' + o.d)}"><div class="ah"><b>${esc(o.d)}</b><small>${esc(o.c)}</small>${x.tags.map(t => `<span class="atag ${isBad ? 'b' : 'g'}">${t}</span>`).join('')}<span class="grow"></span><span class="sc">${pct(o[k])}</span>${dTxt(o)}</div>
-      <div class="ab">${k === 'br' ? (o.br < lo ? `比合理下限低 <b>${((lo - o.br) * 100).toFixed(1)}%</b>` : o.br > hi ? `超過合理上限 <b>${((o.br - hi) * 100).toFixed(1)}%</b>` : '<b>在合理區間內</b>') : `比醫師平均 ${dv >= 0 ? '高' : '低'} <b>${(Math.abs(dv) * 100).toFixed(1)}%</b>`}　整體 ${pct(o.ar)}・個人 ${pct(o.pr)}・開立 ${pct(o.br)}　${labHtml(o.lab)}</div>
-      <div class="aa">${isBad ? '👉' : '👍'} ${esc(adv(x, isBad))}</div></div>`; };
-  return `<div class="acts">
-    <div><div class="ahd b">⚠️ 要關心的醫師 <small>${bad.length} 位：${badHd}</small></div>${bad.map(x => item(x, true)).join('') || '<div class="note">這期沒有需要特別關心的醫師 🎉</div>'}</div>
-    <div><div class="ahd g">⭐ 值得表揚的醫師 <small>${good.length} 位：${goodHd}</small></div>${good.map(x => item(x, false)).join('') || '<div class="note">這期沒有符合的醫師</div>'}</div></div>`;
+    return { adv: adv(x, isBad), html: `<div class="act" data-k="${esc(o.c + '|' + o.d)}"><div class="ah"><b>${esc(o.d)}</b><small>${esc(o.c)}</small>${x.tags.map(t => `<span class="atag ${isBad ? 'b' : 'g'}">${t}</span>`).join('')}<span class="grow"></span><span class="sc">${pct(o[k])}</span>${dTxt(o)}</div>
+      <div class="ab">${k === 'br' ? (o.br < lo ? `比合理下限低 <b>${((lo - o.br) * 100).toFixed(1)}%</b>` : o.br > hi ? `超過合理上限 <b>${((o.br - hi) * 100).toFixed(1)}%</b>` : '<b>在合理區間內</b>') : `比醫師平均 ${dv >= 0 ? '高' : '低'} <b>${(Math.abs(dv) * 100).toFixed(1)}%</b>`}　整體 ${pct(o.ar)}・個人 ${pct(o.pr)}・開立 ${pct(o.br)}　${labHtml(o.lab)}</div>` }; };
+  return `<div class="acts">` + actCol(true, badHd, bad.map(x => item(x, true)), '這期沒有需要特別關心的醫師 🎉') + actCol(false, goodHd, good.map(x => item(x, false)), '這期沒有符合的醫師') + '</div>';
 }
 function detail() {
   const el = $('#detail');
   if (!detailK || !V) { el.classList.add('hide'); return; }
-  const k = detailK, isS = k === 'score', f = x => x == null ? '—' : isS ? x.toFixed(1) : pct(x, 2);
-  const docs = V.docs.filter(o => o[k] != null), vals = docs.map(o => o[k]).sort((a, b) => a - b);
-  const t1 = vals[Math.floor(vals.length / 3)], t2 = vals[Math.floor(vals.length * 2 / 3)];
-  const sorted = [...docs].sort((a, b) => b[k] - a[k]);
-  const li = o => `<li data-k="${esc(o.c + '|' + o.d)}"><b>${esc(o.d)}</b> ${f(o[k])}<small>${esc(o.c)}</small></li>`;
-  const W = Math.max(300, el.clientWidth - 40 || 800), H = 74, lo = vals[0], hi = vals[vals.length - 1], X = v => 14 + (v - lo) / ((hi - lo) || 1) * (W - 28);
-  const mk = (v, t) => `<line x1="${X(v)}" x2="${X(v)}" y1="8" y2="48" stroke="var(--ink)" stroke-opacity=".5" stroke-dasharray="3 3"/><text x="${X(v)}" y="64" font-size="11" text-anchor="middle" fill="var(--muted)">${t}</text>`;
-  let strip = `<svg width="100%" viewBox="0 0 ${W} ${H}" id="strip"><line x1="14" x2="${W - 14}" y1="28" y2="28" stroke="var(--line)"/>` + mk(t1, '低標') + mk(t2, '高標') + mk(mean(vals), '均值');
-  if (k === 'br') [SC['開立率合理下限'], SC['開立率合理上限']].forEach(v => { if (v >= lo && v <= hi) strip += `<line x1="${X(v)}" x2="${X(v)}" y1="8" y2="48" stroke="var(--accent)" stroke-width="2"/>`; });
-  docs.forEach(o => strip += `<circle class="dot ${selClinic && o.c !== selClinic ? 'dim' : selClinic ? 'sel' : ''}" cx="${X(o[k])}" cy="28" r="6" data-k="${esc(o.c + '|' + o.d)}"/>`);
-  strip += '</svg>';
+  const k = detailK, isS = k === 'score';
   el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>${KDEF[k].t}・${esc(V.label)}</h2><button class="lnk" id="dClose">收起 ✕</button></div>
-    ${(isS ? actionList() : actionListRate(k)) + '<div class="refh">分布參考</div>'}
-    <div class="stats"><div><div class="k">均值（醫師平均）</div><div class="n">${f(mean(vals))}</div></div><div><div class="k">高標（前 1/3 界線）</div><div class="n">${f(t2)}</div></div><div><div class="k">低標（後 1/3 界線）</div><div class="n">${f(t1)}</div></div><div><div class="k">最高 ～ 最低</div><div class="n" style="font-size:17px">${f(hi)} ～ ${f(lo)}</div></div></div>
-    <div style="margin-top:14px">${strip}</div>
-    <div class="note">每個點是一位醫師，滑過看名字、點一下看報告。${k === 'br' ? '橘線＝合理區間 ' + pct(SC['開立率合理下限'], 0) + '～' + pct(SC['開立率合理上限'], 0) + '。' : ''}${k === 'sp' ? '外溢率不計分，高低沒有好壞，看病人流向用。' : ''}</div>
-    <div class="reps hide"><div><b>最高 3 位</b><ol>${sorted.slice(0, 3).map(li).join('')}</ol></div><div><b>最低 3 位</b><ol>${sorted.slice(-3).reverse().map(li).join('')}</ol></div></div>`;
+    ${isS ? actionList() : actionListRate(k)}${k === 'sp' ? '<div class="note">外溢率不計分，看病人流向用。</div>' : ''}`;
   el.classList.remove('hide');
   $('#dClose').onclick = () => { detailK = null; kpis(); detail(); };
-  $$('#detail [data-k]').forEach(n => { const o = V.docs.find(x => x.c + '|' + x.d === n.dataset.k); if (!o) return; n.onclick = () => openDoc(o); if (n.tagName === 'circle') { n.onmousemove = e => tip(e, `<b>${esc(o.c)}・${esc(o.d)}</b><br>${KDEF[k].t} ${f(o[k])}`); n.onmouseleave = untip; } });
+  $$('#detail [data-k]').forEach(n => { const o = V.docs.find(x => x.c + '|' + x.d === n.dataset.k); if (o) n.onclick = () => openDoc(o); });
 }
 
-/* ---------- 院區膠囊 → 醫師膠囊 ---------- */
+/* ---------- 篩選：分類膠囊、院區膠囊 ---------- */
+let selCls = null;
 const order = () => CFG.clinics.map(c => c.name).filter(c => V.docs.some(o => o.c === c));
 function chips() {
-  $('#clChips').innerHTML = `<button class="chip ${!selClinic ? 'on' : ''}" data-c="">全部院區</button>` + order().map(c => `<button class="chip ${selClinic === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
-  $$('#clChips .chip').forEach(b => b.onclick = () => { selClinic = b.dataset.c || null; renderAll(); if (detailK) detail(); });
-  const dc = $('#docChips');
-  if (!selClinic) { dc.classList.add('hide'); return; }
-  const ds = V.docs.filter(o => o.c === selClinic);
-  dc.innerHTML = `<span class="hint">${esc(selClinic)}的醫師：</span>` + ds.map(o => `<button class="chip doc" data-k="${esc(o.c + '|' + o.d)}">${esc(o.d)}</button>`).join('');
-  dc.classList.remove('hide');
-  $$('#docChips .chip').forEach(b => b.onclick = () => openDoc(V.docs.find(o => o.c + '|' + o.d === b.dataset.k)));
+  const cnt = c => V.docs.filter(o => o.lab === c && (!selClinic || o.c === selClinic)).length;
+  $('#clChips').innerHTML = `<div class="frow"><span class="flab">分類</span><button class="chip ${!selCls ? 'on' : ''}" data-f="cls" data-v="">全部</button>` +
+    CLS_ORDER.filter(c => V.docs.some(o => o.lab === c)).map(c => `<button class="chip ${selCls === c ? 'on' : ''}" data-f="cls" data-v="${esc(c)}">${esc(labName(c))} <small>${cnt(c)}</small></button>`).join('') + '</div>' +
+    `<div class="frow"><span class="flab">院區</span><button class="chip ${!selClinic ? 'on' : ''}" data-f="cl" data-v="">全部</button>` + order().map(c => `<button class="chip ${selClinic === c ? 'on' : ''}" data-f="cl" data-v="${esc(c)}">${esc(c)}</button>`).join('') + '</div>';
+  $$('#clChips .chip').forEach(b => b.onclick = () => { const v = b.dataset.v || null; if (b.dataset.f === 'cls') selCls = v; else selClinic = v; renderAll(); });
+}
+
+/* ---------- 本期重點（3～4 句話） ---------- */
+function summary() {
+  const D = V.docs.filter(o => o.score != null), n = c => D.filter(o => o.lab === c).length;
+  const tier = t => D.filter(o => o.s.tier === t);
+  const pv = {}; (V.prev ? V.prev.docs : []).forEach(o => pv[o.c + '|' + o.d] = o);
+  const ch = D.map(o => ({ o, d: pv[o.c + '|' + o.d] && pv[o.c + '|' + o.d].score != null ? o.score - pv[o.c + '|' + o.d].score : null })).filter(x => x.d != null).sort((a, b) => b.d - a.d);
+  const ar = gAvg(V, 'ar'), par = V.prev ? gAvg(V.prev, 'ar') : null, br = gAvg(V, 'br');
+  const nm = arr => arr.map(o => `<a data-k="${esc(o.c + '|' + o.d)}">${esc(o.d)}</a>`).join('、');
+  const lines = [
+    `本期 <b>${D.length}</b> 位醫師：${CLS_ORDER.filter(n).map(c => `${labName(c)} <b>${n(c)}</b>`).join('・')}。`,
+    `整體回診率 <b>${pct(ar)}</b>${par != null ? (Math.abs(ar - par) < .0005 ? '（與上期持平）' : `（比上期 <span class="${ar >= par ? 'up' : 'dn'}">${ar >= par ? '▲' : '▼'}${(Math.abs(ar - par) * 100).toFixed(1)}%</span>）`) : ''}；開立率 <b>${pct(br)}</b>，${br >= SC['開立率合理下限'] ? '已達目標' : '未達目標 ' + pct(SC['開立率合理下限'], 0)}。`,
+    tier('待加強').length ? `綜合分數待加強 <b>${tier('待加強').length}</b> 位：${nm(tier('待加強'))}。` : '這期沒有綜合分數待加強的醫師 🎉',
+    ch.length ? `進步最多：${nm([ch[0].o])}（<span class="up">▲${ch[0].d.toFixed(1)}</span> 分）；退步最多：${nm([ch[ch.length - 1].o])}（<span class="dn">▼${Math.abs(ch[ch.length - 1].d).toFixed(1)}</span> 分）。` : ''
+  ].filter(Boolean);
+  $('#summary').innerHTML = `<div class="sumh">📌 本期重點・${esc(V.label)}</div><ul>${lines.map(l => `<li>${l}</li>`).join('')}</ul>`;
+  $$('#summary a[data-k]').forEach(a => a.onclick = () => openDoc(V.docs.find(o => o.c + '|' + o.d === a.dataset.k)));
+}
+
+/* ---------- 醫師球探牆：依分類分區，每位一張迷你五角形卡 ---------- */
+function radarMini(r) {
+  const A = axes(r), S = 120, c = S / 2, R = 48, n = A.length, lo = SC['分數下限'], hi = SC['分數上限'];
+  const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / n, k = ((v ?? lo) - lo) / (hi - lo) * R; return [c + k * Math.cos(a), c + k * Math.sin(a)]; };
+  let s = `<svg viewBox="0 -8 ${S} ${S + 10}" width="100%" style="max-width:130px;display:block;margin:4px auto 0">`;
+  s += `<polygon points="${A.map((_, i) => pt(i, hi).join(',')).join(' ')}" fill="var(--chip-bg)" stroke="var(--line)"/>`;
+  s += `<polygon points="${A.map((_, i) => pt(i, SC['分數平均']).join(',')).join(' ')}" fill="none" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 2"/>`;
+  s += `<polygon points="${A.map((a, i) => pt(i, a[2]).join(',')).join(' ')}" fill="var(--brand)" fill-opacity=".22" stroke="var(--brand)" stroke-width="1.8" stroke-linejoin="round"/>`;
+  ['整', '個', '開', '效', '慢'].forEach((t, i) => { const [x, y] = pt(i, hi + 9); s += `<text x="${x}" y="${y + 3}" font-size="10" text-anchor="middle" fill="var(--muted)">${t}</text>`; });
+  return s + '</svg>';
+}
+/* 小玫 10/30 選 A：沒篩選時只展開「標竿」的五角形卡，其他分類一行名字膠囊；
+   點了分類或院區＝不再分區，照院區開幕順序（院區清單順序）、醫師清單順序排，卡上標分類 */
+function wall() {
+  const cOrd = {}, dOrd = {}; CFG.clinics.forEach((c, i) => cOrd[c.name] = i); (CFG.doctors || []).forEach((d, i) => dOrd[d.clinic + '|' + d.name] = +d.order || i);
+  const byOrder = (a, b) => (cOrd[a.c] ?? 99) - (cOrd[b.c] ?? 99) || (dOrd[a.c + '|' + a.d] ?? 999) - (dOrd[b.c + '|' + b.d] ?? 999);
+  const card = (o, tag) => `<div class="wc" data-k="${esc(o.c + '|' + o.d)}"><div class="wn"><b>${esc(o.d)}</b><small>${esc(o.c)}</small></div>${radarMini(o)}<div class="ws"><span class="sc">${o.score == null ? '—' : o.score.toFixed(0)}</span>${posHtml(o.score)}</div>${tag ? `<div class="wt">${labHtml(o.lab)}</div>` : ''}</div>`;
+  const note = '<div class="note">小五角形：整＝整體回診、個＝個人回診、開＝開立適切、效＝看診效率、慢＝慢專比例；虛線＝集團平均（' + SC['分數平均'] + '）。點醫師看完整報告。</div>';
+  if (selCls || selClinic) {
+    const list = V.docs.filter(o => (!selCls || o.lab === selCls) && (!selClinic || o.c === selClinic)).sort(byOrder);
+    const title = [selClinic, selCls ? labName(selCls) : ''].filter(Boolean).join('・');
+    $('#wall').innerHTML = `<div class="wgh"><b>${esc(title)}</b><span class="wcount">${list.length} 位</span>${selCls ? `<span class="wadv">${esc(E.CLASS_ADVICE[selCls] || '')}</span>` : ''}<button class="lnk" id="wReset">看全部 ✕</button></div>` +
+      (list.length ? `<div class="wgrid">${list.map(o => card(o, !selCls)).join('')}</div>` : '<div class="note">沒有符合的醫師</div>') + note;
+    $('#wReset').onclick = () => { selCls = null; selClinic = null; renderAll(); };
+  } else {
+    const top = V.docs.filter(o => o.lab === '標竿').sort(byOrder);
+    const rows = CLS_ORDER.filter(c => c !== '標竿').map(c => [c, V.docs.filter(o => o.lab === c).sort(byOrder)]).filter(r => r[1].length);
+    $('#wall').innerHTML = (top.length ? `<div class="wg"><div class="wgh">${labHtml('標竿')}<span class="wcount">${top.length} 位</span><span class="wadv">${esc(E.CLASS_ADVICE['標竿'])}</span></div><div class="wgrid">${top.map(o => card(o)).join('')}</div></div>` : '') +
+      `<div class="card wrows">${rows.map(([c, list]) => `<div class="wrow"><button class="wrl" data-cls="${esc(c)}">${labHtml(c)}<span class="wcount">${list.length} 位 ›</span></button><div class="wnames">${list.map(o => `<button class="nchip" data-k="${esc(o.c + '|' + o.d)}">${esc(o.d)}<small>${esc(o.c)}</small></button>`).join('')}</div></div>`).join('')}
+        <div class="note" style="margin-top:6px">點分類看該分類全部醫師的五角形；點名字直接看報告。</div></div>` + note;
+    $$('#wall .wrl').forEach(b => b.onclick = () => { selCls = b.dataset.cls; renderAll(); document.getElementById('clChips').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    $$('#wall .nchip').forEach(b => b.onclick = () => openDoc(V.docs.find(o => o.c + '|' + o.d === b.dataset.k)));
+  }
+  $$('#wall .wc').forEach(el => el.onclick = () => openDoc(V.docs.find(o => o.c + '|' + o.d === el.dataset.k)));
 }
 
 /* ---------- 分布圖 ---------- */
 const POS = s => s == null ? ['—', 'var(--pos-mid)'] : (s = Math.round(s)) >= SC['位置_前段門檻'] ? ['前段', 'var(--pos-hi)'] : s < SC['位置_待加強門檻'] ? ['待加強', 'var(--pos-lo)'] : ['中段', 'var(--pos-mid)'];
 const posHtml = s => { const [t, c] = POS(s); return `<span class="pos" style="--c:${c}">${t}</span>`; };
-const LAB = { '標竿': ['★', '#dff0e6', '#1f6a46'], '經驗型': ['◆', '#e3edf6', '#2f5a85'], '一般': ['·', '#efefec', '#5c5b56'], '認真但方向不對': ['↗', '#fdf0d8', '#8a5a00'], '瞎忙': ['!', '#ecebe7', '#5f5e58'], '醫病經營不用心': ['▼', '#fbe3e0', '#9b2f22'] };
-const labHtml = l => l && LAB[l] ? `<span class="lab" data-ic="${LAB[l][0]}" style="background:${LAB[l][1]};color:${LAB[l][2]}">${l}</span>` : '<span class="note">—</span>';
+const LAB = { '標竿': ['★', '#dff0e6', '#1f6a46'], '經驗型': ['◆', '#e3edf6', '#2f5a85'], '一般': ['·', '#efefec', '#5c5b56'], '認真但方向不對': ['↗', '#fdf0d8', '#8a5a00'], '瞎忙': ['!', '#ece6f6', '#5b3f8f'], '醫病經營不用心': ['▼', '#fbe3e0', '#9b2f22'] };
+// 儀表板上顯示的名稱（小玫 10/30 選 A：委婉、中性；分類算法不變）
+const LABN = { '標竿': '標竿', '經驗型': '經驗型', '一般': '穩定', '認真但方向不對': '開立積極、待優化', '瞎忙': '開立效益待提升', '醫病經營不用心': '醫病經營待加強' };
+const CLS_ORDER = ['標竿', '經驗型', '一般', '認真但方向不對', '瞎忙', '醫病經營不用心'];
+const labName = l => LABN[l] || l || '';
+const labHtml = l => l && LAB[l] ? `<span class="lab" style="background:${LAB[l][1]};color:${LAB[l][2]}">${labName(l)}</span>` : '<span class="note">—</span>';
 function tip(e, h) { const t = $('#tip'); t.innerHTML = h; t.style.opacity = 1; t.style.left = Math.min(e.clientX + 14, innerWidth - 260) + 'px'; t.style.top = (e.clientY + 14) + 'px'; }
 const untip = () => $('#tip').style.opacity = 0;
 function scatter() {
@@ -502,7 +573,7 @@ function scatter() {
   const rr = v => 6 + (v - rMin) / ((rMax - rMin) || 1) * (W < 600 ? 10 : 14);
   const xt = x(SC['開立率合理下限']), yt = y(mean(D.map(o => o.pr)));
   let s = `<svg width="${W}" height="${H}" role="img" aria-label="醫師分布圖">`;
-  const q = [[m.l, m.t, xt - m.l, yt - m.t, '經驗型', '少開 BACK，病人也會回來'], [xt, m.t, W - m.r - xt, yt - m.t, '標竿', '有開、病人也回來'], [xt, yt, W - m.r - xt, H - m.b - yt, '開很多、回來少', '瞎忙／方向待調整'], [m.l, yt, xt - m.l, H - m.b - yt, '經營待加強', '開得少、回來也少']];
+  const q = [[m.l, m.t, xt - m.l, yt - m.t, '經驗型', '少開 BACK，病人也會回來'], [xt, m.t, W - m.r - xt, yt - m.t, '標竿', '有開、病人也回來'], [xt, yt, W - m.r - xt, H - m.b - yt, '開很多、回來少', '開立效益待提升'], [m.l, yt, xt - m.l, H - m.b - yt, '經營待加強', '開得少、回來也少']];
   q.forEach(([a, b, w, h, t1, t2], i) => { s += `<rect x="${a}" y="${b}" width="${w}" height="${h}" fill="var(--q${i})"/>`; const tx = i % 3 === 0 ? a + 10 : a + w - 10, an = i % 3 === 0 ? 'start' : 'end', ty = i < 2 ? b + 20 : b + h - 24; s += `<text class="qlab" x="${tx}" y="${ty}" text-anchor="${an}">${t1}</text>` + (W >= 600 ? `<text class="qsub" x="${tx}" y="${ty + 15}" text-anchor="${an}">${t2}</text>` : ''); });
   for (let v = 0; v <= xMax + .001; v += .2) s += `<text class="axis" x="${x(v)}" y="${H - m.b + 18}" text-anchor="middle">${Math.round(v * 100)}%</text>`;
   for (let v = 0; v <= yMax + .001; v += .05) s += `<text class="axis" x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end">${Math.round(v * 100)}%</text>`;
@@ -517,21 +588,11 @@ function scatter() {
   $('#scatter').innerHTML = s;
   $$('#scatter .dot').forEach(c => {
     const r = D.find(o => o.c + '|' + o.d === c.dataset.k);
-    c.onmousemove = e => tip(e, `<b>${esc(r.c)}・${esc(r.d)}</b><br>開立率 ${pct(r.br)}｜個人 ${pct(r.pr)}<br>整體 ${pct(r.ar)}｜綜合 ${r.score == null ? '—' : r.score.toFixed(0) + '（' + POS(r.score)[0] + '）'}<br>${esc(r.lab)}`);
+    c.onmousemove = e => tip(e, `<b>${esc(r.c)}・${esc(r.d)}</b><br>開立率 ${pct(r.br)}｜個人 ${pct(r.pr)}<br>整體 ${pct(r.ar)}｜綜合 ${r.score == null ? '—' : r.score.toFixed(0) + '（' + POS(r.score)[0] + '）'}<br>${esc(labName(r.lab))}`);
     c.onmouseleave = untip; c.onclick = () => openDoc(r);
   });
 }
 
-/* ---------- 排行表 ---------- */
-const COLS = [['rank', '#', 0], ['d', '醫師', 1], ['br', '開立率', 0], ['pr', '個人', 0], ['ar', '整體', 0], ['sp', '外溢', 0, 1], ['score', '綜合', 0], ['lab', '分類', 1]];
-function table() {
-  const rows = V.docs.filter(r => !selClinic || r.c === selClinic);
-  rows.sort((a, b) => { const A = a[sortK], B = b[sortK]; if (A == null) return 1; if (B == null) return -1; return (typeof A === 'string' ? A.localeCompare(B) : A - B) * sortDir; });
-  $('#tbl').innerHTML = `<thead><tr>${COLS.map(([k, t, l, hm]) => `<th class="${l ? 'l' : ''} ${hm ? 'hide-m' : ''} ${sortK === k ? 'on' : ''}" data-k="${k}">${t}${sortK === k ? (sortDir < 0 ? ' ↓' : ' ↑') : ''}</th>`).join('')}</tr></thead><tbody>` +
-    rows.map(r => `<tr data-k="${esc(r.c + '|' + r.d)}"><td>${r.rank ?? '—'}</td><td class="l dn2">${esc(r.d)}<small>${esc(r.c)}</small></td><td>${pct(r.br)}</td><td>${pct(r.pr)}</td><td>${pct(r.ar)}</td><td class="hide-m">${pct(r.sp)}</td><td class="sc">${r.score == null ? '—' : r.score.toFixed(0) + ' ' + posHtml(r.score)}</td><td class="l">${labHtml(r.lab)}</td></tr>`).join('') + '</tbody>';
-  $$('#tbl th').forEach(th => th.onclick = () => { const k = th.dataset.k === 'rank' ? 'score' : th.dataset.k; if (sortK === k) sortDir *= -1; else { sortK = k; sortDir = (k === 'd' || k === 'lab') ? 1 : -1; } table(); });
-  $$('#tbl tbody tr').forEach(tr => tr.onclick = () => openDoc(V.docs.find(o => o.c + '|' + o.d === tr.dataset.k)));
-}
 
 /* ---------- 院區比較 ---------- */
 function bars() {
@@ -656,7 +717,7 @@ function bindTrend() {
 function closeDoc() { $('#drawer').classList.remove('on'); $('#mask').classList.remove('on'); }
 $('#mask').onclick = closeDoc; addEventListener('keydown', e => { if (e.key === 'Escape') closeDoc(); });
 
-function renderAll() { if (!V) return; chips(); scatter(); table(); bars(); }
+function renderAll() { if (!V) return; chips(); summary(); wall(); scatter(); bars(); }
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (V) { scatter(); if (detailK) detail(); } }, 150); });
 
 if (TOKEN) start(); else showLogin();
