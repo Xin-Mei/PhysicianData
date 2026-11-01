@@ -757,14 +757,34 @@ function openDoc(r) {
       <div id="trendBox" style="display:grid;gap:14px">${trend(r)}</div>
     </div>`;
   bindTrend();
+  // 開報告時記一筆瀏覽紀錄：手機「上一頁」或 iPhone 從左邊緣滑回，會關報告而不是離開儀表板
+  if (!$('#drawer').classList.contains('on')) try { history.pushState({ doc: 1 }, ''); } catch (e) {}
   $('#drawer').classList.add('on'); $('#mask').classList.add('on');
 }
 function bindTrend() {
   $$('#tY .chip').forEach(b => b.onclick = () => { trendY = b.dataset.y; $('#trendBox').innerHTML = trend(curDoc); bindTrend(); });
   $$('#tK .chip').forEach(b => b.onclick = () => { trendK = b.dataset.k; $('#trendBox').innerHTML = trend(curDoc); bindTrend(); });
 }
-function closeDoc() { $('#drawer').classList.remove('on'); $('#mask').classList.remove('on'); }
+function hideDoc() { const d = $('#drawer'); d.style.transition = d.style.transform = ''; d.classList.remove('on'); $('#mask').classList.remove('on'); }
+function closeDoc() { if (history.state && history.state.doc) history.back(); else hideDoc(); }
+addEventListener('popstate', hideDoc);
 $('#mask').onclick = closeDoc; addEventListener('keydown', e => { if (e.key === 'Escape') closeDoc(); });
+// 手機：在醫師報告上往右滑＝關閉（小玫 11/02）；畫面跟著手指移動，滑超過 1/4 寬或快速一撥就關
+(() => {
+  const d = $('#drawer'); let x0, y0, t0, dx = 0, mode = null;
+  d.addEventListener('touchstart', e => { if (e.touches.length !== 1) return; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now(); dx = 0; mode = null; }, { passive: true });
+  d.addEventListener('touchmove', e => {
+    if (x0 == null) return;
+    const mx = e.touches[0].clientX - x0, my = e.touches[0].clientY - y0;
+    if (!mode && Math.abs(mx) + Math.abs(my) > 10) mode = mx > 0 && Math.abs(mx) > Math.abs(my) * 1.5 ? 'h' : 'v';
+    if (mode !== 'h') return;
+    e.preventDefault(); dx = Math.max(0, mx); d.style.transition = 'none'; d.style.transform = `translateX(${dx}px)`;
+  }, { passive: false });
+  d.addEventListener('touchend', () => {
+    if (mode === 'h') { const fast = dx > 40 && dx / (Date.now() - t0) > .5; d.style.transition = ''; if (dx > d.offsetWidth / 4 || fast) { d.style.transform = 'translateX(100%)'; closeDoc(); } else d.style.transform = ''; }
+    x0 = null; mode = null;
+  });
+})();
 
 function renderAll() { if (!V) return; chips(); summary(); wall(); scatter(); bars(); }
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (V) { scatter(); if (detailK) detail(); } }, 150); });
