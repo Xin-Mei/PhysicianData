@@ -15,7 +15,7 @@
 <style>
 :root{
   --bg:#f3f6f4;--card:#ffffff;--ink:#1d2a28;--muted:#6b7a76;--line:#e1e8e4;--line-soft:#eef2f0;
-  --brand:#24534c;--accent:#d9822b;--dot:#5f9c8c;--bar:#5f9c8c;--track:#e9efec;--chip-bg:#eef3f1;--hover:#f3f8f6;
+  --brand:#24534c;--accent:#d9822b;--sel:#1c7e75;--dot:#5f9c8c;--bar:#5f9c8c;--track:#e9efec;--chip-bg:#eef3f1;--hover:#f3f8f6;
   --hero-bg:#24534c;--hero-ink:#ffffff;--hero-muted:#b9d3cc;
   --q0:#eef6f2;--q1:#e3f1ea;--q2:#f1f3f2;--q3:#fbe8e5;--q-ink:#3d5752;
   --tip-bg:#1d2a28;--tip-ink:#fff;--shadow:0 1px 2px rgba(29,42,40,.04),0 6px 20px rgba(29,42,40,.04);
@@ -48,7 +48,7 @@ h2{font-size:20px;margin:0;letter-spacing:.03em}
 .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:12px}
 .kpi{cursor:pointer;transition:transform .12s}
 .kpi:hover{transform:translateY(-2px)}
-.kpi.sel{outline:3px solid var(--accent);outline-offset:-1px}
+.kpi.sel{outline:3px solid var(--sel);outline-offset:-1px}
 .kpi .l{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
 .kpi .v{font-size:34px;font-weight:900;margin-top:6px;font-variant-numeric:tabular-nums}
 .kpi .s{font-size:12.5px;color:var(--muted);margin-top:2px}
@@ -59,7 +59,7 @@ h2{font-size:20px;margin:0;letter-spacing:.03em}
 .kpi.hero .tag-w{background:rgba(255,255,255,.16);color:var(--hero-ink)}
 .up{color:var(--up)}.dn{color:var(--dn)}.neu{color:var(--muted)}
 .detail{margin-top:14px}
-.kpis>.detail{grid-column:1/-1;margin-top:0;border:2px solid var(--accent)}
+.kpis>.detail{grid-column:1/-1;margin-top:0;border:2px solid var(--sel)}/* 點開外框：LOGO 青綠與品牌深綠的中間色（小玫 11/02） */
 .detail .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
 .detail .stats div{background:var(--chip-bg);border-radius:12px;padding:10px 12px}
 .detail .stats .k{font-size:12px;color:var(--muted)}.detail .stats .n{font-size:22px;font-weight:900}
@@ -68,19 +68,15 @@ h2{font-size:20px;margin:0;letter-spacing:.03em}
 .reps li small{color:var(--muted);margin-left:6px}
 .acts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
 .ahd{font-weight:900;font-size:16px;padding:8px 12px;border-radius:12px;margin-bottom:8px}
-.ahd small{font-weight:400;font-size:12px;color:var(--muted);margin-left:6px}
+.ahd small{display:block;font-weight:400;font-size:12px;color:var(--muted);margin-top:1px}
 .ahd.b{background:#fbe8e5;color:#9b2f22}.ahd.g{background:#e3f1ea;color:#1f6a46}
-.act{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;cursor:pointer;background:var(--card)}
-.act:hover{background:var(--hover);border-color:var(--dot)}
-.act .ah{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.act .ah small{color:var(--muted)}
-.act .ah .sc{font-size:18px}.act .ab{font-size:13px;color:var(--muted);margin-top:4px}.act .ab b{color:var(--ink)}
-.act .aa{font-size:13.5px;margin-top:4px;font-weight:500}
-/* 展開內容排版（小玫 11/01）：電腦每排小方塊（B）；手機改細線分隔的清單 */
-.acts>div{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px;align-content:start}
-.acts>div>.ahd,.acts>div>.aadv,.acts>div>.note{grid-column:1/-1;margin-bottom:0}
-.acts .act{margin:0;padding:8px 10px}.acts .act .ah{gap:2px 6px}.acts .act .ah .grow{flex-basis:100%;height:0}
-.acts .act .ah .sc{font-size:17px}.acts .act .ab{font-size:12px;margin-top:2px}
-.aadv{font-size:13.5px;font-weight:700;margin:12px 2px 8px;color:var(--ink)}
+/* 展開內容（小玫 11/02 選 A）：一人一行的對齊表格 */
+.asub{font-size:12px;font-weight:700;color:var(--muted);margin:8px 2px 0}
+.at{table-layout:fixed;margin-bottom:2px}.at th{padding:2px 4px 4px;font-size:11.5px;cursor:default;border-bottom:0}.at th:first-child{text-align:left}.at th:not(:first-child),.at td:not(:first-child){width:74px}
+.at td{padding:7px 4px;border-top:1px solid var(--line);border-bottom:0;white-space:nowrap}.at td:first-child{text-align:left;overflow:hidden;text-overflow:ellipsis}
+.at td:first-child b{font-size:15px}.at td small{color:var(--muted);font-size:12px;margin-left:4px}.at td:nth-child(2){font-weight:900;font-size:15.5px}
+.at tr[data-k]{cursor:pointer}.at tr[data-k]:hover td{background:var(--hover)}
+.aadv{font-size:13.5px;font-weight:700;margin:12px 2px 2px;color:var(--ink)}
 .atag{font-size:11px;font-weight:700;padding:calc(1px - .06em) 8px calc(1px + .06em);border-radius:99px}.atag.b{background:#fbe8e5;color:#9b2f22}.atag.g{background:#e3f1ea;color:#1f6a46}
 .refh{margin-top:18px;font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.06em;border-top:1px dashed var(--line);padding-top:12px}
 .summary{background:var(--q0);border-color:#d5e8de;box-shadow:none;padding:14px 18px}
@@ -204,7 +200,7 @@ body.locked header.top,body.locked .wrap{visibility:hidden}
 @media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.grid2{grid-template-columns:minmax(0,1fr)}.expl{grid-template-columns:1fr 1fr}}
 @media (min-width:1100px){body{font-size:16px}.wgrid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}.wc .wn b{font-size:16.5px}.wc .ws .sc{font-size:23px}.nchip{font-size:14.5px}.chip{font-size:14px}.summary ul{font-size:15px}.kpi .l{font-size:14px}.kpi .s{font-size:13.5px}.sec-h .sub{font-size:14px}}
 /* 手機：標題列固定在上方、縮成一行（只留 LOGO＋區間切換＋登出） */
-@media (max-width:640px){header.top .in{padding:7px 10px;gap:8px;flex-wrap:nowrap}.brand img{width:30px;height:30px}.brand>div,.grow{display:none}.ctl{flex-wrap:nowrap;gap:6px;flex:1;justify-content:flex-end;min-width:0;overflow-x:auto}.seg button{padding:calc(5px - .06em) 9px calc(5px + .06em);font-size:12.5px}#pick select,#pick input{font-size:13px;padding:5px 6px}.lnk{padding:calc(4px - .06em) 9px calc(4px + .06em);font-size:12px;white-space:nowrap}.wrap{padding:0 14px 40px}.summary ul{font-size:13.5px}.cnts{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:1fr 1fr}.kpi .v{font-size:26px}.kpi.hero{grid-column:1/-1}.expl{grid-template-columns:1fr}.brand .t2{font-size:17px}.hide-m{display:none}td,th{padding:9px 6px}.detail .stats{grid-template-columns:1fr 1fr}.reps,.acts{grid-template-columns:1fr}.wgrid{grid-template-columns:repeat(2,1fr);gap:8px}.wrow{grid-template-columns:1fr}.acts>div{display:block}.acts .act{border:0;border-bottom:1px solid var(--line);border-radius:0;padding:7px 2px;background:transparent}.acts .act .ah .grow{flex-basis:auto;flex:0}.acts .act .ah .sc{font-size:16px}.acts .act .ab{font-size:12.5px;margin-top:1px}.acts .aadv{margin:10px 2px 2px}.lg-card{margin:4vh auto auto;padding:26px 22px 22px}.lg-card img{width:76px;height:76px}}
+@media (max-width:640px){header.top .in{padding:7px 10px;gap:8px;flex-wrap:nowrap}.brand img{width:30px;height:30px}.brand>div,.grow{display:none}.ctl{flex-wrap:nowrap;gap:6px;flex:1;justify-content:flex-end;min-width:0;overflow-x:auto}.seg button{padding:calc(5px - .06em) 9px calc(5px + .06em);font-size:12.5px}#pick select,#pick input{font-size:13px;padding:5px 6px}.lnk{padding:calc(4px - .06em) 9px calc(4px + .06em);font-size:12px;white-space:nowrap}.wrap{padding:0 14px 40px}.summary ul{font-size:13.5px}.cnts{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:1fr 1fr}.kpi .v{font-size:26px}.kpi.hero{grid-column:1/-1}.expl{grid-template-columns:1fr}.brand .t2{font-size:17px}.hide-m{display:none}td,th{padding:9px 6px}.detail .stats{grid-template-columns:1fr 1fr}.reps,.acts{grid-template-columns:1fr}.wgrid{grid-template-columns:repeat(2,1fr);gap:8px}.wrow{grid-template-columns:1fr}.lg-card{margin:4vh auto auto;padding:26px 22px 22px}.lg-card img{width:76px;height:76px}}
 </style>
 </head>
 <body class="locked">
@@ -235,7 +231,7 @@ body.locked header.top,body.locked .wrap{visibility:hidden}
   <div class="kpis" id="kpis"><div class="card empty" style="grid-column:1/-1">載入中…</div></div>
   <div class="card detail hide" id="detail"></div>
 
-  <div class="sec-h"><h2>醫師球探牆</h2><span class="sub">依分類排列，標竿在最上面；點醫師卡看完整報告</span></div>
+  <div class="sec-h"><h2>醫師球探牆</h2><span class="sub">依分類排列；點分類看五角形，點名字看完整報告</span></div>
   <div class="chips" id="clChips"></div>
   <div id="wall"></div>
 
@@ -429,13 +425,22 @@ function weakest(o) {
   if (k === 'back') tip = raw < SC['開立率合理下限'] ? '開立偏少，提醒適時開立 BACK' : raw > SC['開立率合理上限'] ? '開立偏多，檢視開立是否必要' : '開立率在合理區間';
   return { name: ax[0], raw, sc, tip };
 }
-/* 一欄行動清單：建議相同的醫師排在一起，同一句建議只寫一次（避免重複閱讀） */
-function actCol(bad, head, items, empty) {
+/* 一欄行動清單（小玫 11/02 選 A：對齊表格）：建議相同的排一起、同一句只寫一次；原因（最低／比上期退步…）當小標，一人一行、數字上下對齊 */
+function actCol(bad, head, ref, cols, items, empty) {
   const ic = bad ? '👉' : '👍', groups = [];
-  items.forEach(x => { const g = groups.find(g => g.adv === x.adv); if (g) g.list.push(x); else groups.push({ adv: x.adv, list: [x] }); });
-  return `<div><div class="ahd ${bad ? 'b' : 'g'}">${bad ? '⚠️ 要關心的醫師' : '⭐ 值得表揚的醫師'} <small>${items.length} 位：${head}</small></div>` +
-    (groups.map(g => `<div class="aadv">${ic} ${esc(g.adv)}</div>` + g.list.map(x => x.html + '</div>').join('')).join('') || `<div class="note">${empty}</div>`) + '</div>';
+  items.forEach(x => {
+    let g = groups.find(g => g.adv === x.adv); if (!g) groups.push(g = { adv: x.adv, subs: [] });
+    let s = g.subs.find(s => s.tag === x.tag); if (!s) g.subs.push(s = { tag: x.tag, list: [] });
+    s.list.push(x);
+  });
+  let first = true;
+  const tbl = list => `<table class="at">${first ? (first = false, `<tr><th>醫師</th>${cols.map(c => `<th>${c}</th>`).join('')}</tr>`) : ''}` +
+    list.map(x => `<tr data-k="${esc(x.o.c + '|' + x.o.d)}"><td><b>${esc(x.o.d)}</b><small>${esc(x.o.c)}</small></td>${x.cells.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') + '</table>';
+  return `<div><div class="ahd ${bad ? 'b' : 'g'}">${bad ? '⚠️ 要關心的醫師' : '⭐ 值得表揚的醫師'}<small>${ref ? ref + '・' : ''}${head}</small></div>` +
+    (groups.map(g => `<div class="aadv">${ic} ${esc(g.adv)}</div>` + g.subs.map(s => (s.tag ? `<div class="asub">${esc(s.tag)}</div>` : '') + tbl(s.list)).join('')).join('') || `<div class="note">${empty}</div>`) + '</div>';
 }
+const SHORT = { '整體回診': '整體', '個人回診': '個人', '開立適切': '開立' };
+const arrow = (d, cls) => d == null ? '<span class="neu">—</span>' : `<span class="${cls}">${d >= 0 ? '▲' : '▼'}${Math.abs(d).toFixed(1)}</span>`;
 function actionList() {
   const pv = {}; (V.prev ? V.prev.docs : []).forEach(o => pv[o.c + '|' + o.d] = o);
   const docs = V.docs.filter(o => o.score != null).map(o => { const p = pv[o.c + '|' + o.d]; return Object.assign(o, { dScore: p && p.score != null ? o.score - p.score : null }); });
@@ -444,24 +449,17 @@ function actionList() {
   const drops = docs.filter(o => o.dScore != null && o.dScore <= -2).sort((a, b) => a.dScore - b.dScore);
   const topTier = docs.filter(o => o.s.tier === '前段').sort((a, b) => b.score - a.score);
   const ups = docs.filter(o => o.dScore != null && o.dScore >= 2).sort((a, b) => b.dScore - a.dScore);
-  const dTxt = o => o.dScore == null ? '' : `<span class="${o.dScore >= 0 ? 'up' : 'dn'}">${o.dScore >= 0 ? '▲' : '▼'}${Math.abs(o.dScore).toFixed(1)}</span>`;
-  const why = (o, bad) => {
-    const tags = [];
-    if (o.s.tier === (bad ? '待加強' : '前段')) tags.push(o.s.tier);
-    if (o.dScore != null && (bad ? o.dScore <= -2 : o.dScore >= 2)) tags.push(bad ? '比上期退步' : '比上期進步');
-    return tags.map(t => `<span class="atag ${bad ? 'b' : 'g'}">${t}</span>`).join('');
-  };
   const item = (o, bad) => {
     const w = weakest(o), adv = o.lab && o.lab !== '一般' ? (CLS_DESC[o.lab] ? CLS_DESC[o.lab][1] : o.s.advice) : (w ? w.tip : '持續追蹤');
     const best = !bad ? [['any', o.s.anyScore], ['same', o.s.sameScore], ['back', o.s.backScore]].sort((a, b) => b[1] - a[1])[0] : null;
-    return { adv: bad ? adv : (o.s.tier !== '前段' ? '進步了，給予鼓勵' : o.lab === '標竿' ? '可請他分享經驗' : '公開肯定、維持表現'),
-      html: `<div class="act" data-k="${esc(o.c + '|' + o.d)}"><div class="ah"><b>${esc(o.d)}</b><small>${esc(o.c)}</small>${why(o, bad)}<span class="grow"></span><span class="sc">${o.score.toFixed(0)}</span>${dTxt(o)}</div>
-      <div class="ab">${bad ? (w ? `最弱：<b>${w.name}</b>（${Math.round(w.sc)} 分）` : '') : `最強：<b>${AXN[best[0]][0]}</b>（${Math.round(best[1])} 分）`}</div>` };
+    const ax = bad ? (w ? [w.name, w.sc] : null) : [AXN[best[0]][0], best[1]];
+    return { o, adv: bad ? adv : (o.s.tier !== '前段' ? '進步了，給予鼓勵' : o.lab === '標竿' ? CLS_DESC['標竿'][1] : '公開肯定、維持表現'),
+      tag: o.s.tier === (bad ? '待加強' : '前段') ? o.s.tier : (bad ? '比上期退步' : '比上期進步'),
+      cells: [o.score.toFixed(0), arrow(o.dScore, o.dScore >= 0 ? 'up' : 'dn'), ax ? `${SHORT[ax[0]] || ax[0]} ${Math.round(ax[1])}` : '—'] };
   };
-  const bad = pick(lowTier, drops, 3), good = pick(topTier, ups, 3);
-  const hasPrev = !!V.prev;
-  return `<div class="acts">` + actCol(true, '待加強' + (hasPrev ? '，加上比上期退步最多的' : ''), bad.map(o => item(o, true)), '這期沒有需要特別關心的醫師 🎉') +
-    actCol(false, '前段' + (hasPrev ? '，加上比上期進步最多的' : ''), good.map(o => item(o, false)), '這期沒有前段醫師') + '</div>';
+  const bad = pick(lowTier, drops, 3), good = pick(topTier, ups, 3), hasPrev = !!V.prev, ref = `集團平均 ${SC['分數平均']}`;
+  return `<div class="acts">` + actCol(true, '待加強' + (hasPrev ? '＋比上期退步最多的' : ''), ref, ['分數', '比上期', '最弱項目'], bad.map(o => item(o, true)), '這期沒有需要特別關心的醫師 🎉') +
+    actCol(false, '前段' + (hasPrev ? '＋比上期進步最多的' : ''), ref, ['分數', '比上期', '最強項目'], good.map(o => item(o, false)), '這期沒有前段醫師') + '</div>';
 }
 /* 四項比率點開：行動清單。要關心＝最低 3 位＋比上期退步最多 3 位；值得表揚＝最高 3 位＋進步最多 3 位（變動 ≥ 1 個百分點才算）
    開立率：要關心＝離合理區間最遠（太少、太多各 3 位）；值得表揚＝在合理區間且整體回診最好的 3 位＋這期回到合理區間的
@@ -482,7 +480,7 @@ function actionListRate(k) {
     bad = uniq(by(o => o.br, 1).filter(o => o.br < lo).slice(0, 3).map(o => ({ o, tags: ['開太少'] })).concat(by(o => o.br, -1).filter(o => o.br > hi).slice(0, 3).map(o => ({ o, tags: ['開太多'] }))));
     const inR = o => o.br >= lo && o.br <= hi, pIn = o => { const p = pv[o.c + '|' + o.d]; return p && p.br >= lo && p.br <= hi; };
     good = uniq(by(o => o.ar, -1).filter(inR).slice(0, 3).map(o => ({ o, tags: ['合理區間'] })).concat(docs.filter(o => inR(o) && pv[o.c + '|' + o.d] && !pIn(o)).slice(0, 3).map(o => ({ o, tags: ['回到合理區間'] }))));
-    badHd = `離合理區間 ${pct(lo, 0)}～${pct(hi, 0)} 最遠的`; goodHd = '在合理區間、整體回診也好的' + (V.prev ? '，加上這期回到區間的' : '');
+    badHd = '離區間最遠的（太少、太多各 3 位）'; goodHd = '在區間內、整體回診也好的' + (V.prev ? '＋這期回到區間的' : '');
     adv = (x, isBad) => isBad ? (x.o.br < lo ? '開立偏少，提醒適時開立 BACK' : '開立偏多，檢視開立是否必要') : '開立適中，請維持';
   } else if (k === 'sp') {
     bad = by(o => o.sp, -1).slice(0, 3).map(o => ({ o, tags: ['外溢最高'] }));
@@ -493,21 +491,24 @@ function actionListRate(k) {
   } else {
     bad = uniq(by(o => o[k], 1).slice(0, 3).map(o => ({ o, tags: ['最低'] })).concat(by(o => o._d ?? 0, 1).filter(o => o._d != null && o._d <= -.01).slice(0, 3).map(o => ({ o, tags: ['比上期退步'] }))));
     good = uniq(by(o => o[k], -1).slice(0, 3).map(o => ({ o, tags: ['最高'] })).concat(by(o => o._d ?? 0, -1).filter(o => o._d != null && o._d >= .01).slice(0, 3).map(o => ({ o, tags: ['比上期進步'] }))));
-    badHd = '最低 3 位' + (V.prev ? '，加上比上期退步最多的' : ''); goodHd = '最高 3 位' + (V.prev ? '，加上比上期進步最多的' : '');
+    badHd = '最低 3 位' + (V.prev ? '＋比上期退步最多的' : ''); goodHd = '最高 3 位' + (V.prev ? '＋比上期進步最多的' : '');
     adv = (x, isBad) => isBad ? RTXT[k].lo : (x.tags.includes('最高') ? RTXT[k].hi : '進步了，給予鼓勵');
   }
-  const dTxt = o => o._d == null ? '' : `<span class="${k === 'br' || k === 'sp' ? 'neu' : o._d >= 0 ? 'up' : 'dn'}">${o._d >= 0 ? '▲' : '▼'}${(Math.abs(o._d) * 100).toFixed(1)}%</span>`;
-  const item = (x, isBad) => { const o = x.o, dv = o[k] - avg;
-    return { adv: adv(x, isBad), html: `<div class="act" data-k="${esc(o.c + '|' + o.d)}"><div class="ah"><b>${esc(o.d)}</b><small>${esc(o.c)}</small>${x.tags.map(t => `<span class="atag ${isBad ? 'b' : 'g'}">${t}</span>`).join('')}<span class="grow"></span><span class="sc">${pct(o[k])}</span>${dTxt(o)}</div>
-      <div class="ab">${k === 'br' ? (o.br < lo ? `比合理下限低 <b>${((lo - o.br) * 100).toFixed(1)}%</b>` : o.br > hi ? `超過合理上限 <b>${((o.br - hi) * 100).toFixed(1)}%</b>` : '<b>在合理區間內</b>') : `比醫師平均 ${dv >= 0 ? '高' : '低'} <b>${(Math.abs(dv) * 100).toFixed(1)}%</b>`}</div>` }; };
-  return `<div class="acts">` + actCol(true, badHd, bad.map(x => item(x, true)), '這期沒有需要特別關心的醫師 🎉') + actCol(false, goodHd, good.map(x => item(x, false)), '這期沒有符合的醫師') + '</div>';
+  // 比上期、比平均都以「百分點」顯示；外溢率越高越不好，所以顏色反過來；開立率看離 30～40% 區間多遠
+  const pp = v => (v * 100).toFixed(1), sgn = v => (pp(Math.abs(v)) === '0.0' ? '' : v >= 0 ? '+' : '−') + pp(Math.abs(v));
+  const cmp = o => { if (k === 'br') return o.br < lo ? `<span class="dn">−${pp(lo - o.br)}</span>` : o.br > hi ? `<span class="dn">+${pp(o.br - hi)}</span>` : '<span class="up">區間內</span>';
+    const dv = o[k] - avg; return `<span class="${(k === 'sp' ? dv <= 0 : dv >= 0) ? 'up' : 'dn'}">${sgn(dv)}</span>`; };
+  const item = (x, isBad) => { const o = x.o, d = o._d == null ? null : o._d * 100;
+    return { o, adv: adv(x, isBad), tag: x.tags[0], cells: [pct(o[k]), arrow(d, k === 'br' || k === 'sp' ? 'neu' : d >= 0 ? 'up' : 'dn'), cmp(o)] }; };
+  const ref = k === 'br' ? `合理區間 ${pct(lo, 0)}～${pct(hi, 0)}` : `醫師平均 ${pct(avg)}`, cols = ['本期', '比上期', k === 'br' ? '離區間' : '比平均'];
+  return `<div class="acts">` + actCol(true, badHd, ref, cols, bad.map(x => item(x, true)), '這期沒有需要特別關心的醫師 🎉') + actCol(false, goodHd, ref, cols, good.map(x => item(x, false)), '這期沒有符合的醫師') + '</div>';
 }
 function detail() {
   const el = $('#detail');
   if (!detailK || !V) { el.classList.add('hide'); return; }
   const k = detailK, isS = k === 'score';
   el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>${KDEF[k].t}・${esc(V.label)}</h2><button class="lnk" id="dClose">收起 ✕</button></div>
-    ${isS ? actionList() : actionListRate(k)}${k === 'sp' ? '<div class="note">外溢率不計分，看病人流向用。</div>' : ''}`;
+    ${isS ? actionList() : actionListRate(k)}<div class="note">${isS ? '比上期單位：分。' : '比上期、' + (k === 'br' ? '離區間' : '比平均') + '單位：百分點。' + (k === 'sp' ? '外溢率不計分，看病人流向用。' : '')}點醫師看完整報告。</div>`;
   el.classList.remove('hide');
   // 詳細內容直接接在「點的那張卡」那一排下面（手機上才看得出有點到）
   const cards = $$('#kpis .kpi'), sel = cards.find(c => c.dataset.k === k);
@@ -586,11 +587,11 @@ function wall() {
       (list.length ? `<div class="wgrid">${list.map(o => card(o, !selCls)).join('')}</div>` : '<div class="note">沒有符合的醫師</div>') + note;
     $('#wReset').onclick = () => { selCls = null; selClinic = null; renderAll(); };
   } else {
-    const top = V.docs.filter(o => o.lab === '標竿').sort(byOrder);
-    const rows = CLS_ORDER.filter(c => c !== '標竿').map(c => [c, V.docs.filter(o => o.lab === c).sort(byOrder)]).filter(r => r[1].length);
-    $('#wall').innerHTML = (top.length ? `<div class="wg"><div class="wgh">${labHtml('標竿')}<span class="wcount">${top.length} 位</span></div>${clsDesc('標竿')}<div class="wgrid">${top.map(o => card(o)).join('')}</div></div>` : '') +
+    // 「全部」只列名單（標竿也一樣），點分類才展開五角形（小玫 11/02 選 B）
+    const rows = CLS_ORDER.map(c => [c, V.docs.filter(o => o.lab === c).sort(byOrder)]).filter(r => r[1].length);
+    $('#wall').innerHTML =
       `<div class="card wrows">${rows.map(([c, list]) => `<div class="wrow"><button class="wrl" data-cls="${esc(c)}">${labHtml(c)}<span class="wcount">${list.length} 位 ›</span></button><div class="wnames">${list.map(o => `<button class="nchip" data-k="${esc(o.c + '|' + o.d)}">${esc(o.d)}<small>${esc(o.c)}</small></button>`).join('')}</div></div>`).join('')}
-        <div class="note" style="margin-top:6px">點分類看該分類全部醫師的五角形；點名字直接看報告。</div></div>` + note;
+        <div class="note" style="margin-top:6px">點分類看該分類全部醫師的五角形；點名字直接看報告。</div></div>`;
     $$('#wall .wrl').forEach(b => b.onclick = () => { selCls = b.dataset.cls; renderAll(); document.getElementById('clChips').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
     $$('#wall .nchip').forEach(b => b.onclick = () => openDoc(V.docs.find(o => o.c + '|' + o.d === b.dataset.k)));
   }
@@ -616,7 +617,7 @@ function scatter() {
   const rr = v => 6 + (v - rMin) / ((rMax - rMin) || 1) * (W < 600 ? 10 : 14);
   const xt = x(SC['開立率合理下限']), yt = y(mean(D.map(o => o.pr)));
   let s = `<svg width="${W}" height="${H}" role="img" aria-label="醫師分布圖">`;
-  const q = [[m.l, m.t, xt - m.l, yt - m.t, '經驗型', '少開 BACK，病人也會回來'], [xt, m.t, W - m.r - xt, yt - m.t, '標竿', '有開、病人也回來'], [xt, yt, W - m.r - xt, H - m.b - yt, '開很多、回來少', '效益待提升'], [m.l, yt, xt - m.l, H - m.b - yt, '經營待加強', '開得少、回來也少']];
+  const q = [[m.l, m.t, xt - m.l, yt - m.t, '經驗型'], [xt, m.t, W - m.r - xt, yt - m.t, '標竿'], [xt, yt, W - m.r - xt, H - m.b - yt, '瞎忙'], [m.l, yt, xt - m.l, H - m.b - yt, '醫病經營不用心']].map(q => [...q.slice(0, 4), labName(q[4]), CLS_DESC[q[4]][0]]);
   q.forEach(([a, b, w, h, t1, t2], i) => { s += `<rect x="${a}" y="${b}" width="${w}" height="${h}" fill="var(--q${i})"/>`; const tx = i % 3 === 0 ? a + 10 : a + w - 10, an = i % 3 === 0 ? 'start' : 'end', ty = i < 2 ? b + 20 : b + h - 24; s += `<text class="qlab" x="${tx}" y="${ty}" text-anchor="${an}">${t1}</text>` + (W >= 600 ? `<text class="qsub" x="${tx}" y="${ty + 15}" text-anchor="${an}">${t2}</text>` : ''); });
   for (let v = 0; v <= xMax + .001; v += .2) s += `<text class="axis" x="${x(v)}" y="${H - m.b + 18}" text-anchor="middle">${Math.round(v * 100)}%</text>`;
   for (let v = 0; v <= yMax + .001; v += .05) s += `<text class="axis" x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end">${Math.round(v * 100)}%</text>`;
@@ -748,7 +749,7 @@ function openDoc(r) {
       <div class="big"><span class="n">${r.score == null ? '—' : r.score.toFixed(0)}</span>${posHtml(r.score)}<span class="u">綜合分數（集團平均 ${SC['分數平均']}）<br>集團第 ${r.rank ?? '—'}/${V.docs.length} 名</span></div></div>
     <div class="db">
       <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">${labHtml(r.lab)}<span class="note" style="margin:0">建議：${esc(CLS_DESC[r.lab] ? CLS_DESC[r.lab][1] : r.s.advice || '—')}</span></div>
-        <div class="note">開立率${lv.back || '—'}（${w('開立率合理下限')} 為界）・個人回診${lv.same || '—'}・整體回診${lv.any || '—'}</div></div>
+        ${CLS_DESC[r.lab] ? `<div style="margin-top:8px;font-weight:500">${esc(CLS_DESC[r.lab][0])}</div>` : ''}<div class="note">開立率${lv.back || '—'}（${w('開立率合理下限')} 為界）・個人回診${lv.same || '—'}・整體回診${lv.any || '—'}</div></div>
       <div class="card"><b>球探五角形</b><span class="note" style="margin-left:8px">實線＝${esc(r.d)}、虛線＝集團平均（${SC['分數平均']}）</span>${radar(r)}
         <div class="note">每一角換算成「集團平均＝${SC['分數平均']}」的分數，越往外越好。綜合分數只計前三項；看診效率、慢專比例為參考。</div></div>
       <div class="card"><b>各項明細</b><span class="note" style="margin-left:8px">跟${esc(r.c)}院區、集團平均比</span>${mtable}</div>
