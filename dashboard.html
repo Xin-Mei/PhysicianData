@@ -75,6 +75,11 @@ h2{font-size:20px;margin:0;letter-spacing:.03em}
 .act .ah{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.act .ah small{color:var(--muted)}
 .act .ah .sc{font-size:18px}.act .ab{font-size:13px;color:var(--muted);margin-top:4px}.act .ab b{color:var(--ink)}
 .act .aa{font-size:13.5px;margin-top:4px;font-weight:500}
+/* 展開內容排版（小玫 11/01）：電腦每排小方塊（B）；手機改細線分隔的清單 */
+.acts>div{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px;align-content:start}
+.acts>div>.ahd,.acts>div>.aadv,.acts>div>.note{grid-column:1/-1;margin-bottom:0}
+.acts .act{margin:0;padding:8px 10px}.acts .act .ah{gap:2px 6px}.acts .act .ah .grow{flex-basis:100%;height:0}
+.acts .act .ah .sc{font-size:17px}.acts .act .ab{font-size:12px;margin-top:2px}
 .aadv{font-size:13.5px;font-weight:700;margin:12px 2px 8px;color:var(--ink)}
 .atag{font-size:11px;font-weight:700;padding:calc(1px - .06em) 8px calc(1px + .06em);border-radius:99px}.atag.b{background:#fbe8e5;color:#9b2f22}.atag.g{background:#e3f1ea;color:#1f6a46}
 .refh{margin-top:18px;font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.06em;border-top:1px dashed var(--line);padding-top:12px}
@@ -199,7 +204,7 @@ body.locked header.top,body.locked .wrap{visibility:hidden}
 @media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.grid2{grid-template-columns:minmax(0,1fr)}.expl{grid-template-columns:1fr 1fr}}
 @media (min-width:1100px){body{font-size:16px}.wgrid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}.wc .wn b{font-size:16.5px}.wc .ws .sc{font-size:23px}.nchip{font-size:14.5px}.chip{font-size:14px}.summary ul{font-size:15px}.kpi .l{font-size:14px}.kpi .s{font-size:13.5px}.sec-h .sub{font-size:14px}}
 /* 手機：標題列固定在上方、縮成一行（只留 LOGO＋區間切換＋登出） */
-@media (max-width:640px){header.top .in{padding:7px 10px;gap:8px;flex-wrap:nowrap}.brand img{width:30px;height:30px}.brand>div,.grow{display:none}.ctl{flex-wrap:nowrap;gap:6px;flex:1;justify-content:flex-end;min-width:0;overflow-x:auto}.seg button{padding:calc(5px - .06em) 9px calc(5px + .06em);font-size:12.5px}#pick select,#pick input{font-size:13px;padding:5px 6px}.lnk{padding:calc(4px - .06em) 9px calc(4px + .06em);font-size:12px;white-space:nowrap}.wrap{padding:0 14px 40px}.summary ul{font-size:13.5px}.cnts{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:1fr 1fr}.kpi .v{font-size:26px}.kpi.hero{grid-column:1/-1}.expl{grid-template-columns:1fr}.brand .t2{font-size:17px}.hide-m{display:none}td,th{padding:9px 6px}.detail .stats{grid-template-columns:1fr 1fr}.reps,.acts{grid-template-columns:1fr}.wgrid{grid-template-columns:repeat(2,1fr);gap:8px}.wrow{grid-template-columns:1fr}.lg-card{margin:4vh auto auto;padding:26px 22px 22px}.lg-card img{width:76px;height:76px}}
+@media (max-width:640px){header.top .in{padding:7px 10px;gap:8px;flex-wrap:nowrap}.brand img{width:30px;height:30px}.brand>div,.grow{display:none}.ctl{flex-wrap:nowrap;gap:6px;flex:1;justify-content:flex-end;min-width:0;overflow-x:auto}.seg button{padding:calc(5px - .06em) 9px calc(5px + .06em);font-size:12.5px}#pick select,#pick input{font-size:13px;padding:5px 6px}.lnk{padding:calc(4px - .06em) 9px calc(4px + .06em);font-size:12px;white-space:nowrap}.wrap{padding:0 14px 40px}.summary ul{font-size:13.5px}.cnts{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:1fr 1fr}.kpi .v{font-size:26px}.kpi.hero{grid-column:1/-1}.expl{grid-template-columns:1fr}.brand .t2{font-size:17px}.hide-m{display:none}td,th{padding:9px 6px}.detail .stats{grid-template-columns:1fr 1fr}.reps,.acts{grid-template-columns:1fr}.wgrid{grid-template-columns:repeat(2,1fr);gap:8px}.wrow{grid-template-columns:1fr}.acts>div{display:block}.acts .act{border:0;border-bottom:1px solid var(--line);border-radius:0;padding:7px 2px;background:transparent}.acts .act .ah .grow{flex-basis:auto;flex:0}.acts .act .ah .sc{font-size:16px}.acts .act .ab{font-size:12.5px;margin-top:1px}.acts .aadv{margin:10px 2px 2px}.lg-card{margin:4vh auto auto;padding:26px 22px 22px}.lg-card img{width:76px;height:76px}}
 </style>
 </head>
 <body class="locked">
