@@ -452,7 +452,7 @@ function actionList() {
     return tags.map(t => `<span class="atag ${bad ? 'b' : 'g'}">${t}</span>`).join('');
   };
   const item = (o, bad) => {
-    const w = weakest(o), adv = o.lab && o.lab !== '一般' ? o.s.advice : (w ? w.tip : '持續觀察');
+    const w = weakest(o), adv = o.lab && o.lab !== '一般' ? (CLS_DESC[o.lab] ? CLS_DESC[o.lab][1] : o.s.advice) : (w ? w.tip : '持續追蹤');
     const best = !bad ? [['any', o.s.anyScore], ['same', o.s.sameScore], ['back', o.s.backScore]].sort((a, b) => b[1] - a[1])[0] : null;
     return { adv: bad ? adv : (o.s.tier !== '前段' ? '進步了，給予鼓勵' : o.lab === '標竿' ? '可請他分享經驗' : '公開肯定、維持表現'),
       html: `<div class="act" data-k="${esc(o.c + '|' + o.d)}"><div class="ah"><b>${esc(o.d)}</b><small>${esc(o.c)}</small>${why(o, bad)}<span class="grow"></span><span class="sc">${o.score.toFixed(0)}</span>${dTxt(o)}</div>
@@ -564,14 +564,14 @@ function radarMini(r) {
 }
 /* 小玫 10/30 選 A：沒篩選時只展開「標竿」的五角形卡，其他分類一行名字膠囊；
    點了分類或院區＝不再分區，照院區開幕順序（院區清單順序）、醫師清單順序排，卡上標分類 */
-// 分類說明（小玫 11/01 選 A：先說是什麼樣的醫師，再說建議）
+// 分類說明（小玫 11/01 選 A：先說是什麼樣的醫師，再說建議；11/02 小玫改寫文字）
 const CLS_DESC = {
-  '標竿': ['開立達標，病人也很願意回來找他', '請他分享經驗，當其他醫師的參考'],
-  '經驗型': ['開立不多，但病人很願意回來找他', '不用介入；想再提升，可鼓勵適度開立 BACK'],
-  '一般': ['各項表現在中間，沒有明顯強弱', '持續觀察'],
-  '認真但方向不對': ['開立積極，病人有回院區，但較少回來找他本人', '給資源協助（回診提醒、醫病溝通）'],
-  '瞎忙': ['開立多，但病人回來的少（找他、找院區都少）', '介入輔導，了解開了為什麼沒回來'],
-  '醫病經營不用心': ['開立少，病人也較少回來找他', '主管關懷、要求改善']
+  '標竿': ['開立達標且病患回診意願高', '可請醫師分享經驗'],
+  '經驗型': ['開立不多但病患回診意願高', '不用介入；想再提升，可鼓勵適度開立 BACK'],
+  '一般': ['各項表現皆於中間值，沒有明顯強弱', '持續追蹤'],
+  '認真但方向不對': ['開立積極但外溢率較高', '可優化回診提醒、醫病溝通'],
+  '瞎忙': ['開立積極但病患回診意願低', '介入輔導'],
+  '醫病經營不用心': ['開立不多病患回診意願也低', '執行長評估關懷']
 };
 const clsDesc = c => CLS_DESC[c] ? `<div class="wdesc">${esc(CLS_DESC[c][0])}<span>👉 ${esc(CLS_DESC[c][1])}</span></div>` : '';
 function wall() {
@@ -747,7 +747,7 @@ function openDoc(r) {
       <div class="cl">${esc(r.c)}院區 · ${esc(r.t)} · ${esc(V.label)}</div><div class="nm">${esc(r.d)}</div>
       <div class="big"><span class="n">${r.score == null ? '—' : r.score.toFixed(0)}</span>${posHtml(r.score)}<span class="u">綜合分數（集團平均 ${SC['分數平均']}）<br>集團第 ${r.rank ?? '—'}/${V.docs.length} 名</span></div></div>
     <div class="db">
-      <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">${labHtml(r.lab)}<span class="note" style="margin:0">建議：${esc(r.s.advice || '—')}</span></div>
+      <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">${labHtml(r.lab)}<span class="note" style="margin:0">建議：${esc(CLS_DESC[r.lab] ? CLS_DESC[r.lab][1] : r.s.advice || '—')}</span></div>
         <div class="note">開立率${lv.back || '—'}（${w('開立率合理下限')} 為界）・個人回診${lv.same || '—'}・整體回診${lv.any || '—'}</div></div>
       <div class="card"><b>球探五角形</b><span class="note" style="margin-left:8px">實線＝${esc(r.d)}、虛線＝集團平均（${SC['分數平均']}）</span>${radar(r)}
         <div class="note">每一角換算成「集團平均＝${SC['分數平均']}」的分數，越往外越好。綜合分數只計前三項；看診效率、慢專比例為參考。</div></div>
