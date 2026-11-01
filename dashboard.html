@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script>/* iPhone 點到輸入框、選單會自動放大畫面，放大後標題列會被切；加 maximum-scale 只擋自動放大，手指放大照樣可以 */if (/iP(hone|ad|od)/.test(navigator.userAgent)) document.querySelector('meta[name=viewport]').content += ',maximum-scale=1';</script>
 <title>醫師貢獻值儀表板</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
@@ -83,6 +84,7 @@ h2{font-size:20px;margin:0;letter-spacing:.03em}
 .summary a{color:var(--brand);font-weight:700;cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .wg{margin-bottom:18px}
 .wgh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 10px}
+.wdesc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:-2px 0 12px;font-size:13.5px;color:var(--muted)}.wdesc span{display:block;color:var(--ink);font-weight:500;margin-top:2px}
 .wgh .lab{font-size:14px;padding:calc(5px - .06em) 14px calc(5px + .06em)}.wcount{font-weight:700}.wadv{color:var(--muted);font-size:13px}
 .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
 .wc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 12px 10px;cursor:pointer;box-shadow:var(--shadow);transition:transform .12s,border-color .12s}
@@ -183,12 +185,13 @@ tbody tr{cursor:pointer}tbody tr:hover{background:var(--hover)}
 .wbar{display:flex;height:34px;border-radius:10px;overflow:hidden;margin-top:12px;gap:2px}
 .wbar div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
 footer{color:var(--muted);font-size:12px;text-align:center;margin-top:36px}
-.login{position:fixed;inset:0;z-index:100;background:linear-gradient(160deg,#24534c 0%,#2f6b62 55%,#f3f6f4 55.1%);display:grid;place-items:center;padding:20px}
+.login{position:fixed;inset:0;z-index:100;background:linear-gradient(160deg,#24534c 0%,#2f6b62 55%,#f3f6f4 55.1%);display:flex;padding:20px;overflow-y:auto}
+.lg-card{margin:auto}
 .lg-card{background:#fff;border-radius:22px;padding:36px 34px 30px;width:100%;max-width:400px;box-shadow:0 20px 50px #0003;text-align:center}
 .lg-card img{width:92px;height:92px;border-radius:50%}
 .lg-card h2{margin:14px 0 4px;font-size:21px;color:var(--brand)}
 .lg-card .role{display:inline-block;background:var(--chip-bg);color:var(--brand);border-radius:99px;padding:calc(3px - .06em) 12px calc(3px + .06em);font-size:13px;font-weight:500;margin-bottom:20px}
-.lg-card input{width:100%;border:1px solid #d6dfdb;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:15px;outline:none;font-family:inherit}
+.lg-card input{width:100%;border:1px solid #d6dfdb;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:16px;outline:none;font-family:inherit}
 .lg-card button{width:100%;border:0;border-radius:12px;padding:12px;background:var(--brand);color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit}
 .lg-err{color:#b42318;font-size:13px;min-height:20px;margin-top:10px}
 .hide{display:none!important}
@@ -196,7 +199,7 @@ body.locked header.top,body.locked .wrap{visibility:hidden}
 @media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.grid2{grid-template-columns:minmax(0,1fr)}.expl{grid-template-columns:1fr 1fr}}
 @media (min-width:1100px){body{font-size:16px}.wgrid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}.wc .wn b{font-size:16.5px}.wc .ws .sc{font-size:23px}.nchip{font-size:14.5px}.chip{font-size:14px}.summary ul{font-size:15px}.kpi .l{font-size:14px}.kpi .s{font-size:13.5px}.sec-h .sub{font-size:14px}}
 /* 手機：標題列固定在上方、縮成一行（只留 LOGO＋區間切換＋登出） */
-@media (max-width:640px){header.top .in{padding:7px 10px;gap:8px;flex-wrap:nowrap}.brand img{width:30px;height:30px}.brand>div,.grow{display:none}.ctl{flex-wrap:nowrap;gap:6px;flex:1;justify-content:flex-end;min-width:0;overflow-x:auto}.seg button{padding:calc(5px - .06em) 9px calc(5px + .06em);font-size:12.5px}#pick select,#pick input{font-size:13px;padding:5px 6px}.lnk{padding:calc(4px - .06em) 9px calc(4px + .06em);font-size:12px;white-space:nowrap}.wrap{padding:0 14px 40px}.summary ul{font-size:13.5px}.cnts{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:1fr 1fr}.kpi .v{font-size:26px}.kpi.hero{grid-column:1/-1}.expl{grid-template-columns:1fr}.brand .t2{font-size:17px}.hide-m{display:none}td,th{padding:9px 6px}.detail .stats{grid-template-columns:1fr 1fr}.reps,.acts{grid-template-columns:1fr}.wgrid{grid-template-columns:repeat(2,1fr);gap:8px}.wrow{grid-template-columns:1fr}}
+@media (max-width:640px){header.top .in{padding:7px 10px;gap:8px;flex-wrap:nowrap}.brand img{width:30px;height:30px}.brand>div,.grow{display:none}.ctl{flex-wrap:nowrap;gap:6px;flex:1;justify-content:flex-end;min-width:0;overflow-x:auto}.seg button{padding:calc(5px - .06em) 9px calc(5px + .06em);font-size:12.5px}#pick select,#pick input{font-size:13px;padding:5px 6px}.lnk{padding:calc(4px - .06em) 9px calc(4px + .06em);font-size:12px;white-space:nowrap}.wrap{padding:0 14px 40px}.summary ul{font-size:13.5px}.cnts{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:1fr 1fr}.kpi .v{font-size:26px}.kpi.hero{grid-column:1/-1}.expl{grid-template-columns:1fr}.brand .t2{font-size:17px}.hide-m{display:none}td,th{padding:9px 6px}.detail .stats{grid-template-columns:1fr 1fr}.reps,.acts{grid-template-columns:1fr}.wgrid{grid-template-columns:repeat(2,1fr);gap:8px}.wrow{grid-template-columns:1fr}.lg-card{margin:4vh auto auto;padding:26px 22px 22px}.lg-card img{width:76px;height:76px}}
 </style>
 </head>
 <body class="locked">
@@ -282,7 +285,7 @@ $('#lgForm').onsubmit = async ev => {
     const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'login', payload: { role: 'viewer', user: $('#lgUser').value.trim(), pass: $('#lgPass').value } }) });
     const j = await res.json(); if (!j.ok) throw new Error(j.error);
     TOKEN = j.data.token; try { sessionStorage.setItem(TOK_KEY, TOKEN); } catch (e) {}
-    $('#lgPass').value = ''; $('#login').classList.add('hide'); start();
+    $('#lgPass').value = ''; $('#login').classList.add('hide'); scrollTo(0, 0); await start(); scrollTo(0, 0);
   } catch (e) { $('#lgErr').textContent = e.message || '登入失敗'; }
   b.disabled = false; b.textContent = '登入';
 };
@@ -448,7 +451,7 @@ function actionList() {
     const best = !bad ? [['any', o.s.anyScore], ['same', o.s.sameScore], ['back', o.s.backScore]].sort((a, b) => b[1] - a[1])[0] : null;
     return { adv: bad ? adv : (o.s.tier !== '前段' ? '進步了，給予鼓勵' : o.lab === '標竿' ? '可請他分享經驗' : '公開肯定、維持表現'),
       html: `<div class="act" data-k="${esc(o.c + '|' + o.d)}"><div class="ah"><b>${esc(o.d)}</b><small>${esc(o.c)}</small>${why(o, bad)}<span class="grow"></span><span class="sc">${o.score.toFixed(0)}</span>${dTxt(o)}</div>
-      <div class="ab">${bad ? (w ? `最弱：<b>${w.name}</b> ${pct(w.raw)}（${Math.round(w.sc)} 分）` : '') : `最強：<b>${AXN[best[0]][0]}</b> ${pct(o[AXN[best[0]][1]])}（${Math.round(best[1])} 分）`}　${labHtml(o.lab)}</div>` };
+      <div class="ab">${bad ? (w ? `最弱：<b>${w.name}</b>（${Math.round(w.sc)} 分）` : '') : `最強：<b>${AXN[best[0]][0]}</b>（${Math.round(best[1])} 分）`}</div>` };
   };
   const bad = pick(lowTier, drops, 3), good = pick(topTier, ups, 3);
   const hasPrev = !!V.prev;
@@ -491,7 +494,7 @@ function actionListRate(k) {
   const dTxt = o => o._d == null ? '' : `<span class="${k === 'br' || k === 'sp' ? 'neu' : o._d >= 0 ? 'up' : 'dn'}">${o._d >= 0 ? '▲' : '▼'}${(Math.abs(o._d) * 100).toFixed(1)}%</span>`;
   const item = (x, isBad) => { const o = x.o, dv = o[k] - avg;
     return { adv: adv(x, isBad), html: `<div class="act" data-k="${esc(o.c + '|' + o.d)}"><div class="ah"><b>${esc(o.d)}</b><small>${esc(o.c)}</small>${x.tags.map(t => `<span class="atag ${isBad ? 'b' : 'g'}">${t}</span>`).join('')}<span class="grow"></span><span class="sc">${pct(o[k])}</span>${dTxt(o)}</div>
-      <div class="ab">${k === 'br' ? (o.br < lo ? `比合理下限低 <b>${((lo - o.br) * 100).toFixed(1)}%</b>` : o.br > hi ? `超過合理上限 <b>${((o.br - hi) * 100).toFixed(1)}%</b>` : '<b>在合理區間內</b>') : `比醫師平均 ${dv >= 0 ? '高' : '低'} <b>${(Math.abs(dv) * 100).toFixed(1)}%</b>`}　整體 ${pct(o.ar)}・個人 ${pct(o.pr)}・開立 ${pct(o.br)}　${labHtml(o.lab)}</div>` }; };
+      <div class="ab">${k === 'br' ? (o.br < lo ? `比合理下限低 <b>${((lo - o.br) * 100).toFixed(1)}%</b>` : o.br > hi ? `超過合理上限 <b>${((o.br - hi) * 100).toFixed(1)}%</b>` : '<b>在合理區間內</b>') : `比醫師平均 ${dv >= 0 ? '高' : '低'} <b>${(Math.abs(dv) * 100).toFixed(1)}%</b>`}</div>` }; };
   return `<div class="acts">` + actCol(true, badHd, bad.map(x => item(x, true)), '這期沒有需要特別關心的醫師 🎉') + actCol(false, goodHd, good.map(x => item(x, false)), '這期沒有符合的醫師') + '</div>';
 }
 function detail() {
@@ -524,14 +527,13 @@ function chips() {
 
 /* ---------- 本期重點（3～4 句話） ---------- */
 function summary() {
-  const D = V.docs.filter(o => o.score != null), n = c => D.filter(o => o.lab === c).length;
+  const D = V.docs.filter(o => o.score != null);
   const tier = t => D.filter(o => o.s.tier === t);
   const pv = {}; (V.prev ? V.prev.docs : []).forEach(o => pv[o.c + '|' + o.d] = o);
   const ch = D.map(o => ({ o, d: pv[o.c + '|' + o.d] && pv[o.c + '|' + o.d].score != null ? o.score - pv[o.c + '|' + o.d].score : null })).filter(x => x.d != null).sort((a, b) => b.d - a.d);
   const ar = gAvg(V, 'ar'), par = V.prev ? gAvg(V.prev, 'ar') : null, br = gAvg(V, 'br');
   const nm = arr => arr.map(o => `<a data-k="${esc(o.c + '|' + o.d)}">${esc(o.d)}</a>`).join('、');
   const lines = [
-    `本期 <b>${D.length}</b> 位醫師：${CLS_ORDER.filter(n).map(c => `${labName(c)} <b>${n(c)}</b>`).join('・')}。`,
     `整體回診率 <b>${pct(ar)}</b>${par != null ? (Math.abs(ar - par) < .0005 ? '（與上期持平）' : `（比上期 <span class="${ar >= par ? 'up' : 'dn'}">${ar >= par ? '▲' : '▼'}${(Math.abs(ar - par) * 100).toFixed(1)}%</span>）`) : ''}；開立率 <b>${pct(br)}</b>，${br >= SC['開立率合理下限'] ? '已達目標' : '未達目標 ' + pct(SC['開立率合理下限'], 0)}。`,
     tier('待加強').length ? `綜合分數待加強 <b>${tier('待加強').length}</b> 位：${nm(tier('待加強'))}。` : '這期沒有綜合分數待加強的醫師 🎉',
     ch.length ? `比上期進步最多：${nm([ch[0].o])}（<span class="up">▲${ch[0].d.toFixed(1)}</span> 分）` + (ch[ch.length - 1].d < 0 ? `；分數下滑、可多關心：${nm([ch[ch.length - 1].o])}（<span class="dn">▼${Math.abs(ch[ch.length - 1].d).toFixed(1)}</span> 分）` : '') + '。' : ''
@@ -557,6 +559,16 @@ function radarMini(r) {
 }
 /* 小玫 10/30 選 A：沒篩選時只展開「標竿」的五角形卡，其他分類一行名字膠囊；
    點了分類或院區＝不再分區，照院區開幕順序（院區清單順序）、醫師清單順序排，卡上標分類 */
+// 分類說明（小玫 11/01 選 A：先說是什麼樣的醫師，再說建議）
+const CLS_DESC = {
+  '標竿': ['開立達標，病人也很願意回來找他', '請他分享經驗，當其他醫師的參考'],
+  '經驗型': ['開立不多，但病人很願意回來找他', '不用介入；想再提升，可鼓勵適度開立 BACK'],
+  '一般': ['各項表現在中間，沒有明顯強弱', '持續觀察'],
+  '認真但方向不對': ['開立積極，病人有回院區，但較少回來找他本人', '給資源協助（回診提醒、醫病溝通）'],
+  '瞎忙': ['開立多，但病人回來的少（找他、找院區都少）', '介入輔導，了解開了為什麼沒回來'],
+  '醫病經營不用心': ['開立少，病人也較少回來找他', '主管關懷、要求改善']
+};
+const clsDesc = c => CLS_DESC[c] ? `<div class="wdesc">${esc(CLS_DESC[c][0])}<span>👉 ${esc(CLS_DESC[c][1])}</span></div>` : '';
 function wall() {
   const cOrd = {}, dOrd = {}; CFG.clinics.forEach((c, i) => cOrd[c.name] = i); (CFG.doctors || []).forEach((d, i) => dOrd[d.clinic + '|' + d.name] = +d.order || i);
   const byOrder = (a, b) => (cOrd[a.c] ?? 99) - (cOrd[b.c] ?? 99) || (dOrd[a.c + '|' + a.d] ?? 999) - (dOrd[b.c + '|' + b.d] ?? 999);
@@ -565,13 +577,13 @@ function wall() {
   if (selCls || selClinic) {
     const list = V.docs.filter(o => (!selCls || o.lab === selCls) && (!selClinic || o.c === selClinic)).sort(byOrder);
     const title = [selClinic, selCls ? labName(selCls) : ''].filter(Boolean).join('・');
-    $('#wall').innerHTML = `<div class="wgh"><b>${esc(title)}</b><span class="wcount">${list.length} 位</span>${selCls ? `<span class="wadv">${esc(E.CLASS_ADVICE[selCls] || '')}</span>` : ''}<button class="lnk" id="wReset">看全部 ✕</button></div>` +
+    $('#wall').innerHTML = `<div class="wgh"><b>${esc(title)}</b><span class="wcount">${list.length} 位</span><button class="lnk" id="wReset">看全部 ✕</button></div>${selCls ? clsDesc(selCls) : ''}` +
       (list.length ? `<div class="wgrid">${list.map(o => card(o, !selCls)).join('')}</div>` : '<div class="note">沒有符合的醫師</div>') + note;
     $('#wReset').onclick = () => { selCls = null; selClinic = null; renderAll(); };
   } else {
     const top = V.docs.filter(o => o.lab === '標竿').sort(byOrder);
     const rows = CLS_ORDER.filter(c => c !== '標竿').map(c => [c, V.docs.filter(o => o.lab === c).sort(byOrder)]).filter(r => r[1].length);
-    $('#wall').innerHTML = (top.length ? `<div class="wg"><div class="wgh">${labHtml('標竿')}<span class="wcount">${top.length} 位</span><span class="wadv">${esc(E.CLASS_ADVICE['標竿'])}</span></div><div class="wgrid">${top.map(o => card(o)).join('')}</div></div>` : '') +
+    $('#wall').innerHTML = (top.length ? `<div class="wg"><div class="wgh">${labHtml('標竿')}<span class="wcount">${top.length} 位</span></div>${clsDesc('標竿')}<div class="wgrid">${top.map(o => card(o)).join('')}</div></div>` : '') +
       `<div class="card wrows">${rows.map(([c, list]) => `<div class="wrow"><button class="wrl" data-cls="${esc(c)}">${labHtml(c)}<span class="wcount">${list.length} 位 ›</span></button><div class="wnames">${list.map(o => `<button class="nchip" data-k="${esc(o.c + '|' + o.d)}">${esc(o.d)}<small>${esc(o.c)}</small></button>`).join('')}</div></div>`).join('')}
         <div class="note" style="margin-top:6px">點分類看該分類全部醫師的五角形；點名字直接看報告。</div></div>` + note;
     $$('#wall .wrl').forEach(b => b.onclick = () => { selCls = b.dataset.cls; renderAll(); document.getElementById('clChips').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
