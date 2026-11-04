@@ -458,7 +458,7 @@ async function loadSaved() {
     (mt.records || []).forEach(x => {
       let r = S.saved.records.find(y => y.clinic === x.clinic && y.doctor === x.doctor);
       if (!r) S.saved.records.push(r = { clinic: x.clinic, doctor: x.doctor, title: x.title, hours: x.hours, visits: x.visits, patients: x.visits, slowN: x.slowN, backN: x.backN });
-      r.sameN = x.sameN; r.anyN = x.anyN;
+      r.sameN = x.sameN; r.anyN = x.anyN; ['oppN', 'expN', 'gotN', 'dutyDays'].forEach(k => r[k] = x[k]);
     });
   } catch (e) {}
   renderChips(); if (S.current) selectClinic(S.current);
@@ -609,7 +609,8 @@ function recompute(cl, keep) {
     Object.keys(w).forEach(d => { if (!r.doctors[d]) r.doctors[d] = { patients: (inR.doctors[d] || {}).patients || 0, backN: 0, nRevN: 0, wRevN: w[d] }; });
     // 醫師貢獻值：回同醫師、回院區任一醫師（起始看診需在區間內）
     const rv = E.countRevisits(allV, { clinic: cl, visitMap: CFG.visitMap, days: DAYS(), start, end });
-    Object.keys(r.doctors).forEach(d => { r.doctors[d].sameN = (rv[d] || {}).sameN || 0; r.doctors[d].anyN = (rv[d] || {}).anyN || 0; });
+    Object.keys(r.doctors).forEach(d => { r.doctors[d].sameN = (rv[d] || {}).sameN || 0; r.doctors[d].anyN = (rv[d] || {}).anyN || 0;
+      ['oppN', 'expN', 'gotN', 'dutyDays'].forEach(k => r.doctors[d][k] = (rv[d] || {})[k] || 0); });   // 病人選擇度、上診天數（儀表板用，11/05）
     c.clinicRev = E.clinicRevisits(allV, { days: DAYS(), start, end });
   } else c.clinicRev = null;
   c.clinicBackN = raw.back ? raw.back.rows.filter(inRange).length : null;
@@ -661,6 +662,7 @@ function doctorRow(cl, d) {
     // 回同醫師＝舊「整體回診數」，舊資料沒有 sameN 時沿用
     sameN: cnt && c.hasVisit ? cnt.sameN : (svn('sameN') !== null ? svn('sameN') : svn('wRevN')), anyN: cnt && c.hasVisit ? cnt.anyN : svn('anyN')
   };
+  ['oppN', 'expN', 'gotN', 'dutyDays'].forEach(k => base[k] = cnt && c.hasVisit ? (cnt[k] || 0) : svn(k));   // 病人選擇度、上診天數（儀表板用）
   if (base.patients === null) base.patients = base.visits;
   return E.metrics(base);
 }
@@ -802,7 +804,8 @@ function metricsPayload(cl, rows, sm, ad) {
   const codes = name => CFG.visitMap.filter(x => x.clinic === cl && x.doctor === name && x.active !== false).map(x => x.code).join('/');
   const cr = c.clinicRev, sum = k => rows.some(r => r[k] !== null) ? rows.reduce((a, r) => a + (r[k] || 0), 0) : null;
   return { month: S.month, clinic: cl, analysisDate: ad, source: '前台分析 ' + [c.visitFile, c.backFile].filter(Boolean).join(' / '),
-    rows: rows.map(r => ({ doctor: r.doctor, title: r.title, code: codes(r.doctor), hours: r.hours, visits: r.visits, slowN: r.slowN, backN: r.backN, sameN: r.sameN, anyN: r.anyN })),
+    rows: rows.map(r => ({ doctor: r.doctor, title: r.title, code: codes(r.doctor), hours: r.hours, visits: r.visits, slowN: r.slowN, backN: r.backN, sameN: r.sameN, anyN: r.anyN,
+      oppN: r.oppN, expN: r.expN, gotN: r.gotN, dutyDays: r.dutyDays })),
     summary: { visits: sm.total, slowN: sm.slow, backN: c.clinicBackN !== null && c.clinicBackN !== undefined ? c.clinicBackN : sum('backN'),
                sameN: cr ? cr.sameN : null, anyN: cr ? cr.anyN : null } };
 }
